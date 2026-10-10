@@ -15,8 +15,20 @@ const putText = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototyp
 const says = (name: string | RegExp, words: string) =>
   typeof name === 'string' ? words.includes(name) : name.test(words);
 
+/** The entities a DOM writes back out, as the characters a person actually reads on the screen. */
+const entities: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+
 /** What a person actually reads on the screen, with the markup taken back out. */
-export const visibleText = (markup: string) => markup.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+export const visibleText = (markup: string) =>
+  markup
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&(#\d+|#x[0-9a-f]+|[a-z]+);/gi, (all, named: string) =>
+      named.startsWith('#')
+        ? String.fromCodePoint(Number(named.startsWith('#x') ? `0x${named.slice(2)}` : named.slice(1)))
+        : entities[named.toLowerCase()] ?? all,
+    )
+    .replace(/\s+/g, ' ')
+    .trim();
 
 export type Screen = {
   /** The field a person would find by reading the words that name it. */

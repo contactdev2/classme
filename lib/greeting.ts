@@ -26,3 +26,13 @@ export function nameOf(teacher: TeacherProfile): string {
 export function greetingFor(teacher: TeacherProfile, at: Date): { hour: string; name: string } {
   return { hour: `${partOfDay(at)},`, name: nameOf(teacher) };
 }
+
+/**
+ * The two letters a teacher's own avatar shows: the initials of the name their record keeps, or the
+ * first of the email it does keep when it keeps no name. Never a letter the app made up for them.
+ */
+export function initialsOf(teacher: TeacherProfile): string {
+  const words = nameOf(teacher).replace(/[^\p{L}\p{N} ]/gu, ' ').trim().split(/\s+/);
+  const letters = words.map((word) => word[0] ?? '').join('');
+  return (letters.slice(0, 1) + letters.slice(-1)).toUpperCase();
+}

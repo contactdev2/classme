@@ -28,11 +28,11 @@ const places = [
  */
 export function HomeScreen({
   teacher,
-  onLogOut,
+  onOpenSettings,
   now = new Date(),
 }: {
   teacher: TeacherProfile;
-  onLogOut: () => void;
+  onOpenSettings: () => void;
   now?: Date;
 }) {
   const greeting = greetingFor(teacher, now);
@@ -54,13 +54,12 @@ export function HomeScreen({
           <Text style={{ fontSize: 22, color: colors.text }}>☰</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.step }}>
             <Text style={{ fontSize: 20 }}>🔔</Text>
-            {/* Their own account. Settings is its own requirement, and logging out securely with it;
-                until that screen exists this is the way back out, and it says so to a screen reader
-                rather than leaving a teacher to guess. */}
+            {/* Their own account, which is Classroom Settings — where what is done with their data
+                is told to them, where a backup is made, and where logging out now lives. */}
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Your account — log out"
-              onPress={onLogOut}
+              accessibilityLabel="Your account — settings"
+              onPress={onOpenSettings}
               style={{
                 backgroundColor: colors.accentSoft,
                 borderRadius: radius.pill,
