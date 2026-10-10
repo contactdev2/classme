@@ -18,8 +18,10 @@ describe('foundation', () => {
     // Said as the screen's heading, so it is the first thing read and the first thing announced.
     expect(markup).toMatch(new RegExp(`<[^>]*role="heading"[^>]*>${productName()}<`));
 
-    // Nothing on it is pinned to a size that the phone's largest text would be cut off by.
-    expect(markup).not.toMatch(/"(height|maxHeight|lineHeight)":/);
+    // Nothing on it is pinned to a size that the phone's largest text would be cut off by,
+    // and nothing it says is cut short after so many lines.
+    expect(markup).not.toMatch(/[;"](height|max-height|line-height)\s*:/);
+    expect(markup).not.toContain('numberOfLines');
 
     takePicture('foundation > first screen', markup);
   });

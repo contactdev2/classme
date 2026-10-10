@@ -12,18 +12,39 @@ type Props = {
   [key: string]: unknown;
 };
 
+// The style words React Native has and a browser does not, said as the pairs a browser draws
+// (react-native-web's own expansion). Left unexpanded, a page is drawn without them and the
+// picture would show a screen nobody would ever see on a phone.
+const expansions: Record<string, string[]> = {
+  paddingHorizontal: ['paddingLeft', 'paddingRight'],
+  paddingVertical: ['paddingTop', 'paddingBottom'],
+  marginHorizontal: ['marginLeft', 'marginRight'],
+  marginVertical: ['marginTop', 'marginBottom'],
+};
+
 /** React Native allows an array of styles, and a browser does not: flattened, last word winning. */
 function flatten(style: Style): Record<string, unknown> {
   if (!style) return {};
   if (Array.isArray(style)) return style.reduce<Record<string, unknown>>((all, one) => ({ ...all, ...flatten(one) }), {});
-  return style as Record<string, unknown>;
+  const drawn: Record<string, unknown> = {};
+  for (const [word, value] of Object.entries(style as Record<string, unknown>)) {
+    for (const said of expansions[word] ?? [word]) drawn[said] = value;
+  }
+  return drawn;
 }
+
+// React Native's own role names, said the way a browser says them (react-native-web's mapping).
+const roles: Record<string, string> = { header: 'heading', link: 'link', button: 'button', image: 'img', text: 'none' };
 
 function element(tag: string, base: Record<string, unknown>) {
   return function Primitive({ children, style, accessibilityRole, ...rest }: Props) {
     return createElement(
       tag,
-      { style: { ...base, ...flatten(style) }, role: accessibilityRole, ...rest },
+      {
+        style: { ...base, ...flatten(style) },
+        role: accessibilityRole ? roles[accessibilityRole] ?? accessibilityRole : undefined,
+        ...rest,
+      },
       children,
     );
   };
