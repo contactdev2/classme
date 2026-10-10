@@ -1,0 +1,11 @@
+{
+  "branch": "constat/session-2-e45807ee",
+  "screens": [],
+  "criteria": [
+    "Teacher can choose to create an encrypted backup file from Settings.",
+    "The backup file contains classroom, student, and attendance data encrypted so it cannot be read without the app.",
+    "The backup process does not send data over the internet.",
+    "Teacher can restore data from a previously saved encrypted backup file. — Yes"
+  ],
+  "why": "DoneMark froze these onto the attempt: the acceptance criteria of the requirement it is for, and the screens those criteria name. The picture suite runs the checks whose names are these criteria and skips the rest; where it can match none of them it narrows by these screens instead, and says so. Honoured on this branch only."
+}
