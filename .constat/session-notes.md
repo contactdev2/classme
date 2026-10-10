@@ -88,3 +88,60 @@ Still half-true, and waiting:
 - The password field has no "return key submits" behaviour: `onSubmitEditing` is deliberately not
   wired, because the DOM stand-in strips it and it would ship untested. If a later requirement wants
   it, teach `test/react-native-dom.tsx` to turn Enter into `onSubmitEditing` first.
+
+## 3 — Verify login against local encrypted data (da161aa0)
+
+What is here now:
+
+- `lib/crypto.ts` is SHA-256, HMAC-SHA256 and PBKDF2-HMAC-SHA256 written out in plain TypeScript,
+  plus UTF-8 both ways, hex both ways, a constant-time `sameBytes` and `unguessableBytes`. **No new
+  package**: the same arithmetic has to run on a phone, in a browser and in a check, and Node's own
+  crypto is none of those. `lib/crypto.test.ts` holds every piece to the published answers of
+  FIPS 180-4, RFC 4231 and the PBKDF2-SHA256 vectors, *and* to what `node:crypto` answers for input
+  at every length a block boundary falls on. Touch that file and those checks will tell you.
+- `lib/local-accounts.ts` is the encrypted local database the login screen has been promising since
+  requirement 1. One account is one `AccountRecord`: `{ version, salt, iterations, nonce, locked,
+  seal }`, all hex, **and nothing in the clear — not the password, not even the email**. The password
+  is stretched with PBKDF2 into two keys (one locks, one seals); the blob is locked with an
+  HMAC-SHA256 keystream counted from the record's own nonce and sealed with HMAC-SHA256 over every
+  stored field. `openAccount` checks the seal *before* reading anything, then only answers when the
+  email inside matches the one typed. Wrong password, another teacher's record and an edited record
+  are all answered with the same `null`, on purpose: told apart, they would say out loud which
+  teachers this phone knows.
+- `submitSignIn` in `lib/sign-in.ts` now asks `teacherMatching()` and nothing else. Its outcome
+  carries `teacher` when somebody signed in. The sentence for "no" is the one requirement 2 chose,
+  unchanged, so the earlier checks still read.
+- `app/index.tsx` gained a gate at the top: the route is the login screen until a record opens, and
+  `components/signed-in-home.tsx` from then on. **No new route file** — `app/` is still
+  `_layout.tsx` and `index.tsx`, so requirement 1's `No other screen appears before the login
+  screen.` still holds and did not have to be widened. When a real home screen arrives, that is the
+  moment to widen it deliberately, as requirement 1 asked.
+
+Decisions taken, so they are not re-decided:
+
+- **50,000 stretches** (`stretchedTimes`), not the 600,000 a native implementation would use: pure-JS
+  PBKDF2 costs ~8µs an iteration on a CI runner and more on a phone, so this is about a second of a
+  teacher's morning. A record carries the number it was made with, so raising it later leaves older
+  records opening as they did. Checks pass `1_000` as the third argument rather than waiting.
+- The sign-in blocks the JS thread while it stretches. The button is already disabled and the screen
+  already says "Checking your details…", so it reads as working rather than stuck.
+- The signed-in screen is a **component, not a route**, for the reason above. It greets the teacher
+  by the email read out of their own record and has a Log Out that only forgets them in memory —
+  logging out *securely* is its own requirement.
+- `unguessableBytes` throws rather than falling back to anything guessable when a device offers no
+  `crypto.getRandomValues`. Node and the browser both have it; if a phone build ever does not, that
+  throw is the bug report, not a record anybody could open.
+
+Half-true, and waiting for the next requirement:
+
+- **No account is ever written.** `accountsFile()` is a seam with `accountsIn([])` behind it — the
+  records live in memory for as long as the app runs, and nothing enrols a teacher. So on a real
+  phone there is no record to match and nobody can sign in yet. The requirement that keeps a
+  teacher's login details locally and encrypted has **one line to replace** (the `let file = ...` in
+  `lib/local-accounts.ts`) and one screen to add; `lockAccount` already makes the record for it. No
+  storage package has been chosen yet: `expo-file-system` writing the records as one file is the
+  obvious candidate, and it needs its sentence in the pull request.
+- **"Remember me" still does nothing**, and "Forgot password?" is still plain text. Both are drawn
+  because the prototype draws them.
+- An error on the login screen is in the ordinary text colour: the agreed palette (round 3) has no
+  colour for alarm, and inventing one was not this requirement's to do.

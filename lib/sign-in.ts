@@ -1,6 +1,7 @@
 // Signing a teacher in, on the phone and nowhere else. The login screen collects what is typed and
 // hands it here; this is the one place that decides what a submission means, so the screen only has
 // to say back what it is told.
+import { teacherMatching, type TeacherProfile } from './local-accounts';
 
 /**
  * What a teacher types in to sign in. These two words travel together and no further: they are
@@ -9,7 +10,12 @@
 export type Credentials = { email: string; password: string };
 
 /** What a submission came to, and the one sentence the screen says back to the teacher. */
-export type SignInOutcome = { signedIn: boolean; said: string };
+export type SignInOutcome = {
+  signedIn: boolean;
+  said: string;
+  /** Who signed in, when somebody did: the details read out of their own record, and no more. */
+  teacher?: TeacherProfile;
+};
 
 /**
  * What a teacher has still to fill in, in words they can act on, or null when both fields are there.
@@ -34,12 +40,15 @@ export function credentialsFrom(typed: Credentials): Credentials {
 /**
  * Submits the credentials to be checked against the teacher accounts kept on this phone.
  *
- * No account is kept on this phone yet — keeping a teacher's login details locally and encrypted is
- * its own requirement, still to come — so there is nothing here any email and password could match,
- * and that is what this answers. When accounts are kept, this is the one function to teach how to
- * read them: everything else on the login screen already goes through it.
+ * The check is the phone's own, start to finish: a record of its own opens with the password that
+ * locked it, or no record does. Nothing is sent anywhere, nothing is asked of a network, and the
+ * answer is the same whether the phone has a connection or not.
+ *
+ * A wrong password and an email this phone has never seen are answered with the same sentence on
+ * purpose: told apart, they would say out loud which teachers this phone knows.
  */
 export async function submitSignIn(credentials: Credentials): Promise<SignInOutcome> {
-  void credentials;
-  return { signedIn: false, said: 'No account on this phone matches that email and password.' };
+  const teacher = await teacherMatching(credentials);
+  if (!teacher) return { signedIn: false, said: 'No account on this phone matches that email and password.' };
+  return { signedIn: true, said: 'Signed in.', teacher };
 }
