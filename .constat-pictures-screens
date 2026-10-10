@@ -1,10 +1,12 @@
 {
   "branch": "constat/session-1-c937d5e6",
-  "screens": [],
+  "screens": [
+    "the Home"
+  ],
   "criteria": [
-    "Entering the correct email and password lets the teacher continue past the login screen.",
-    "Entering a wrong password keeps the teacher on the login screen with an error message.",
-    "The credential check never requires an internet connection."
+    "After a successful login, the teacher sees the Home screen.",
+    "The Home screen shows a greeting with the teacher's name, for example 'Good morning, Ms. Rivera'.",
+    "The Home screen appears within two seconds of a successful login."
   ],
   "why": "DoneMark froze these onto the attempt: the acceptance criteria of the requirement it is for, and the screens those criteria name. The picture suite runs the checks whose names are these criteria and skips the rest; where it can match none of them it narrows by these screens instead, and says so. Honoured on this branch only."
 }
