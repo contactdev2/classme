@@ -1,0 +1,11 @@
+node_modules/
+.expo/
+# What a check run writes for CI to publish, never part of the checkout.
+.constat/check-report/
+.constat/check-coverage/
+.constat/check-mutation/
+.constat/pictures/
+.constat/preview/
+.constat/report.json
+*.log
+.DS_Store
