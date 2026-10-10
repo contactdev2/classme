@@ -18,6 +18,8 @@ export const colors = {
   faint: '#8C98A8',
   /** The accent, washed out, for a panel that is telling rather than asking. */
   accentWash: '#EAF1FD',
+  /** The accent, quietened, behind something small and round: a teacher's own avatar. */
+  accentSoft: '#CBD9F7',
   /** On the accent. */
   onAccent: '#FFFFFF',
 } as const;

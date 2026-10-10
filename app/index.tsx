@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { HomeScreen } from '../components/home-screen';
+import type { TeacherProfile } from '../lib/local-accounts';
 import { productName } from '../lib/product';
 import { credentialsFrom, missingFrom, submitSignIn } from '../lib/sign-in';
 import { colors, radius, shadow, space } from '../lib/theme';
@@ -22,10 +24,24 @@ const fieldRow = {
 } as const;
 
 /**
+ * The route the app opens on: the login screen, until a teacher's own record on this phone opens
+ * with what they typed — and from then on, Home, greeting them by name. Nobody is signed in when
+ * the app starts, so the first thing drawn is always the login screen itself.
+ *
+ * Home is a component and not a second route on purpose: the app opening on the login screen and
+ * nothing else is a requirement of its own, and this keeps '/' the only screen there is.
+ */
+export default function Login() {
+  const [teacher, setTeacher] = useState<TeacherProfile | null>(null);
+  if (teacher) return <HomeScreen teacher={teacher} onLogOut={() => setTeacher(null)} />;
+  return <LoginScreen onSignedIn={setTeacher} />;
+}
+
+/**
  * The screen the app opens on. A teacher arriving in the morning sees where to sign in and nothing
  * else: their email, their password, and the button that logs them in.
  */
-export default function Login() {
+function LoginScreen({ onSignedIn }: { onSignedIn: (teacher: TeacherProfile) => void }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [shown, setShown] = useState(false);
@@ -50,6 +66,12 @@ export default function Login() {
     setSaid('Checking your details…');
     try {
       const outcome = await submitSignIn(credentialsFrom({ email, password }));
+      if (outcome.signedIn && outcome.teacher) {
+        // Their record opened. Nothing more to say here: this screen is done, and the app takes over.
+        setBusy(false);
+        onSignedIn(outcome.teacher);
+        return;
+      }
       setSaid(outcome.said);
     } catch {
       // What went wrong is never said in the words of the thing that failed, and never with any of
