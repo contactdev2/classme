@@ -2,9 +2,9 @@
   "branch": "constat/session-1-c937d5e6",
   "screens": [],
   "criteria": [
-    "Teacher can type an email address into a field.",
-    "Teacher can type a password into a separate field.",
-    "Tapping the Log In button submits the entered credentials."
+    "Entering the correct email and password lets the teacher continue past the login screen.",
+    "Entering a wrong password keeps the teacher on the login screen with an error message.",
+    "The credential check never requires an internet connection."
   ],
   "why": "DoneMark froze these onto the attempt: the acceptance criteria of the requirement it is for, and the screens those criteria name. The picture suite runs the checks whose names are these criteria and skips the rest; where it can match none of them it narrows by these screens instead, and says so. Honoured on this branch only."
 }
