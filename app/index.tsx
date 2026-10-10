@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { productName } from '../lib/product';
+import { credentialsFrom, missingFrom, submitSignIn } from '../lib/sign-in';
 import { colors, radius, shadow, space } from '../lib/theme';
 
 /** The words under a field, naming it, so a person knows what goes in it. */
@@ -30,15 +31,33 @@ export default function Login() {
   const [shown, setShown] = useState(false);
   const [remember, setRemember] = useState(true);
   const [said, setSaid] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  function logIn() {
-    // Checking these against the phone's own records is the next thing to be built; until then the
-    // screen only says what it can honestly say — that both are needed.
-    if (!email.trim() || !password) {
-      setSaid('Enter your email and password to log in.');
+  /**
+   * The Log In button: what the teacher typed, handed in to be checked, and the answer said back.
+   * A field left empty is named here, before anything is submitted — nobody has to wait to be told
+   * they have not finished typing.
+   */
+  async function logIn() {
+    // One press is one submission: a second one while the first is still being answered is ignored.
+    if (busy) return;
+    const missing = missingFrom({ email, password });
+    if (missing) {
+      setSaid(missing);
       return;
     }
-    setSaid(null);
+    setBusy(true);
+    setSaid('Checking your details…');
+    try {
+      const outcome = await submitSignIn(credentialsFrom({ email, password }));
+      setSaid(outcome.said);
+    } catch {
+      // What went wrong is never said in the words of the thing that failed, and never with any of
+      // what was typed in it: a teacher reads what to do next, and nothing else.
+      setSaid('Your details could not be checked just now. Try again.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -158,12 +177,15 @@ export default function Login() {
 
         <Pressable
           accessibilityRole="button"
+          accessibilityState={{ disabled: busy }}
+          disabled={busy}
           onPress={logIn}
           style={{
             alignItems: 'center',
             backgroundColor: colors.accent,
             borderRadius: radius.field,
             paddingVertical: 15,
+            opacity: busy ? 0.7 : 1,
             ...shadow.accent,
           }}
         >
@@ -171,7 +193,7 @@ export default function Login() {
         </Pressable>
 
         {said ? (
-          <Text style={{ marginTop: 12, fontSize: 13, color: colors.text, textAlign: 'center' }}>{said}</Text>
+          <Text accessibilityRole="alert" style={{ marginTop: 12, fontSize: 13, color: colors.text, textAlign: 'center' }}>{said}</Text>
         ) : null}
 
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: space.step }}>

@@ -45,3 +45,46 @@ Half-true, and waiting for the next requirement:
   keeps a teacher's login details locally and encrypted should.
 - **"Verified against your encrypted local database" is a promise the code has not kept yet.** It is
   the prototype's own wording; make it true in the sign-in requirement, or change the wording.
+
+## 2 — Enter credentials and submit (37d893a1)
+
+What is here now:
+
+- `lib/sign-in.ts` is **the one place a submission goes**. `missingFrom()` says what a teacher has
+  still to fill in, `credentialsFrom()` turns what was typed into the pair to be checked (the email
+  trimmed, the password untouched — a space inside a password is part of it), and `submitSignIn()`
+  answers a submission. `app/index.tsx` goes through all three and holds no sign-in rule of its own,
+  so **the requirement that keeps teacher accounts locally and encrypted has one function to teach:
+  `submitSignIn`.** Nothing else on the login screen has to change for a real sign-in to work.
+- `test/screen.tsx` is the checks' hands and eyes: `open(<Screen />)` mounts a screen on a real DOM
+  and hands back `type()`, `press()`, `field()`, `text()` and `markup()`, so a check proves what a
+  screen *does* and not only what it draws. `takePictureOf(name, screen)` photographs it with what
+  was typed showing. A test file that uses it must start with `// @vitest-environment jsdom`; the
+  older markup-only checks stay in the default node environment.
+- **jsdom** is a new devDependency, and the only new package: typing and pressing cannot be proved
+  by rendering markup to a string. Nothing shipped imports it.
+- `test/react-native-dom.tsx`: a `disabled` Pressable no longer answers a click, as a disabled
+  Pressable on a phone does not answer a press.
+
+Decisions taken, so they are not re-decided:
+
+- **`submitSignIn` answers "No account on this phone matches that email and password."** That is not
+  a placeholder — with no account kept on the phone yet, it is the only true answer. Replace the
+  body, not the sentence's place: the screen already says back whatever it is told.
+- One press is one submission. While an answer is awaited the screen says "Checking your details…"
+  and the button is disabled, so a double tap cannot submit twice.
+- What the screen says after a submission is a `Text` with `accessibilityRole="alert"`, so a screen
+  reader announces it. Put any later sign-in message there rather than inventing a second place.
+- **No message ever contains the password or the error's own words.** A thrown error is answered
+  with "Your details could not be checked just now. Try again." and nothing is logged: personal data
+  in logs is an approved "never". Keep it that way when real verification can fail for real reasons.
+
+Still half-true, and waiting:
+
+- **"Remember me" still does nothing**, and "Forgot password?" is still plain text, not a control.
+  Both are drawn because the prototype draws them (see requirement 1's note).
+- **"Verified against your encrypted local database" is still a promise ahead of the code.** The
+  submission now goes to one honest place, but nothing encrypted is read yet.
+- The password field has no "return key submits" behaviour: `onSubmitEditing` is deliberately not
+  wired, because the DOM stand-in strips it and it would ship untested. If a later requirement wants
+  it, teach `test/react-native-dom.tsx` to turn Enter into `onSubmitEditing` first.

@@ -152,7 +152,8 @@ export function Pressable({
       'aria-label': accessibilityLabel,
       ...(accessibilityState?.checked === undefined ? {} : { 'aria-checked': accessibilityState.checked }),
       ...(disabled ? { 'aria-disabled': true } : {}),
-      onClick: onPress,
+      // A disabled Pressable does not answer a press on a phone, so it does not answer a click here.
+      onClick: disabled ? undefined : onPress,
       ...rest,
     },
     typeof children === 'function' ? (children as (s: { pressed: boolean }) => ReactNode)({ pressed: false }) : children,
