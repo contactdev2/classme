@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { HomeScreen } from '../components/home-screen';
+import { SettingsScreen } from '../components/settings-screen';
 import type { TeacherProfile } from '../lib/local-accounts';
 import { productName } from '../lib/product';
 import { credentialsFrom, missingFrom, submitSignIn } from '../lib/sign-in';
@@ -25,15 +26,29 @@ const fieldRow = {
 
 /**
  * The route the app opens on: the login screen, until a teacher's own record on this phone opens
- * with what they typed — and from then on, Home, greeting them by name. Nobody is signed in when
- * the app starts, so the first thing drawn is always the login screen itself.
+ * with what they typed — and from then on, Home, greeting them by name, with Settings behind their
+ * own avatar. Nobody is signed in when the app starts, so the first thing drawn is always the login
+ * screen itself.
  *
- * Home is a component and not a second route on purpose: the app opening on the login screen and
- * nothing else is a requirement of its own, and this keeps '/' the only screen there is.
+ * Home and Settings are components and not routes of their own on purpose: the app opening on the
+ * login screen and nothing else is a requirement of its own, and this keeps '/' the only screen
+ * there is.
  */
 export default function Login() {
   const [teacher, setTeacher] = useState<TeacherProfile | null>(null);
-  if (teacher) return <HomeScreen teacher={teacher} onLogOut={() => setTeacher(null)} />;
+  const [inSettings, setInSettings] = useState(false);
+
+  if (teacher) {
+    const logOut = () => {
+      setTeacher(null);
+      setInSettings(false);
+    };
+    return inSettings ? (
+      <SettingsScreen teacher={teacher} onBack={() => setInSettings(false)} onLogOut={logOut} />
+    ) : (
+      <HomeScreen teacher={teacher} onOpenSettings={() => setInSettings(true)} />
+    );
+  }
   return <LoginScreen onSignedIn={setTeacher} />;
 }
 

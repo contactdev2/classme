@@ -207,3 +207,75 @@ Half-true, and waiting for the next requirement:
 - **"Remember me" still does nothing**, and "Forgot password?" is still plain text.
 - Home has no dark mode. It reads every colour from `lib/theme.ts`, so the requirement that adds one
   has one file to change and no hex codes to hunt for in a screen.
+
+## 5 — Back up data to a file (dc68ccb7)
+
+What is here now:
+
+- `components/settings-screen.tsx` is **Classroom Settings**, built to the agreed prototype: the
+  teacher's card, **Data & Privacy**, **Preferences**, **Account**, and the footer. It is reached
+  from Home's own avatar, which no longer logs out — **Logout now lives in Settings**, where the
+  prototype puts it, exactly as requirement 4's note said it should when this screen arrived.
+  `app/index.tsx` holds which of the two signed-in screens is in front. **Still no new route**, so
+  requirement 1's `No other screen appears before the login screen.` is still true and still has not
+  had to be widened. `HomeScreen`'s prop is now `onOpenSettings`, not `onLogOut`.
+- `lib/sealed-box.ts` is the lock a backup file and a teacher's sign-in record now **share**:
+  `sealBox`/`openBox`, a domain string keeping one kind of box's keys apart from another's, and
+  `stretchedTimes` (50,000), which moved here from `lib/local-accounts.ts` and is still re-exported
+  from it. `lockAccount`/`openAccount` are now thin: the record format is byte-for-byte what it was,
+  and `lib/local-accounts.test.ts` proves it still opens the same way.
+- `lib/classroom-data.ts` is **the shape of a teacher's teaching**: `Classroom`, `Student`,
+  `AttendanceRecord` (`Present` | `Absent` | `Late`), and `ClassroomData` holding all three. Behind
+  a seam (`classroomStore()`), like the accounts. `classroomDataIfWhole()` is what anything read off
+  a file goes through before a word of it is put back on the phone. **The requirement that creates
+  classrooms should write into this store rather than inventing its own shape**; add a field the way
+  requirement 4 added a teacher's name — optional, so older backups still open.
+- `lib/backup.ts` makes and opens the file. A backup is `{ product, kind, version, madeAt, box }`:
+  only `box` holds any of the teacher's data, and what is beside it is what lets the app recognise a
+  file and a teacher tell two of them apart. `backupFileName()` names them so a folder sorts itself.
+- `lib/backup-files.ts` is where the file goes, behind a seam: `backupFilesIn({})` for a check, and
+  the phone's own documents folder otherwise.
+
+Decisions taken, so they are not re-decided:
+
+- **A backup is locked with a backup password the teacher chooses, not with their sign-in password.**
+  Nothing in the app can open a backup, and there is no server to ask (both approved decisions), so
+  the key can only be something a person knows. The sign-in password was not reused because the app
+  deliberately does not keep it after a submission — see requirement 2's note — and widening that to
+  carry it into Settings would be the wrong trade. At least 8 characters; the field is emptied the
+  moment a backup is made or opened, so it is never left on screen for the next person holding the
+  phone. **A teacher who forgets it has a file nobody can open. That is the honest price.**
+- **The screen does not say "AES-256", which the prototype's card does.** The app does not use AES:
+  it is PBKDF2-HMAC-SHA256 stretching and an HMAC-SHA256 keystream, written out in `lib/crypto.ts`,
+  and the row says so. Same reasoning as dropping "Riverside High" in requirement 1 — a prototype's
+  sample words are not a licence to claim something untrue. "Last Backup" says `None yet · on device
+  only` until there is one, then the day the newest was saved.
+- **`expo-file-system` is a new package**, the only one this requirement adds, with its sentence in
+  the pull request. React Native has no way to write a file. It is `import()`ed inside
+  `lib/backup-files.ts` at the moment a backup is written, never at module load, so a check never
+  loads a native module it has no phone for.
+- **Restore replaces what is on the phone with what is in the file**, and the screen says so before a
+  teacher presses it. Merging two sets of attendance records is a question nobody has answered yet.
+- The Dark Mode and Notifications switches flip and do nothing else — drawn because the prototype
+  draws them, like "Remember me" on the login screen. Edit Profile and Help & Support are rows with
+  nothing behind them and are deliberately not announced as buttons.
+- `test/screen.tsx`'s `visibleText` now turns `&amp;` back into `&` before a check reads it: a
+  screen saying "Data & Privacy" should read as "Data & Privacy", not as the DOM's own spelling.
+  A section's title is drawn in capitals with `textTransform`, not written in them, so a screen
+  reader hears the words.
+
+Half-true, and waiting for the next requirement:
+
+- **Nothing on the phone creates a classroom, a student or an attendance mark yet**, and
+  `classroomStore()` is in memory, so on a real phone a backup made today is a backup of nothing and
+  a restore is forgotten when the app closes. The lock, the file and both screens are real and
+  proved; what is missing is the data to put in them and a store that outlasts the app. The same
+  single-line swap requirement 3 left for the accounts (`accountsFile()`) is now waiting in two
+  places: `let store = ...` in `lib/classroom-data.ts` and `let file = ...` in `lib/local-accounts.ts`.
+- **A backup never leaves the phone by itself**, which is the point — but a teacher whose phone is
+  lost needs the file to be somewhere else. Moving it off is the phone's own sharing (`expo-sharing`
+  would be the package), and that was not this requirement's to decide.
+- `app/verify-login.test.tsx`'s first check still carries vitest's default 5-second timeout and takes
+  a picture. On a cold runner the browser alone has taken longer than that. Every check written since
+  requirement 4 carries `pictureTakesAWhile` (120s); **that one should be given it too** the next
+  time anybody is in that file.

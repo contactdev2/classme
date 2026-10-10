@@ -1,10 +1,12 @@
 // The teacher accounts kept on this phone, and the only way to open one.
 //
 // A record keeps nothing in the clear: not the password, and not even the email. What it keeps is a
-// locked blob and a seal over it. The key is the password itself, stretched; so a record opens only
-// for the password it was locked with, and an email can only be read out of a record that opened.
-// Nothing here reaches off the phone, and nothing here is ever logged.
-import { bytesFromHex, hex, hmacSha256, pbkdf2Sha256, sameBytes, sha256, textFromUtf8, unguessableBytes, utf8 } from './crypto';
+// locked blob and a seal over it — a sealed box (lib/sealed-box.ts), the same lock a backup file
+// carries. The key is the password itself, stretched; so a record opens only for the password it was
+// locked with, and an email can only be read out of a record that opened. Nothing here reaches off
+// the phone, and nothing here is ever logged.
+import { sha256, sameBytes, utf8 } from './crypto';
+import { openBox, sealBox, stretchedTimes, type SealedBox } from './sealed-box';
 import type { Credentials } from './sign-in';
 
 /**
@@ -19,62 +21,13 @@ export type TeacherProfile = {
 };
 
 /** One teacher's account as it sits on the phone: locked, sealed, and saying nothing about who it is. */
-export type AccountRecord = {
-  version: 1;
-  /** This record's own salt, so the same password on two phones stretches to two different keys. */
-  salt: string;
-  /** How many times the password was stretched to make this record's key. */
-  iterations: number;
-  /** This record's own nonce, so no two records are locked with the same keystream. */
-  nonce: string;
-  /** The locked blob: what the record knows, unreadable without the password. */
-  locked: string;
-  /** The seal over the locked blob, so a wrong password is told from a tampered record. */
-  seal: string;
-};
+export type AccountRecord = SealedBox;
 
-/**
- * How many times a password is stretched into a key. Every one of them costs whoever took the phone
- * the same again per guess, so the number wants to be as large as a teacher will wait for: this is
- * about a second of a phone's own arithmetic, done once per sign-in and never on a server. A record
- * carries the number it was made with, so raising it later leaves older records opening as they did.
- */
-export const stretchedTimes = 50_000;
+/** The lock a teacher's own record is under, told apart from the lock on anything else. */
+const accountLock = 'classme/account';
 
-/** The two keys a password becomes: one to lock the blob with, one to seal it with. Never the same. */
-function keysFrom(credentials: Credentials, salt: Uint8Array, iterations: number) {
-  const stretched = pbkdf2Sha256(utf8(credentials.password), salt, iterations, 32);
-  return {
-    locking: hmacSha256(stretched, utf8('classme/account/locking')),
-    sealing: hmacSha256(stretched, utf8('classme/account/sealing')),
-  };
-}
-
-/** The bytes a blob is locked with: HMAC-SHA256 counted up from this record's own nonce. */
-function keystream(key: Uint8Array, nonce: Uint8Array, length: number): Uint8Array {
-  const stream = new Uint8Array(length);
-  const counted = new Uint8Array(nonce.length + 4);
-  counted.set(nonce);
-  const counter = new DataView(counted.buffer);
-  for (let block = 0; block * 32 < length; block++) {
-    counter.setUint32(nonce.length, block);
-    stream.set(hmacSha256(key, counted).subarray(0, Math.min(32, length - block * 32)), block * 32);
-  }
-  return stream;
-}
-
-/** Bytes locked, or the same bytes unlocked: one keystream, laid over them either way. */
-function locked(key: Uint8Array, nonce: Uint8Array, bytes: Uint8Array): Uint8Array {
-  const stream = keystream(key, nonce, bytes.length);
-  const out = new Uint8Array(bytes.length);
-  for (let at = 0; at < bytes.length; at++) out[at] = bytes[at] ^ stream[at];
-  return out;
-}
-
-/** The seal over everything a record keeps, so no part of it can be changed without the password. */
-function sealOver(sealing: Uint8Array, record: Omit<AccountRecord, 'seal'>): Uint8Array {
-  return hmacSha256(sealing, utf8([record.version, record.salt, record.iterations, record.nonce, record.locked].join('|')));
-}
+/** How many times a sign-in password is stretched. The same number a backup file is locked with. */
+export { stretchedTimes };
 
 /** The same email, written two ways, is the same teacher. The password is never treated so kindly. */
 const sameEmail = (one: string, other: string) =>
@@ -82,19 +35,9 @@ const sameEmail = (one: string, other: string) =>
 
 /** Locks a teacher's details into a record that only this password opens. */
 export function lockAccount(credentials: Credentials, profile: TeacherProfile, iterations: number = stretchedTimes): AccountRecord {
-  const salt = unguessableBytes(16);
-  const nonce = unguessableBytes(16);
-  const { locking, sealing } = keysFrom(credentials, salt, iterations);
   const name = profile.name?.trim();
-  const inside = utf8(JSON.stringify(name ? { email: profile.email, name } : { email: profile.email }));
-  const sealless = {
-    version: 1 as const,
-    salt: hex(salt),
-    iterations,
-    nonce: hex(nonce),
-    locked: hex(locked(locking, nonce, inside)),
-  };
-  return { ...sealless, seal: hex(sealOver(sealing, sealless)) };
+  const inside = JSON.stringify(name ? { email: profile.email, name } : { email: profile.email });
+  return sealBox(inside, credentials.password, accountLock, iterations);
 }
 
 /**
@@ -105,27 +48,12 @@ export function lockAccount(credentials: Credentials, profile: TeacherProfile, i
  * emails this phone knows.
  */
 export function openAccount(record: AccountRecord, credentials: Credentials): TeacherProfile | null {
-  if (record.version !== 1 || record.iterations < 1) return null;
-  let salt: Uint8Array;
-  let nonce: Uint8Array;
-  let blob: Uint8Array;
-  let seal: Uint8Array;
-  try {
-    salt = bytesFromHex(record.salt);
-    nonce = bytesFromHex(record.nonce);
-    blob = bytesFromHex(record.locked);
-    seal = bytesFromHex(record.seal);
-  } catch {
-    return null;
-  }
-
-  const { locking, sealing } = keysFrom(credentials, salt, record.iterations);
-  // The seal first: nothing inside the blob is read until the password has proved it belongs to it.
-  if (!sameBytes(sealOver(sealing, record), seal)) return null;
+  const opened = openBox(record, credentials.password, accountLock);
+  if (opened === null) return null;
 
   let inside: { email?: unknown; name?: unknown };
   try {
-    inside = JSON.parse(textFromUtf8(locked(locking, nonce, blob)));
+    inside = JSON.parse(opened);
   } catch {
     return null;
   }
