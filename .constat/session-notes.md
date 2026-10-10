@@ -145,3 +145,65 @@ Half-true, and waiting for the next requirement:
   because the prototype draws them.
 - An error on the login screen is in the ordinary text colour: the agreed palette (round 3) has no
   colour for alarm, and inventing one was not this requirement's to do.
+
+## 4 — Land on greeted Home screen (de5e9b36)
+
+What is here now:
+
+- `components/home-screen.tsx` is **Home**, built to the agreed prototype: the top row (menu,
+  notifications, the teacher's own avatar), the greeting, the Mon–Fri strip with today picked out,
+  the day's classes, and the row of the app's places along the bottom with Home current. It takes
+  `now` as a prop (defaulting to the phone's clock) so a check can arrive on a particular morning.
+  It **replaces `components/signed-in-home.tsx`**, which is gone — it was the placeholder this
+  screen was always going to be.
+- `lib/greeting.ts` is the words and nothing else: `partOfDay()` turns the hour into "Good morning"
+  / "Good afternoon" / "Good evening" (noon and six are where it changes), and `nameOf()` says what
+  to call a teacher. `lib/week.ts` is `schoolWeekOf()`, Monday to Friday of the week a day falls in.
+  Both are written out rather than asked of a locale, so every phone and every check reads the same.
+- `lib/local-accounts.ts` now keeps a teacher's **name inside the locked blob**, beside their email.
+  `TeacherProfile.name` is optional on purpose: a record that keeps none opens exactly as it did,
+  and `nameOf()` then greets that teacher by the email the record does keep. That is what keeps
+  requirement 3's `Entering the correct email and password lets the teacher continue past the login
+  screen.` passing word for word — its record has no name, so Home greets it by its email. **If you
+  add a field to a record, add it the same way: optional, inside the lock, and old records still
+  open.**
+- `app/index.tsx` hands the teacher it signed in to Home. **Still no new route** — `app/` is
+  `_layout.tsx` and `index.tsx` — so requirement 1's `No other screen appears before the login
+  screen.` is still true and still has not had to be widened. The first requirement that needs a
+  second route (Classes, Settings, Attendance) is the one that must widen it deliberately.
+- `lib/theme.ts` gained one colour, `accentSoft` (#CBD9F7): the accent quietened, behind the avatar.
+
+Decisions taken, so they are not re-decided:
+
+- **The prototype's Mathematics, Science and English are not in the app.** No classroom can be made
+  yet, so Home shows "No classes yet" in the same card shape instead. Shipping one school's sample
+  data as if it were the teacher's would be a lie on the first screen they see — the same reasoning
+  requirement 1 used to drop "Riverside High". **The requirement that creates classrooms should fill
+  that card**: it is one `View` in `components/home-screen.tsx`, under the comment that says so.
+- **The bottom row and the header's ☰ and 🔔 are drawn with nothing behind them**, as "Forgot
+  password?" is on the login screen. They are deliberately **not** announced as buttons: a control
+  that answers nothing should not say it does. Give them a role when you give them a destination.
+- **The avatar is the only control on Home, and it logs out.** The prototype sends it to Settings,
+  and logging out securely belongs there — but Settings is its own requirement and until it exists
+  this is the app's only way back out, so it carries requirement 3's Log Out rather than losing it.
+  Its `accessibilityLabel` is "Your account — log out", so a screen reader is not surprised by it.
+  **When Settings arrives: the avatar goes there, and the log out moves inside it.**
+- Nothing on Home is pinned to a size — no `height`, no `lineHeight`, no `numberOfLines` — and the
+  bottom row wraps rather than clips, so the phone's largest text makes it taller. The checks hold
+  that shape on Home the way `app/index.test.tsx` holds it on `/`.
+- The checks that photograph a screen carry a 120-second timeout (`pictureTakesAWhile`). Nothing in
+  them waits on anything; it is the browser drawing the picture, and a cold one on a runner has
+  taken fifteen seconds. The two seconds a teacher waits is measured on its own with
+  `performance.now()` around the press, at the app's real `stretchedTimes` — about 450ms here.
+  **Copy that timeout into any new check that takes a picture**, or it will flake rather than fail.
+
+Half-true, and waiting for the next requirement:
+
+- **Still no account is ever written** (requirement 3's note stands, unchanged): `accountsFile()` is
+  `accountsIn([])`, so on a real phone there is no record to open and Home is reachable only from a
+  check. The requirement that keeps a teacher's login details locally and encrypted replaces that
+  one line — and it is now also the one that should ask a teacher for their **name**, because that
+  is what Home greets them by. Until then, a real enrolment would be greeted by its email.
+- **"Remember me" still does nothing**, and "Forgot password?" is still plain text.
+- Home has no dark mode. It reads every colour from `lib/theme.ts`, so the requirement that adds one
+  has one file to change and no hex codes to hunt for in a screen.

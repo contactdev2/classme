@@ -15,6 +15,12 @@ const password = 'Spring-2026-attendance';
 // number rather than the app's. A record carries the number it was made with, so both open alike.
 const checkIterations = 1_000;
 
+// How long a check may take altogether. Nothing here waits on anything — it is the browser that
+// draws the picture at the end of each one, and a cold browser starting for the first time on a
+// runner has taken fifteen seconds. The two seconds a teacher waits is measured on its own, inside
+// the check, and this number has nothing to do with it.
+const pictureTakesAWhile = 120_000;
+
 /** This phone, with one account on it: the teacher's own, locked with their own password. */
 function phoneWithTheTeachersAccount(iterations = checkIterations): void {
   keepAccountsIn(accountsIn([lockAccount({ email: teacher.email, password }, teacher, iterations)]));
@@ -67,7 +73,7 @@ describe('Land on greeted Home screen', () => {
 
     takePictureOf('Land on greeted Home screen > After a successful login, the teacher sees the Home screen.', screen);
     screen.close();
-  });
+  }, pictureTakesAWhile);
 
   it("The Home screen shows a greeting with the teacher's name, for example 'Good morning, Ms. Rivera'.", async () => {
     aMondayMorning();
@@ -85,7 +91,7 @@ describe('Land on greeted Home screen', () => {
       screen,
     );
     screen.close();
-  });
+  }, pictureTakesAWhile);
 
   it('The Home screen appears within two seconds of a successful login.', async () => {
     // At the number of stretches the app itself uses, not a check's smaller one: what is measured
@@ -101,7 +107,7 @@ describe('Land on greeted Home screen', () => {
 
     // Greeted by name, whatever the hour of the check — so the time taken is the time to Home.
     expect(screen.text()).toMatch(/Good (morning|afternoon|evening), Ms\. Rivera/);
-    expect(took).toBeLessThan(2_000);
+    expect(took, `the press took ${Math.round(took)}ms`).toBeLessThan(2_000);
 
     // And nothing is left to wait for once it is drawn: Home has no clock, no animation and no
     // errand of its own between a teacher signing in and reading their day.
@@ -110,5 +116,5 @@ describe('Land on greeted Home screen', () => {
 
     takePictureOf('Land on greeted Home screen > The Home screen appears within two seconds of a successful login.', screen);
     screen.close();
-  });
+  }, pictureTakesAWhile);
 });

@@ -22,6 +22,23 @@ describe('a teacher account kept on this phone', () => {
     expect(written).not.toContain('riversidehigh');
   });
 
+  it('keeps the name a teacher is greeted by inside the lock, and nothing of it in the clear', () => {
+    const named = { email: teacher.email, name: 'Ms. Rivera' };
+    const record = lockAccount(credentials, named, stretches);
+
+    // The name comes back out for whoever can open the record, and for nobody else.
+    expect(openAccount(record, credentials)).toEqual(named);
+    expect(JSON.stringify(record)).not.toContain('Rivera');
+    expect(openAccount(record, { email: teacher.email, password: 'another-password' })).toBeNull();
+  });
+
+  it('opens a record made before a name was kept, and says only what that record knows', () => {
+    const record = lockAccount(credentials, teacher, stretches);
+    const opened = openAccount(record, credentials);
+    expect(opened).toEqual(teacher);
+    expect(opened?.name).toBeUndefined();
+  });
+
   it('does not open for a wrong password, however nearly right', () => {
     const record = lockAccount(credentials, teacher, stretches);
     for (const wrong of ['', 'spring-2026-attendance', 'Spring-2026-attendance ', 'Spring-2026-attendanc']) {

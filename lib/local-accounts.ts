@@ -7,8 +7,16 @@
 import { bytesFromHex, hex, hmacSha256, pbkdf2Sha256, sameBytes, sha256, textFromUtf8, unguessableBytes, utf8 } from './crypto';
 import type { Credentials } from './sign-in';
 
-/** What is known about a teacher once their record opens. Kept inside the locked blob, never beside it. */
-export type TeacherProfile = { email: string };
+/**
+ * What is known about a teacher once their record opens. Kept inside the locked blob, never beside
+ * it: the name a teacher is greeted by is as much theirs as the email they sign in with, so it is
+ * locked with the same password and readable nowhere else.
+ */
+export type TeacherProfile = {
+  email: string;
+  /** The name the school knows them by — 'Ms. Rivera'. A record made before names were kept has none. */
+  name?: string;
+};
 
 /** One teacher's account as it sits on the phone: locked, sealed, and saying nothing about who it is. */
 export type AccountRecord = {
@@ -77,7 +85,8 @@ export function lockAccount(credentials: Credentials, profile: TeacherProfile, i
   const salt = unguessableBytes(16);
   const nonce = unguessableBytes(16);
   const { locking, sealing } = keysFrom(credentials, salt, iterations);
-  const inside = utf8(JSON.stringify({ email: profile.email }));
+  const name = profile.name?.trim();
+  const inside = utf8(JSON.stringify(name ? { email: profile.email, name } : { email: profile.email }));
   const sealless = {
     version: 1 as const,
     salt: hex(salt),
@@ -114,7 +123,7 @@ export function openAccount(record: AccountRecord, credentials: Credentials): Te
   // The seal first: nothing inside the blob is read until the password has proved it belongs to it.
   if (!sameBytes(sealOver(sealing, record), seal)) return null;
 
-  let inside: { email?: unknown };
+  let inside: { email?: unknown; name?: unknown };
   try {
     inside = JSON.parse(textFromUtf8(locked(locking, nonce, blob)));
   } catch {
@@ -123,7 +132,11 @@ export function openAccount(record: AccountRecord, credentials: Credentials): Te
   if (typeof inside.email !== 'string') return null;
 
   // The record opened — and it is this teacher's only if the email in it is the one they typed.
-  return sameEmail(inside.email, credentials.email) ? { email: inside.email } : null;
+  if (!sameEmail(inside.email, credentials.email)) return null;
+  // A record from before names were kept has none, and says so by leaving it out rather than by
+  // offering an empty one: whoever greets this teacher then has only their email to go on.
+  const name = typeof inside.name === 'string' ? inside.name.trim() : '';
+  return name ? { email: inside.email, name } : { email: inside.email };
 }
 
 /** Where the records live: the phone's own store behind one seam, so a check can hand over its own. */
