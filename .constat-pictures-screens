@@ -1,0 +1,12 @@
+{
+  "branch": "constat/task-95c831d8",
+  "screens": [
+    "a run"
+  ],
+  "criteria": [
+    "A fresh checkout installs and runs its tests in CI — the check foundation > installs and tests",
+    "The app starts and shows its name on its first screen — the check foundation > first screen",
+    "DoneMark reads the repository as ready: evidence, runner, and a Run button — a fact from the reporter, not a check"
+  ],
+  "why": "DoneMark froze these onto the attempt: the acceptance criteria of the requirement it is for, and the screens those criteria name. The picture suite runs the checks whose names are these criteria and skips the rest; where it can match none of them it narrows by these screens instead, and says so. Honoured on this branch only."
+}
