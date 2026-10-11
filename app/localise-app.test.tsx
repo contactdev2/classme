@@ -9,6 +9,7 @@ import { accountsIn, keepAccountsIn, lockAccount } from '../lib/local-accounts';
 import { productName } from '../lib/product';
 import { versionLabel } from '../lib/version';
 import { english, type WordKey } from '../lib/words/en';
+import { lettersMissingFrom } from '../test/picture';
 import { open, settle, takePictureOf, type Screen } from '../test/screen';
 import TheApp from './index';
 
@@ -261,6 +262,32 @@ describe('ClasseMe should be localisable to French, Arabic , Japanese and Chines
     );
     again.close();
   }, picturing);
+
+  // What a judge is handed is a picture, and a picture is drawn by a machine that may own no
+  // Chinese, Japanese or Arabic letters: where it owns none it draws an empty box, and a screen
+  // of empty boxes says nothing about a translation. So the letters travel with the app, and this
+  // reads every screen in every language back off the drawn page to be sure none came out a box.
+  it("Every screen's picture shows each language's own letters, with no empty boxes in place of characters.", async () => {
+    const screen = await inSettings();
+
+    // Every screen the app has, in every language it offers, as the drawn page a picture is of.
+    const drawn: string[] = [];
+    for (const { tag } of languages) {
+      await choose(screen, tag);
+      await everyScreenInTurn(screen, () => drawn.push(screen.markup()));
+    }
+
+    expect(lettersMissingFrom(drawn.join('\n')).join(' ')).toBe('');
+
+    // And the picture of it: Classroom Settings in Japanese, the screen whose every word is a
+    // character the machine drawing it has to have been lent a letter for.
+    await choose(screen, 'ja');
+    takePictureOf(
+      "ClasseMe should be localisable to French, Arabic , Japanese and Chinese > Every screen's picture shows each language's own letters, with no empty boxes in place of characters.",
+      screen,
+    );
+    screen.close();
+  }, 600_000);
 
   it('Every label, button, and message on screen appears translated, with none left in the original language.', async () => {
     // Every language says everything the app can say: the same keys, none of them empty, and none
