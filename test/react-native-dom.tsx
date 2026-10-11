@@ -168,3 +168,16 @@ export function ScrollView({ children, style, contentContainerStyle, ...rest }: 
     createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'stretch', ...flatten(contentContainerStyle) } }, children),
   );
 }
+
+/**
+ * The phone's own text layer, told which way the app reads. On a phone this mirrors a keyboard and
+ * an alert along with the screens; in a browser the screens' own `direction` does the mirroring, so
+ * this only remembers what it was told.
+ */
+export const I18nManager = {
+  isRTL: false,
+  allowRTL(_allowed: boolean) {},
+  forceRTL(rtl: boolean) {
+    I18nManager.isRTL = rtl;
+  },
+};

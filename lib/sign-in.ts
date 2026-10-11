@@ -1,6 +1,7 @@
 // Signing a teacher in, on the phone and nowhere else. The login screen collects what is typed and
 // hands it here; this is the one place that decides what a submission means, so the screen only has
 // to say back what it is told.
+import { say } from './i18n';
 import { teacherMatching, type TeacherProfile } from './local-accounts';
 
 /**
@@ -23,9 +24,9 @@ export type SignInOutcome = {
  */
 export function missingFrom(typed: Credentials): string | null {
   const email = typed.email.trim();
-  if (!email && !typed.password) return 'Enter your email and password to log in.';
-  if (!email) return 'Enter your email address to log in.';
-  if (!typed.password) return 'Enter your password to log in.';
+  if (!email && !typed.password) return say('signIn.missingBoth');
+  if (!email) return say('signIn.missingEmail');
+  if (!typed.password) return say('signIn.missingPassword');
   return null;
 }
 
@@ -49,6 +50,6 @@ export function credentialsFrom(typed: Credentials): Credentials {
  */
 export async function submitSignIn(credentials: Credentials): Promise<SignInOutcome> {
   const teacher = await teacherMatching(credentials);
-  if (!teacher) return { signedIn: false, said: 'No account on this phone matches that email and password.' };
-  return { signedIn: true, said: 'Signed in.', teacher };
+  if (!teacher) return { signedIn: false, said: say('signIn.noMatch') };
+  return { signedIn: true, said: say('signIn.signedIn'), teacher };
 }

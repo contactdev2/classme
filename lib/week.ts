@@ -1,13 +1,16 @@
-// The school week a day falls in: Monday to Friday, with the day itself picked out. Written out
-// rather than asked of a locale, so the strip reads the same on every phone and in every check.
-const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'] as const;
-const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const;
+// The school week a day falls in: Monday to Friday, with the day itself picked out. The names come
+// out of the app's own words rather than off a phone's locale, so the strip is in the language the
+// teacher chose and not in the one their phone was bought in.
+import { say } from './i18n';
+import type { WordKey } from './words/en';
+
+const weekdays = ['day.mon', 'day.tue', 'day.wed', 'day.thu', 'day.fri'] as const;
 
 /** One day in the strip along the top of Home. */
 export type SchoolDay = {
-  /** Mon to Fri, the day's short name. */
+  /** Monday to Friday, the day's short name in the app's own language. */
   name: string;
-  /** The date on it, as a person reads it: 'Apr 21'. */
+  /** The date on it, as this language writes it: 'Apr 21', '4月21日'. */
   date: string;
   /** Whether this is the day the teacher is looking at the screen on. */
   today: boolean;
@@ -24,8 +27,15 @@ const sameDay = (one: Date, other: Date) =>
 export function schoolWeekOf(now: Date): SchoolDay[] {
   // getDay() counts from Sunday; the school week counts from Monday.
   const sinceMonday = (now.getDay() + 6) % 7;
-  return weekdays.map((name, after) => {
+  return weekdays.map((key, after) => {
     const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - sinceMonday + after);
-    return { name, date: `${months[day.getMonth()]} ${day.getDate()}`, today: sameDay(day, now) };
+    const month = say(`month.${day.getMonth() + 1}` as WordKey);
+    return {
+      name: say(key),
+      // The month and the day round the other way in French and Arabic, and the day carries a
+      // character of its own in Chinese and Japanese: the order is the catalogue's to decide.
+      date: say('week.date', { month, day: day.getDate() }),
+      today: sameDay(day, now),
+    };
   });
 }

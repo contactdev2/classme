@@ -4,6 +4,7 @@
 // documents folder, which is the phone's, and a teacher moves it off the phone themselves if they
 // want it somewhere else — by the phone's own sharing, in their own hands, on purpose.
 import { backupExtension } from './backup';
+import { say } from './i18n';
 
 /** The folder a teacher's backups are kept in, inside the app's own documents. */
 export const backupFolderName = 'ClassMe backups';
@@ -30,7 +31,7 @@ const newestFirst = (names: string[]) => [...names].sort().reverse();
 export function backupFilesIn(files: Record<string, string> = {}): BackupFiles {
   const kept = new Map(Object.entries(files));
   return {
-    where: () => 'this phone',
+    where: () => say('backup.wherePhone'),
     async save(name, contents) {
       kept.set(name, contents);
       return name;
@@ -62,7 +63,7 @@ function onThisPhone(): BackupFiles {
     return { phone, where };
   };
   return {
-    where: () => `the ${backupFolderName} folder on this phone`,
+    where: () => say('backup.whereFolder', { folder: backupFolderName }),
     async save(name, contents) {
       const { phone, where } = await folder();
       await phone.writeAsStringAsync(`${where}${name}`, contents);

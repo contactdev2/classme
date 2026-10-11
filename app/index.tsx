@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { HomeScreen } from '../components/home-screen';
 import { SettingsScreen } from '../components/settings-screen';
+import { recallLanguage, useDirection, useWords } from '../lib/i18n';
 import type { TeacherProfile } from '../lib/local-accounts';
 import { productName } from '../lib/product';
 import { credentialsFrom, missingFrom, submitSignIn } from '../lib/sign-in';
@@ -39,6 +40,13 @@ export default function Login() {
   const [teacher, setTeacher] = useState<TeacherProfile | null>(null);
   const [inSettings, setInSettings] = useState(false);
 
+  // The language this phone was last left in, put back before a teacher reads anything on it. It is
+  // read from the phone itself and nowhere else; nothing kept means the app's own default, which is
+  // what the screens are already in.
+  useEffect(() => {
+    void recallLanguage();
+  }, []);
+
   if (teacher) {
     const logOut = () => {
       setTeacher(null);
@@ -58,6 +66,8 @@ export default function Login() {
  * else: their email, their password, and the button that logs them in.
  */
 function LoginScreen({ onSignedIn }: { onSignedIn: (teacher: TeacherProfile) => void }) {
+  const t = useWords();
+  const dir = useDirection();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [shown, setShown] = useState(false);
@@ -79,7 +89,7 @@ function LoginScreen({ onSignedIn }: { onSignedIn: (teacher: TeacherProfile) => 
       return;
     }
     setBusy(true);
-    setSaid('Checking your details…');
+    setSaid(t('login.checking'));
     try {
       const outcome = await submitSignIn(credentialsFrom({ email, password }));
       if (outcome.signedIn && outcome.teacher) {
@@ -92,14 +102,14 @@ function LoginScreen({ onSignedIn }: { onSignedIn: (teacher: TeacherProfile) => 
     } catch {
       // What went wrong is never said in the words of the thing that failed, and never with any of
       // what was typed in it: a teacher reads what to do next, and nothing else.
-      setSaid('Your details could not be checked just now. Try again.');
+      setSaid(t('login.couldNotCheck'));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, direction: dir, backgroundColor: colors.background }}>
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={{ alignItems: 'center', paddingTop: 56, paddingBottom: space.gap, paddingHorizontal: space.gap }}
@@ -121,15 +131,15 @@ function LoginScreen({ onSignedIn }: { onSignedIn: (teacher: TeacherProfile) => 
         <Text accessibilityRole="header" style={{ fontSize: 24, fontWeight: '800', color: colors.text, letterSpacing: 0.3 }}>
           {productName()}
         </Text>
-        <Text style={{ fontSize: 12, color: '#7C8A9E', letterSpacing: 1, marginTop: 2 }}>TEACH · TRACK · INSPIRE</Text>
+        <Text style={{ fontSize: 12, color: '#7C8A9E', letterSpacing: 1, marginTop: 2 }}>{t('login.tagline')}</Text>
       </View>
 
       <View style={{ alignItems: 'center', marginBottom: space.room }}>
         <Text style={{ fontSize: 20, fontWeight: '700', color: colors.text, marginBottom: space.tight, textAlign: 'center' }}>
-          Welcome back
+          {t('login.welcome')}
         </Text>
         <Text style={{ fontSize: 14, color: colors.muted, textAlign: 'center' }}>
-          Sign in to manage your classrooms and track attendance securely.
+          {t('login.invite')}
         </Text>
       </View>
 
@@ -145,17 +155,17 @@ function LoginScreen({ onSignedIn }: { onSignedIn: (teacher: TeacherProfile) => 
         }}
       >
         <View style={{ marginBottom: space.step }}>
-          <FieldLabel>Email Address</FieldLabel>
+          <FieldLabel>{t('login.email')}</FieldLabel>
           <View style={fieldRow}>
             <Text style={{ fontSize: 15 }}>✉️</Text>
             <TextInput
-              accessibilityLabel="Email Address"
+              accessibilityLabel={t('login.email')}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
               autoComplete="email"
               textContentType="emailAddress"
-              placeholder="you@school.edu"
+              placeholder={t('login.emailPlaceholder')}
               placeholderTextColor={colors.faint}
               value={email}
               onChangeText={setEmail}
@@ -165,17 +175,17 @@ function LoginScreen({ onSignedIn }: { onSignedIn: (teacher: TeacherProfile) => 
         </View>
 
         <View style={{ marginBottom: space.snug }}>
-          <FieldLabel>Password</FieldLabel>
+          <FieldLabel>{t('login.password')}</FieldLabel>
           <View style={fieldRow}>
             <Text style={{ fontSize: 15 }}>🔒</Text>
             <TextInput
-              accessibilityLabel="Password"
+              accessibilityLabel={t('login.password')}
               secureTextEntry={!shown}
               autoCapitalize="none"
               autoCorrect={false}
               autoComplete="password"
               textContentType="password"
-              placeholder="Your password"
+              placeholder={t('login.passwordPlaceholder')}
               placeholderTextColor={colors.faint}
               value={password}
               onChangeText={setPassword}
@@ -183,7 +193,7 @@ function LoginScreen({ onSignedIn }: { onSignedIn: (teacher: TeacherProfile) => 
             />
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={shown ? 'Hide password' : 'Show password'}
+              accessibilityLabel={shown ? t('login.hidePassword') : t('login.showPassword')}
               onPress={() => setShown(!shown)}
             >
               <Text style={{ fontSize: 13 }}>👁️</Text>
@@ -209,9 +219,9 @@ function LoginScreen({ onSignedIn }: { onSignedIn: (teacher: TeacherProfile) => 
             >
               <Text style={{ color: remember ? colors.onAccent : 'transparent', fontSize: 11, fontWeight: '700' }}>✓</Text>
             </View>
-            <Text style={{ fontSize: 13, color: colors.muted }}>Remember me</Text>
+            <Text style={{ fontSize: 13, color: colors.muted }}>{t('login.remember')}</Text>
           </Pressable>
-          <Text style={{ fontSize: 13, color: colors.accent, fontWeight: '600' }}>Forgot password?</Text>
+          <Text style={{ fontSize: 13, color: colors.accent, fontWeight: '600' }}>{t('login.forgot')}</Text>
         </View>
 
         <Pressable
@@ -228,7 +238,7 @@ function LoginScreen({ onSignedIn }: { onSignedIn: (teacher: TeacherProfile) => 
             ...shadow.accent,
           }}
         >
-          <Text style={{ color: colors.onAccent, fontSize: 16, fontWeight: '700' }}>Log In</Text>
+          <Text style={{ color: colors.onAccent, fontSize: 16, fontWeight: '700' }}>{t('login.logIn')}</Text>
         </Pressable>
 
         {said ? (
@@ -237,13 +247,13 @@ function LoginScreen({ onSignedIn }: { onSignedIn: (teacher: TeacherProfile) => 
 
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: space.step }}>
           <Text style={{ fontSize: 13 }}>🔐</Text>
-          <Text style={{ fontSize: 12, color: colors.faint, textAlign: 'center' }}>Verified against your encrypted local database</Text>
+          <Text style={{ fontSize: 12, color: colors.faint, textAlign: 'center' }}>{t('login.verified')}</Text>
         </View>
       </View>
 
       <View style={{ alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: space.snug, marginTop: space.gap, marginBottom: 18 }}>
         <View style={{ flex: 1, borderTopWidth: 1, borderTopColor: colors.line }} />
-        <Text style={{ fontSize: 12, color: '#9AA7B8' }}>OR</Text>
+        <Text style={{ fontSize: 12, color: '#9AA7B8' }}>{t('login.or')}</Text>
         <View style={{ flex: 1, borderTopWidth: 1, borderTopColor: colors.line }} />
       </View>
 
@@ -265,9 +275,9 @@ function LoginScreen({ onSignedIn }: { onSignedIn: (teacher: TeacherProfile) => 
           <Text style={{ fontSize: 18 }}>🛡️</Text>
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>Your data stays on this device</Text>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>{t('login.promiseTitle')}</Text>
           <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>
-            All classroom records are stored in an encrypted on-device database. Nothing is synced externally.
+            {t('login.promiseWords')}
           </Text>
         </View>
       </View>

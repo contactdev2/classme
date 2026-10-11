@@ -3,6 +3,7 @@
 // only — the app on a phone is driven by the phone itself. Nothing here is shipped.
 import { act, type ReactElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { languageNow } from '../lib/i18n';
 import { takePicture } from './picture';
 
 // React asks to be told when it is being driven by a check, so it can settle every update before
@@ -41,6 +42,10 @@ export type Screen = {
   text(): string;
   /** The screen as it stands, markup and all — what a picture of it is taken from. */
   markup(): string;
+  /** The screen's own outermost element, laid out the way the phone lays it out. */
+  root(): HTMLElement;
+  /** Every word a person actually reads on it: a leaf of the screen, a placeholder, a label. */
+  readable(): string[];
   close(): void;
 };
 
@@ -48,8 +53,13 @@ function fields(host: HTMLElement): HTMLInputElement[] {
   return [...host.querySelectorAll('input')];
 }
 
+/**
+ * Everything on a screen a person presses: a button, and a row of a list they choose from — the
+ * language rows in Classroom Settings are announced as the radio group they are, and a finger does
+ * not care which of the two a screen called them.
+ */
 function buttons(host: HTMLElement): HTMLElement[] {
-  return [...host.querySelectorAll('[role="button"]')] as HTMLElement[];
+  return [...host.querySelectorAll('[role="button"], [role="radio"]')] as HTMLElement[];
 }
 
 /** Opens a screen on the DOM, as the app's own web build does, and hands back a way to use it. */
@@ -85,6 +95,21 @@ export function open(element: ReactElement): Screen {
       });
     },
     text: () => visibleText(host.innerHTML),
+    root: () => host.firstElementChild as HTMLElement,
+    readable() {
+      const read: string[] = [];
+      for (const el of [...host.querySelectorAll<HTMLElement>('*')]) {
+        if (el.children.length === 0) {
+          const words = (el.textContent ?? '').trim();
+          if (words) read.push(words);
+        }
+        for (const attribute of ['placeholder', 'aria-label']) {
+          const words = el.getAttribute(attribute)?.trim();
+          if (words) read.push(words);
+        }
+      }
+      return read;
+    },
     markup() {
       // What a person has typed lives in the field itself, not in the markup React wrote; said out
       // loud here so the picture shows the screen as the person in front of it sees it.
@@ -98,7 +123,22 @@ export function open(element: ReactElement): Screen {
   };
 }
 
-/** One picture of this screen, at the moment the check that took it passes. */
+/**
+ * A moment of real time on the phone: everything the screen started when it opened — reading the
+ * language it was last left in, among them — finished before a check looks at it.
+ */
+export async function settle(): Promise<void> {
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+}
+
+/**
+ * One picture of this screen, at the moment the check that took it passes — told which language
+ * the app is in, because the same character is drawn one way for a Chinese reader and another for
+ * a Japanese one, and a picture of a screen should be in the hand its reader reads.
+ */
 export function takePictureOf(checkName: string, screen: Screen): string {
-  return takePicture(checkName, screen.markup());
+  return takePicture(checkName, screen.markup(), { lang: languageNow() });
 }

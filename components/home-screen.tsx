@@ -1,5 +1,6 @@
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { greetingFor } from '../lib/greeting';
+import { useDirection, useWords } from '../lib/i18n';
 import type { TeacherProfile } from '../lib/local-accounts';
 import { colors, radius, shadow, space } from '../lib/theme';
 import { schoolWeekOf } from '../lib/week';
@@ -12,11 +13,11 @@ import { schoolWeekOf } from '../lib/week';
  * does.
  */
 const places = [
-  { name: 'Home', mark: '⌂' },
-  { name: 'Classes', mark: '◫' },
-  { name: 'Attendance', mark: '📅' },
-  { name: 'Messages', mark: '💬' },
-  { name: 'More', mark: '⋯' },
+  { key: 'place.home', mark: '⌂' },
+  { key: 'place.classes', mark: '◫' },
+  { key: 'place.attendance', mark: '📅' },
+  { key: 'place.messages', mark: '💬' },
+  { key: 'place.more', mark: '⋯' },
 ] as const;
 
 /**
@@ -35,11 +36,13 @@ export function HomeScreen({
   onOpenSettings: () => void;
   now?: Date;
 }) {
+  const t = useWords();
+  const dir = useDirection();
   const greeting = greetingFor(teacher, now);
   const week = schoolWeekOf(now);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, direction: dir, backgroundColor: colors.background }}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: 20, paddingBottom: space.step }}>
         {/* The screen's own top row: the menu, what is waiting, and the teacher themselves. */}
         <View
@@ -58,7 +61,7 @@ export function HomeScreen({
                 is told to them, where a backup is made, and where logging out now lives. */}
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Your account — settings"
+              accessibilityLabel={t('home.account')}
               onPress={onOpenSettings}
               style={{
                 backgroundColor: colors.accentSoft,
@@ -76,8 +79,8 @@ export function HomeScreen({
         {/* The greeting: the first thing read, and the first thing a screen reader announces. */}
         <View accessibilityRole="header" style={{ paddingHorizontal: space.gap, paddingBottom: space.step }}>
           <Text style={{ fontSize: 22, fontWeight: '700', color: colors.text }}>{greeting.hour}</Text>
-          <Text style={{ fontSize: 22, fontWeight: '700', color: colors.text }}>{greeting.name} 👋</Text>
-          <Text style={{ fontSize: 14, color: colors.muted, marginTop: space.tight }}>Here's what's happening today.</Text>
+          <Text style={{ fontSize: 22, fontWeight: '700', color: colors.text }}>{t('home.greetingName', { name: greeting.name })}</Text>
+          <Text style={{ fontSize: 14, color: colors.muted, marginTop: space.tight }}>{t('home.here')}</Text>
         </View>
 
         {/* The week being taught, with the day the teacher is standing in picked out. */}
@@ -117,11 +120,9 @@ export function HomeScreen({
           >
             <View style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, backgroundColor: colors.accent }} />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 2 }}>Today</Text>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>No classes yet</Text>
-              <Text style={{ fontSize: 13, color: colors.muted, marginTop: 4 }}>
-                Your periods, and the students in them, show here once you have a classroom.
-              </Text>
+              <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 2 }}>{t('home.todayLabel')}</Text>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{t('home.noClasses')}</Text>
+              <Text style={{ fontSize: 13, color: colors.muted, marginTop: 4 }}>{t('home.noClassesWords')}</Text>
             </View>
           </View>
         </View>
@@ -144,12 +145,12 @@ export function HomeScreen({
         }}
       >
         {places.map((place) => {
-          const here = place.name === 'Home';
+          const here = place.key === 'place.home';
           return (
-            <View key={place.name} style={{ alignItems: 'center', gap: 4 }}>
+            <View key={place.key} style={{ alignItems: 'center', gap: 4 }}>
               <Text style={{ fontSize: 18, color: here ? colors.accent : colors.faint }}>{place.mark}</Text>
               <Text style={{ fontSize: 11, fontWeight: here ? '600' : '400', color: here ? colors.accent : colors.faint }}>
-                {place.name}
+                {t(place.key)}
               </Text>
             </View>
           );

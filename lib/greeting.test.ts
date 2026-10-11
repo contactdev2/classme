@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { greetingFor, nameOf, partOfDay } from './greeting';
 import { schoolWeekOf } from './week';
+import { setLanguage } from './i18n';
+import { sourceLanguage } from './languages';
+
+// These checks read the greeting and the week in the language the app's own words are written in,
+// so what they prove is the arithmetic of a date and not a translation of it. That every screen
+// follows the language a teacher chose is proved in app/localise-app.test.tsx.
+setLanguage(sourceLanguage);
 
 const at = (when: string) => new Date(when);
 
