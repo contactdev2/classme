@@ -3,7 +3,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { HomeScreen } from '../components/home-screen';
 import { SettingsScreen } from '../components/settings-screen';
 import { SignUpScreen } from '../components/sign-up-screen';
-import { recallLanguage, useDirection, useWords } from '../lib/i18n';
+import { openInPhoneLanguage, useDirection, useWords } from '../lib/i18n';
 import type { TeacherProfile } from '../lib/local-accounts';
 import { productName } from '../lib/product';
 import { credentialsFrom, missingFrom, submitSignIn } from '../lib/sign-in';
@@ -49,11 +49,11 @@ export default function Login() {
   // just made their profile. Nothing of what they typed is kept here: only the sentence.
   const [told, setTold] = useState<string | null>(null);
 
-  // The language this phone was last left in, put back before a teacher reads anything on it. It is
-  // read from the phone itself and nowhere else; nothing kept means the app's own default, which is
-  // what the screens are already in.
+  // The language this app opens in, settled before a teacher reads anything on it: the one their
+  // phone is set to, or the one they chose themselves on a phone still set the way it was. It is
+  // read from the phone itself and nowhere else — see lib/i18n.ts.
   useEffect(() => {
-    void recallLanguage();
+    void openInPhoneLanguage();
   }, []);
 
   if (teacher) {

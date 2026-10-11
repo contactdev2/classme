@@ -1,19 +1,29 @@
-// Where the language a teacher chose is kept, so the app opens in it next time.
+// Where the language the app is showing is kept, so it opens in the right one next time.
 //
-// One line in one small file on the phone itself: no account, no network, nowhere else. Behind one
-// seam, the way the backups are (lib/backup-files.ts), so a check can hand over a file of its own
-// and never load a phone's native file module to do it.
+// Two things are kept, a line each in a small file of its own on the phone itself: the language the
+// app is showing, and the phone language it was matched to when it started showing it. The second
+// is what tells a teacher's own choice apart from a phone the app was simply following: a phone
+// that has since been set to another language is followed again, and a choice made on a phone still
+// set the way it was stands.
+//
+// No account, no network, nowhere else. Behind one seam, the way the backups are
+// (lib/backup-files.ts), so a check can hand over files of its own and never load a phone's native
+// file module to do it.
 import { isLanguage, type Tag } from './languages';
 
-/** The one thing kept: the language last chosen, or nothing when none has been. */
+/** What is kept: the language the app is showing, and the phone language it is matching. */
 export type LanguageFile = {
   read(): Promise<Tag | null>;
   write(tag: Tag): Promise<void>;
+  /** The phone's own language the shown one was matched to, or nothing from before it was kept. */
+  readPhone(): Promise<Tag | null>;
+  writePhone(tag: Tag): Promise<void>;
 };
 
-/** A file holding this choice and nothing else, kept for as long as the app runs. */
-export function languageFileWith(chosen: Tag | null = null): LanguageFile {
-  let kept = chosen;
+/** Files holding this and nothing else, kept for as long as the app runs. */
+export function languageFileWith(shown: Tag | null = null, matching: Tag | null = null): LanguageFile {
+  let kept = shown;
+  let keptPhone = matching;
   return {
     async read() {
       return kept;
@@ -21,11 +31,20 @@ export function languageFileWith(chosen: Tag | null = null): LanguageFile {
     async write(tag) {
       kept = tag;
     },
+    async readPhone() {
+      return keptPhone;
+    },
+    async writePhone(tag) {
+      keptPhone = tag;
+    },
   };
 }
 
-/** What the file is called on the phone. */
+/** What the file holding the shown language is called on the phone. */
 export const languageFileName = 'classme-language.txt';
+
+/** And the one beside it, holding the phone language that one was matched to. */
+export const phoneLanguageFileName = 'classme-phone-language.txt';
 
 /**
  * The file on the phone itself: expo-file-system's own, in the app's documents directory. Asked for
@@ -33,21 +52,25 @@ export const languageFileName = 'classme-language.txt';
  * over its own file never loads a native module it has no phone for.
  */
 function onThisPhone(): LanguageFile {
-  const where = async () => {
+  const where = async (name: string) => {
     const phone = await import('expo-file-system');
     if (!phone.documentDirectory) throw new Error('this device offers no folder of its own to keep a choice in');
-    return { phone, path: `${phone.documentDirectory}${languageFileName}` };
+    return { phone, path: `${phone.documentDirectory}${name}` };
+  };
+  const readFrom = async (name: string): Promise<Tag | null> => {
+    const { phone, path } = await where(name);
+    const kept = (await phone.readAsStringAsync(path)).trim();
+    return isLanguage(kept) ? kept : null;
+  };
+  const writeTo = async (name: string, tag: Tag): Promise<void> => {
+    const { phone, path } = await where(name);
+    await phone.writeAsStringAsync(path, tag);
   };
   return {
-    async read() {
-      const { phone, path } = await where();
-      const kept = (await phone.readAsStringAsync(path)).trim();
-      return isLanguage(kept) ? kept : null;
-    },
-    async write(tag) {
-      const { phone, path } = await where();
-      await phone.writeAsStringAsync(path, tag);
-    },
+    read: () => readFrom(languageFileName),
+    write: (tag) => writeTo(languageFileName, tag),
+    readPhone: () => readFrom(phoneLanguageFileName),
+    writePhone: (tag) => writeTo(phoneLanguageFileName, tag),
   };
 }
 
