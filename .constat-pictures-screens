@@ -1,0 +1,13 @@
+{
+  "branch": "constat/task-ef1dc833",
+  "screens": [],
+  "criteria": [
+    "A teacher can open a signup screen from the login screen.",
+    "A teacher can enter their name, email, and a password, then submit to create their profile.",
+    "After submitting valid signup details, the teacher's profile is saved and they can log in with it.",
+    "If a teacher tries to sign up with an email already used by another profile, the app shows a clear message instead of creating a duplicate.",
+    "Require at least 8 characters.",
+    "The signup screen looks correctly laid out and readable."
+  ],
+  "why": "DoneMark froze these onto the attempt: the acceptance criteria of the requirement it is for, and the screens those criteria name. The picture suite runs the checks whose names are these criteria and skips the rest; where it can match none of them it narrows by these screens instead, and says so. Honoured on this branch only."
+}
