@@ -24,6 +24,8 @@ export const english = {
   'login.couldNotCheck': 'Your details could not be checked just now. Try again.',
   'login.verified': 'Verified against your encrypted local database',
   'login.or': 'OR',
+  'login.noProfile': 'New here?',
+  'login.signUp': 'Create a profile',
   'login.promiseTitle': 'Your data stays on this device',
   'login.promiseWords':
     'All classroom records are stored in an encrypted on-device database. Nothing is synced externally.',
@@ -34,6 +36,38 @@ export const english = {
   'signIn.missingPassword': 'Enter your password to log in.',
   'signIn.noMatch': 'No account on this phone matches that email and password.',
   'signIn.signedIn': 'Signed in.',
+
+  // Making a profile: the two steps of it, and what each one asks for.
+  'signUp.title': 'Create Profile',
+  'signUp.backToLogin': 'Back to sign in',
+  'signUp.backToName': 'Back to your name',
+  'signUp.stepName': 'Name',
+  'signUp.stepAccount': 'Account',
+  'signUp.nameTitle': 'What should we call you?',
+  'signUp.nameWords': 'Use the name your students know you by. It greets you every time you sign in.',
+  'signUp.name': 'Your Name',
+  // A sample name, so the field shows the shape of an answer rather than an empty box.
+  'signUp.namePlaceholder': 'Ms. Patel',
+  'signUp.continue': 'Continue',
+  'signUp.greeting': 'Hi, {name}',
+  'signUp.accountWords': 'Now set your email and password to finish signup.',
+  'signUp.passwordPlaceholder': 'At least {least} characters',
+  'signUp.passwordHint': 'Password must be at least {least} characters.',
+  'signUp.create': 'Create Profile',
+  'signUp.haveProfile': 'Already have a profile?',
+  'signUp.signIn': 'Sign In',
+  'signUp.onThisPhone': 'Your profile is made on this phone and stays on it. No connection needed.',
+
+  // What a submission came to, said back to the teacher who made it.
+  'signUp.missingName': 'Enter your name to carry on.',
+  'signUp.missingEmail': 'Enter your email address to create your profile.',
+  'signUp.badEmail': 'Enter an email address in the form name@school.edu.',
+  'signUp.missingPassword': 'Choose a password to create your profile.',
+  'signUp.shortPassword': 'Choose a password of at least {least} characters.',
+  'signUp.emailTaken': 'A profile already uses that email on this phone. Sign in with it instead.',
+  'signUp.making': 'Creating your profile…',
+  'signUp.created': 'Profile created. Log in with your email and password.',
+  'signUp.couldNotCreate': 'Your profile could not be created just now. Try again.',
 
   // Home.
   'home.greetingMorning': 'Good morning',
