@@ -1,0 +1,12 @@
+{
+  "build": {
+    "constat-phone": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "credentialsSource": "local",
+      "android": {
+        "buildType": "apk"
+      }
+    }
+  }
+}
