@@ -33,6 +33,10 @@ function insideSomethingScrolled(el: HTMLElement): boolean {
   return false;
 }
 
+/** A check that photographs its screen waits on a browser to launch, which on a busy machine
+ * takes longer than a check that only reads one. */
+const picturing = 120_000;
+
 describe('Show the app version on the welcome screen', () => {
   it('When the welcome screen opens, a version number is visible on it.', () => {
     const screen = open(<LoginScreen />);
@@ -51,7 +55,7 @@ describe('Show the app version on the welcome screen', () => {
 
     takePictureOf('Show the app version on the welcome screen > When the welcome screen opens, a version number is visible on it.', screen);
     screen.close();
-  });
+  }, picturing);
 
   it('The version number shown on the welcome screen is the same as the version number of the installed app.', () => {
     const screen = open(<LoginScreen />);
@@ -73,7 +77,7 @@ describe('Show the app version on the welcome screen', () => {
 
     takePictureOf('Show the app version on the welcome screen > The version number shown on the welcome screen is the same as the version number of the installed app.', screen);
     screen.close();
-  });
+  }, picturing);
 
   it('The version number can be read without scrolling or tapping anything.', () => {
     const screen = open(<LoginScreen />);
@@ -100,7 +104,7 @@ describe('Show the app version on the welcome screen', () => {
 
     takePictureOf('Show the app version on the welcome screen > The version number can be read without scrolling or tapping anything.', screen);
     screen.close();
-  });
+  }, picturing);
 
   it('Use the format vMAJOR.MINOR.PATCH, e.g. v1.0.0', () => {
     const screen = open(<LoginScreen />);
@@ -115,7 +119,7 @@ describe('Show the app version on the welcome screen', () => {
 
     takePictureOf('Show the app version on the welcome screen > Use the format vMAJOR.MINOR.PATCH, e.g. v1.0.0', screen);
     screen.close();
-  });
+  }, picturing);
 
   it('The version number stays the same and visible every time the welcome screen is opened.', () => {
     const wanted = asRead(installedVersion());
@@ -137,5 +141,5 @@ describe('Show the app version on the welcome screen', () => {
 
     takePictureOf('Show the app version on the welcome screen > The version number stays the same and visible every time the welcome screen is opened.', last);
     last.close();
-  });
+  }, picturing);
 });

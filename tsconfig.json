@@ -8,6 +8,8 @@
     "strict": true,
     "allowJs": true,
     "esModuleInterop": true,
+    // The app reads its own version out of app.json, so a JSON import is part of the app.
+    "resolveJsonModule": true,
     "skipLibCheck": true,
     "noEmit": true,
     "types": ["node"]
