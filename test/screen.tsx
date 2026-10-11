@@ -41,6 +41,10 @@ export type Screen = {
   text(): string;
   /** The screen as it stands, markup and all — what a picture of it is taken from. */
   markup(): string;
+  /** The screen's own outermost element, laid out the way the phone lays it out. */
+  root(): HTMLElement;
+  /** Every word a person actually reads on it: a leaf of the screen, a placeholder, a label. */
+  readable(): string[];
   close(): void;
 };
 
@@ -85,6 +89,21 @@ export function open(element: ReactElement): Screen {
       });
     },
     text: () => visibleText(host.innerHTML),
+    root: () => host.firstElementChild as HTMLElement,
+    readable() {
+      const read: string[] = [];
+      for (const el of [...host.querySelectorAll<HTMLElement>('*')]) {
+        if (el.children.length === 0) {
+          const words = (el.textContent ?? '').trim();
+          if (words) read.push(words);
+        }
+        for (const attribute of ['placeholder', 'aria-label']) {
+          const words = el.getAttribute(attribute)?.trim();
+          if (words) read.push(words);
+        }
+      }
+      return read;
+    },
     markup() {
       // What a person has typed lives in the field itself, not in the markup React wrote; said out
       // loud here so the picture shows the screen as the person in front of it sees it.
@@ -96,6 +115,17 @@ export function open(element: ReactElement): Screen {
       host.remove();
     },
   };
+}
+
+/**
+ * A moment of real time on the phone: everything the screen started when it opened — reading the
+ * language it was last left in, among them — finished before a check looks at it.
+ */
+export async function settle(): Promise<void> {
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+  });
 }
 
 /** One picture of this screen, at the moment the check that took it passes. */
