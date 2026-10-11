@@ -1,0 +1,13 @@
+{
+  "branch": "constat/task-4c5ae367",
+  "screens": [],
+  "criteria": [
+    "When a phone's system language is set to French, opening the app shows all screens in French.",
+    "When a phone's system language is set to Arabic, opening the app shows all screens in Arabic with right-to-left text.",
+    "When a phone's system language is set to Japanese, opening the app shows all screens in Japanese.",
+    "When a phone's system language is set to Chinese, opening the app shows all screens in Chinese.",
+    "Use English as the fallback language.",
+    "The app remembers which language it is currently showing, so switching the phone's language and reopening the app updates the app to match."
+  ],
+  "why": "DoneMark froze these onto the attempt: the acceptance criteria of the requirement it is for, and the screens those criteria name. The picture suite runs the checks whose names are these criteria and skips the rest; where it can match none of them it narrows by these screens instead, and says so. Honoured on this branch only."
+}
