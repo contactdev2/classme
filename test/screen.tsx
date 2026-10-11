@@ -52,8 +52,13 @@ function fields(host: HTMLElement): HTMLInputElement[] {
   return [...host.querySelectorAll('input')];
 }
 
+/**
+ * Everything on a screen a person presses: a button, and a row of a list they choose from — the
+ * language rows in Classroom Settings are announced as the radio group they are, and a finger does
+ * not care which of the two a screen called them.
+ */
 function buttons(host: HTMLElement): HTMLElement[] {
-  return [...host.querySelectorAll('[role="button"]')] as HTMLElement[];
+  return [...host.querySelectorAll('[role="button"], [role="radio"]')] as HTMLElement[];
 }
 
 /** Opens a screen on the DOM, as the app's own web build does, and hands back a way to use it. */

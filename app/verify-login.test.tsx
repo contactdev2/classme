@@ -5,6 +5,15 @@ import { accountsIn, keepAccountsIn, lockAccount, openAccount, type AccountRecor
 import { submitSignIn } from '../lib/sign-in';
 import { open, takePictureOf } from '../test/screen';
 import LoginScreen from './index';
+import { setLanguage } from '../lib/i18n';
+import { keepLanguageIn, languageFileWith } from '../lib/language-file';
+import { sourceLanguage } from '../lib/languages';
+
+// This check reads the app in the language its own words are written in, so what it proves is about
+// the screen and not about a translation. Which language a screen is in, and that every screen
+// follows the one a teacher chose, is proved in app/localise-app.test.tsx.
+setLanguage(sourceLanguage);
+keepLanguageIn(languageFileWith(null));
 
 // The teacher this phone belongs to, and the password only they know.
 const teacher = { email: 'ms.rivera@riversidehigh.edu' };
