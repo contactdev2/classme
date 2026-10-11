@@ -1,0 +1,12 @@
+{
+  "branch": "constat/task-9f41a319",
+  "screens": [],
+  "criteria": [
+    "When the welcome screen opens, a version number is visible on it.",
+    "The version number shown on the welcome screen is the same as the version number of the installed app.",
+    "The version number can be read without scrolling or tapping anything.",
+    "Use the format vMAJOR.MINOR.PATCH, e.g. v1.0.0",
+    "The version number stays the same and visible every time the welcome screen is opened."
+  ],
+  "why": "DoneMark froze these onto the attempt: the acceptance criteria of the requirement it is for, and the screens those criteria name. The picture suite runs the checks whose names are these criteria and skips the rest; where it can match none of them it narrows by these screens instead, and says so. Honoured on this branch only."
+}
