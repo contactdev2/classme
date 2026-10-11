@@ -2,6 +2,22 @@
   "expo": {
     "name": "ClassMe",
     "slug": "classme",
-    "scheme": "classme"
+    "scheme": "classme",
+    "android": {
+      "package": "com.contactdev2.classme"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "1.9.25"
+          }
+        }
+      ]
+    ]
   }
 }
