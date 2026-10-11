@@ -1,0 +1,13 @@
+{
+  "branch": "constat/task-1ef052e2",
+  "screens": [],
+  "criteria": [
+    "A person can switch the app's language to French and every screen then shows French text.",
+    "A person can switch the app's language to Arabic and every screen then shows Arabic text with the layout mirrored right-to-left.",
+    "A person can switch the app's language to Japanese and every screen then shows Japanese text.",
+    "Use Simplified Chinese as the default, matching mainland China users.",
+    "When a person closes and reopens the app, it still shows the language they last chose.",
+    "Every label, button, and message on screen appears translated, with none left in the original language."
+  ],
+  "why": "DoneMark froze these onto the attempt: the acceptance criteria of the requirement it is for, and the screens those criteria name. The picture suite runs the checks whose names are these criteria and skips the rest; where it can match none of them it narrows by these screens instead, and says so. Honoured on this branch only."
+}
