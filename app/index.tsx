@@ -6,6 +6,7 @@ import type { TeacherProfile } from '../lib/local-accounts';
 import { productName } from '../lib/product';
 import { credentialsFrom, missingFrom, submitSignIn } from '../lib/sign-in';
 import { colors, radius, shadow, space } from '../lib/theme';
+import { versionLabel } from '../lib/version';
 
 /** The words under a field, naming it, so a person knows what goes in it. */
 function FieldLabel({ children }: { children: string }) {
@@ -98,6 +99,7 @@ function LoginScreen({ onSignedIn }: { onSignedIn: (teacher: TeacherProfile) => 
   }
 
   return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={{ alignItems: 'center', paddingTop: 56, paddingBottom: space.gap, paddingHorizontal: space.gap }}
@@ -270,7 +272,29 @@ function LoginScreen({ onSignedIn }: { onSignedIn: (teacher: TeacherProfile) => 
         </View>
       </View>
 
-      <Text style={{ marginTop: space.room, fontSize: 13, color: '#9AA7B8', textAlign: 'center' }}>{productName()} v1.0</Text>
     </ScrollView>
+
+    {/*
+      The foot of the screen, outside everything that scrolls, so the version is readable the moment
+      the screen opens however long the login card above it grows — at the phone's largest text size
+      the card slides under this strip and never past it.
+    */}
+    <View
+      style={{
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.background,
+        borderTopWidth: 1,
+        borderTopColor: colors.line,
+        paddingTop: space.step,
+        paddingBottom: 22,
+        paddingHorizontal: space.gap,
+      }}
+    >
+      <Text style={{ fontSize: 12, fontWeight: '600', color: '#9AA7B8', letterSpacing: 0.5, textAlign: 'center' }}>
+        {versionLabel()}
+      </Text>
+    </View>
+    </View>
   );
 }

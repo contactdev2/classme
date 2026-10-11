@@ -3,6 +3,7 @@
     "name": "ClassMe",
     "slug": "classme",
     "scheme": "classme",
+    "version": "1.0.0",
     "android": {
       "package": "com.contactdev2.classme"
     },
