@@ -3,6 +3,7 @@
 // only — the app on a phone is driven by the phone itself. Nothing here is shipped.
 import { act, type ReactElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { languageNow } from '../lib/i18n';
 import { takePicture } from './picture';
 
 // React asks to be told when it is being driven by a check, so it can settle every update before
@@ -133,7 +134,11 @@ export async function settle(): Promise<void> {
   });
 }
 
-/** One picture of this screen, at the moment the check that took it passes. */
+/**
+ * One picture of this screen, at the moment the check that took it passes — told which language
+ * the app is in, because the same character is drawn one way for a Chinese reader and another for
+ * a Japanese one, and a picture of a screen should be in the hand its reader reads.
+ */
 export function takePictureOf(checkName: string, screen: Screen): string {
-  return takePicture(checkName, screen.markup());
+  return takePicture(checkName, screen.markup(), { lang: languageNow() });
 }

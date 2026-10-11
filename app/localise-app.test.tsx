@@ -270,14 +270,14 @@ describe('ClasseMe should be localisable to French, Arabic , Japanese and Chines
   it("Every screen's picture shows each language's own letters, with no empty boxes in place of characters.", async () => {
     const screen = await inSettings();
 
-    // Every screen the app has, in every language it offers, as the drawn page a picture is of.
-    const drawn: string[] = [];
+    // Every screen the app has, in every language it offers, drawn the way a picture of it is
+    // drawn, and read back off the page: not one character of it came out an empty box.
     for (const { tag } of languages) {
       await choose(screen, tag);
+      const drawn: string[] = [];
       await everyScreenInTurn(screen, () => drawn.push(screen.markup()));
+      expect(lettersMissingFrom(drawn.join('\n'), { lang: tag }).join(' '), `${tag} · drawn as boxes`).toBe('');
     }
-
-    expect(lettersMissingFrom(drawn.join('\n')).join(' ')).toBe('');
 
     // And the picture of it: Classroom Settings in Japanese, the screen whose every word is a
     // character the machine drawing it has to have been lent a letter for.
