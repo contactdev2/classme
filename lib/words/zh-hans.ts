@@ -131,4 +131,9 @@ export const simplifiedChinese: Words = {
   'language.name.ar': '阿拉伯语',
   'language.name.ja': '日语',
   'language.name.en': '英语',
+  'language.withDefault': '{language} · 默认',
+  'language.withRtl': '{language} · 从右至左',
+
+  'error.wrong': '此界面出现了问题。',
+  'error.retry': '重试',
 };

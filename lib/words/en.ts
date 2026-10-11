@@ -147,6 +147,13 @@ export const english = {
   'language.name.ar': 'Arabic',
   'language.name.ja': 'Japanese',
   'language.name.en': 'English',
+  // One language in the picker, with what is worth saying about it beside its own name.
+  'language.withDefault': '{language} · Default',
+  'language.withRtl': '{language} · Right-to-left',
+
+  // A screen that failed to draw, as a teacher is told about it.
+  'error.wrong': 'Something went wrong on this screen.',
+  'error.retry': 'Try again',
 } as const;
 
 /** A key a screen asks for. */

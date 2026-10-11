@@ -1,5 +1,6 @@
 // What Home says first: the part of the day it is, and the teacher whose phone this is. Kept apart
 // from the screen that draws it so the words are one thing and the layout another.
+import { say } from './i18n';
 import type { TeacherProfile } from './local-accounts';
 
 /**
@@ -8,9 +9,9 @@ import type { TeacherProfile } from './local-accounts';
  */
 export function partOfDay(at: Date): string {
   const hour = at.getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Good evening';
+  if (hour < 12) return say('home.greetingMorning');
+  if (hour < 18) return say('home.greetingAfternoon');
+  return say('home.greetingEvening');
 }
 
 /**
@@ -24,7 +25,8 @@ export function nameOf(teacher: TeacherProfile): string {
 
 /** The greeting in the two lines the prototype draws: the hour first, then who is being greeted. */
 export function greetingFor(teacher: TeacherProfile, at: Date): { hour: string; name: string } {
-  return { hour: `${partOfDay(at)},`, name: nameOf(teacher) };
+  // The comma after the greeting is the language's own: Chinese and Japanese do not use this one.
+  return { hour: say('home.greetingLine', { part: partOfDay(at) }), name: nameOf(teacher) };
 }
 
 /**

@@ -138,4 +138,9 @@ export const french: Words = {
   'language.name.ar': 'Arabe',
   'language.name.ja': 'Japonais',
   'language.name.en': 'Anglais',
+  'language.withDefault': '{language} · Par défaut',
+  'language.withRtl': '{language} · De droite à gauche',
+
+  'error.wrong': "Une erreur s'est produite sur cet écran.",
+  'error.retry': 'Réessayer',
 };

@@ -132,4 +132,9 @@ export const japanese: Words = {
   'language.name.ar': 'アラビア語',
   'language.name.ja': '日本語',
   'language.name.en': '英語',
+  'language.withDefault': '{language} · 既定',
+  'language.withRtl': '{language} · 右から左',
+
+  'error.wrong': 'この画面で問題が発生しました。',
+  'error.retry': '再試行',
 };

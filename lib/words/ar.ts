@@ -132,4 +132,9 @@ export const arabic: Words = {
   'language.name.ar': 'العربية',
   'language.name.ja': 'اليابانية',
   'language.name.en': 'الإنجليزية',
+  'language.withDefault': '{language} · الافتراضية',
+  'language.withRtl': '{language} · من اليمين إلى اليسار',
+
+  'error.wrong': 'حدث خطأ في هذه الشاشة.',
+  'error.retry': 'إعادة المحاولة',
 };

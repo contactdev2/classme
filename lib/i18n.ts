@@ -32,6 +32,7 @@ export const wordsAllowedToStay: readonly WordKey[] = [
   'login.emailPlaceholder',
   'privacy.standardValue',
   'home.greetingLine',
+  'home.greetingName',
 ];
 
 let current: Tag = defaultLanguage;
@@ -100,4 +101,10 @@ export function useWords(): typeof say {
   const [, bump] = useState(0);
   useEffect(() => onLanguageChange(() => bump((n) => n + 1)), []);
   return say;
+}
+
+/** Which way the screens read, for a screen that must be redrawn the moment that changes. */
+export function useDirection(): 'ltr' | 'rtl' {
+  useWords();
+  return direction();
 }
