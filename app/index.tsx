@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { HomeScreen } from '../components/home-screen';
 import { SettingsScreen } from '../components/settings-screen';
+import { SignUpScreen } from '../components/sign-up-screen';
 import { recallLanguage, useDirection, useWords } from '../lib/i18n';
 import type { TeacherProfile } from '../lib/local-accounts';
 import { productName } from '../lib/product';
@@ -32,13 +33,21 @@ const fieldRow = {
  * own avatar. Nobody is signed in when the app starts, so the first thing drawn is always the login
  * screen itself.
  *
- * Home and Settings are components and not routes of their own on purpose: the app opening on the
- * login screen and nothing else is a requirement of its own, and this keeps '/' the only screen
- * there is.
+ * A teacher with no record on this phone yet goes the other way first: the login screen's own
+ * invitation opens the screen where a profile is made, and making one comes back here to log in
+ * with it.
+ *
+ * Home, Settings and signup are components and not routes of their own on purpose: the app opening
+ * on the login screen and nothing else is a requirement of its own, and this keeps '/' the only
+ * screen there is.
  */
 export default function Login() {
   const [teacher, setTeacher] = useState<TeacherProfile | null>(null);
   const [inSettings, setInSettings] = useState(false);
+  const [signingUp, setSigningUp] = useState(false);
+  // What the login screen is to say the moment it is drawn, when a teacher arrives at it having
+  // just made their profile. Nothing of what they typed is kept here: only the sentence.
+  const [told, setTold] = useState<string | null>(null);
 
   // The language this phone was last left in, put back before a teacher reads anything on it. It is
   // read from the phone itself and nowhere else; nothing kept means the app's own default, which is
@@ -51,6 +60,7 @@ export default function Login() {
     const logOut = () => {
       setTeacher(null);
       setInSettings(false);
+      setTold(null);
     };
     return inSettings ? (
       <SettingsScreen teacher={teacher} onBack={() => setInSettings(false)} onLogOut={logOut} />
@@ -58,21 +68,51 @@ export default function Login() {
       <HomeScreen teacher={teacher} onOpenSettings={() => setInSettings(true)} />
     );
   }
-  return <LoginScreen onSignedIn={setTeacher} />;
+  if (signingUp) {
+    return (
+      <SignUpScreen
+        onBack={() => setSigningUp(false)}
+        onCreated={(said) => {
+          setSigningUp(false);
+          setTold(said);
+        }}
+      />
+    );
+  }
+  return (
+    <LoginScreen
+      onSignedIn={setTeacher}
+      onSignUp={() => {
+        setTold(null);
+        setSigningUp(true);
+      }}
+      told={told}
+    />
+  );
 }
 
 /**
  * The screen the app opens on. A teacher arriving in the morning sees where to sign in and nothing
- * else: their email, their password, and the button that logs them in.
+ * else: their email, their password, and the button that logs them in — and, under it, the way to
+ * make a profile for a teacher who has not got one yet.
  */
-function LoginScreen({ onSignedIn }: { onSignedIn: (teacher: TeacherProfile) => void }) {
+function LoginScreen({
+  onSignedIn,
+  onSignUp,
+  told = null,
+}: {
+  onSignedIn: (teacher: TeacherProfile) => void;
+  onSignUp: () => void;
+  /** A sentence to be standing on the screen as it opens: a profile just made, and ready to use. */
+  told?: string | null;
+}) {
   const t = useWords();
   const dir = useDirection();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [shown, setShown] = useState(false);
   const [remember, setRemember] = useState(true);
-  const [said, setSaid] = useState<string | null>(null);
+  const [said, setSaid] = useState<string | null>(told);
   const [busy, setBusy] = useState(false);
 
   /**
@@ -255,6 +295,24 @@ function LoginScreen({ onSignedIn }: { onSignedIn: (teacher: TeacherProfile) => 
         <View style={{ flex: 1, borderTopWidth: 1, borderTopColor: colors.line }} />
         <Text style={{ fontSize: 12, color: '#9AA7B8' }}>{t('login.or')}</Text>
         <View style={{ flex: 1, borderTopWidth: 1, borderTopColor: colors.line }} />
+      </View>
+
+      {/* For a teacher holding a phone with no profile on it yet: the way to make one. */}
+      <View
+        style={{
+          alignSelf: 'stretch',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexWrap: 'wrap',
+          gap: 6,
+          marginBottom: 18,
+        }}
+      >
+        <Text style={{ fontSize: 13, color: colors.faint }}>{t('login.noProfile')}</Text>
+        <Pressable accessibilityRole="button" onPress={onSignUp}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: colors.accent }}>{t('login.signUp')}</Text>
+        </Pressable>
       </View>
 
       {/* What the app promises about a teacher's data, where they can read it before signing in. */}

@@ -5,7 +5,7 @@
 // carries. The key is the password itself, stretched; so a record opens only for the password it was
 // locked with, and an email can only be read out of a record that opened. Nothing here reaches off
 // the phone, and nothing here is ever logged.
-import { sha256, sameBytes, utf8 } from './crypto';
+import { bytesFromHex, hex, hmacSha256, pbkdf2Sha256, sha256, sameBytes, utf8 } from './crypto';
 import { openBox, sealBox, stretchedTimes, type SealedBox } from './sealed-box';
 import type { Credentials } from './sign-in';
 
@@ -20,8 +20,15 @@ export type TeacherProfile = {
   name?: string;
 };
 
-/** One teacher's account as it sits on the phone: locked, sealed, and saying nothing about who it is. */
-export type AccountRecord = SealedBox;
+/**
+ * One teacher's account as it sits on the phone: locked, sealed, and saying nothing about who it is
+ * — beyond the one thing the phone has to be able to ask without a password, which is whether some
+ * record here is already this email's. That is the mark: see markOf below for what it costs to read.
+ */
+export type AccountRecord = SealedBox & {
+  /** This record's email, marked rather than written — see markOf. A record made before is unmarked. */
+  at?: string;
+};
 
 /** The lock a teacher's own record is under, told apart from the lock on anything else. */
 const accountLock = 'classme/account';
@@ -29,15 +36,34 @@ const accountLock = 'classme/account';
 /** How many times a sign-in password is stretched. The same number a backup file is locked with. */
 export { stretchedTimes };
 
+/** An email as the one spelling two ways of writing the same address agree on. */
+const oneSpelling = (email: string) => email.trim().toLowerCase();
+
 /** The same email, written two ways, is the same teacher. The password is never treated so kindly. */
 const sameEmail = (one: string, other: string) =>
-  sameBytes(sha256(utf8(one.trim().toLowerCase())), sha256(utf8(other.trim().toLowerCase())));
+  sameBytes(sha256(utf8(oneSpelling(one))), sha256(utf8(oneSpelling(other))));
+
+/**
+ * This email's mark under one record's own salt: what lets the phone say "a profile already uses
+ * that email" without opening a single record, and the only thing a record says about itself.
+ *
+ * It is the email stretched exactly as a password is — this record's salt, this record's number of
+ * stretches — and not a plain hash of it, on purpose. A plain hash of an address is as good as the
+ * address: there are not many to try, and whoever took the phone could try them all in a second.
+ * Marked this way, every guess at the email costs the same arithmetic as a guess at the password,
+ * which is the price the rest of this file is already built around.
+ */
+function markOf(email: string, salt: string, iterations: number): string {
+  const stretched = pbkdf2Sha256(utf8(oneSpelling(email)), bytesFromHex(salt), iterations, 32);
+  return hex(hmacSha256(stretched, utf8(`${accountLock}/mark`)));
+}
 
 /** Locks a teacher's details into a record that only this password opens. */
 export function lockAccount(credentials: Credentials, profile: TeacherProfile, iterations: number = stretchedTimes): AccountRecord {
   const name = profile.name?.trim();
   const inside = JSON.stringify(name ? { email: profile.email, name } : { email: profile.email });
-  return sealBox(inside, credentials.password, accountLock, iterations);
+  const box = sealBox(inside, credentials.password, accountLock, iterations);
+  return { ...box, at: markOf(profile.email, box.salt, box.iterations) };
 }
 
 /**
@@ -99,6 +125,33 @@ export function keepAccountsIn(next: AccountsFile): void {
 /** The accounts file in use. */
 export function accountsFile(): AccountsFile {
   return file;
+}
+
+/**
+ * Whether some record this phone keeps is already this email's, which is the one question signing
+ * up has to ask and signing in never does.
+ *
+ * A record from before records were marked answers for nothing: it is passed over here rather than
+ * opened, because opening it would need the password of whoever made it. So the worst this can do
+ * is let a second record for one email stand beside an old unmarked one — never refuse a teacher
+ * an email nobody has, and never a reason to open a record that is not the asker's.
+ */
+export async function emailAlreadyUsed(email: string): Promise<boolean> {
+  for (const record of await accountsFile().read()) {
+    if (typeof record.at !== 'string') continue;
+    try {
+      if (sameBytes(bytesFromHex(record.at), bytesFromHex(markOf(email, record.salt, record.iterations)))) return true;
+    } catch {
+      // A record whose salt or mark is not hex is not a record this phone wrote. It marks nothing.
+    }
+  }
+  return false;
+}
+
+/** Keeps one more record on this phone, beside the ones already here and without touching them. */
+export async function addAccount(record: AccountRecord): Promise<void> {
+  const file = accountsFile();
+  await file.write([...(await file.read()), record]);
 }
 
 /**
