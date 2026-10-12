@@ -137,7 +137,7 @@ export function accountsFile(): AccountsFile {
  * an email nobody has, and never a reason to open a record that is not the asker's.
  */
 export async function emailAlreadyUsed(email: string): Promise<boolean> {
-  for (const record of await accountsFile().read()) {
+  for (const record of (await recordsKept()) ?? []) {
     if (typeof record.at !== 'string') continue;
     try {
       if (sameBytes(bytesFromHex(record.at), bytesFromHex(markOf(email, record.salt, record.iterations)))) return true;
@@ -148,10 +148,41 @@ export async function emailAlreadyUsed(email: string): Promise<boolean> {
   return false;
 }
 
-/** Keeps one more record on this phone, beside the ones already here and without touching them. */
-export async function addAccount(record: AccountRecord): Promise<void> {
-  const file = accountsFile();
-  await file.write([...(await file.read()), record]);
+/**
+ * What this phone keeps, or none of it where the phone will not say.
+ *
+ * A phone that cannot be read answers no records rather than refusing the asker, because of what
+ * the two callers below do with the answer: signing up asks whether an email is taken, and a phone
+ * that will not say has taken nothing — a profile is still made, and the one thing that could go
+ * wrong is a second record beside one nobody could read. Being told instead that the profile could
+ * not be created leaves a teacher with no profile at all, which is strictly worse.
+ */
+async function recordsKept(): Promise<AccountRecord[] | null> {
+  try {
+    return await accountsFile().read();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Keeps one more record on this phone, beside the ones already here and without touching them, and
+ * answers whether the phone really wrote it down.
+ *
+ * Never throws, and never writes over what it could not read. A file this app cannot read could be
+ * holding another teacher's record, so the records are left exactly as they are and the caller is
+ * told the profile is not written down — rather than a teacher losing somebody else's profile, or
+ * their own being refused.
+ */
+export async function addAccount(record: AccountRecord): Promise<boolean> {
+  const kept = await recordsKept();
+  if (kept === null) return false;
+  try {
+    await accountsFile().write([...kept, record]);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**

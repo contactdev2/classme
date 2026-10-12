@@ -131,8 +131,9 @@ describe('Add ability for teachers to create their profile with a signup action'
     await giveTheName(screen, teacher.name);
     await giveTheAccount(screen, teacher.email, password);
 
-    // Made: the app says so, where they are about to use it.
-    expect(screen.text()).toContain('Profile created');
+    // Made: the app says so on the step it ends on, with the details it saved.
+    expect(screen.text()).toContain('Profile Created');
+    expect(screen.text()).toContain(teacher.email);
 
     // The profile is on the phone and not merely in the app that is running: closed and opened
     // again, it is still there to log in with.
@@ -175,9 +176,9 @@ describe('Add ability for teachers to create their profile with a signup action'
     await giveTheAccount(screen, ' MS.Rivera@RiversideHigh.edu ', 'Autumn-2025-attendance');
 
     // Told plainly what the matter is, in a sentence a screen reader announces.
-    expect(screen.text()).toContain('A profile already uses that email');
+    expect(screen.text()).toContain('An account with this email already exists');
     const announced = [...screen.root().querySelectorAll('[role="alert"]')].map((one) => one.textContent ?? '');
-    expect(announced.join(' ')).toContain('A profile already uses that email');
+    expect(announced.join(' ')).toContain('An account with this email already exists');
 
     // And nothing was made: the phone keeps the one record it had, the teacher's own, untouched.
     const records = await accountsFile().read();

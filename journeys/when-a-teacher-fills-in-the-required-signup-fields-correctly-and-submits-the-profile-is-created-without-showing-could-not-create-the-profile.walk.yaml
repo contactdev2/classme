@@ -1,0 +1,26 @@
+appId: com.contactdev2.classme
+name: When a teacher fills in the required signup fields correctly and submits, the profile is created without showing 'could not create the profile'.
+---
+# A teacher with no profile on this phone fills the signup in correctly and submits it. The phone
+# makes the record with its own arithmetic; nothing is asked of a network and nothing fails.
+- tapOn: "Create a profile"
+- tapOn: "Ms. Patel"
+- inputText: "Ms. Rivera"
+- hideKeyboard
+- tapOn: "Continue"
+- tapOn: "you@school.edu"
+- inputText: "ms.rivera@riversidehigh.edu"
+- hideKeyboard
+- tapOn: "At least 8 characters"
+- inputText: "Spring-2026-attendance"
+- hideKeyboard
+# The screen's own name says "Create Profile" above the steps, and so does the button under the
+# password: the second of the two is the button.
+- tapOn:
+    text: "Create Profile"
+    index: 1
+# Stretching the password is a second or two of the phone's own arithmetic, done once.
+- extendedWaitUntil:
+    visible: "Profile Created.*"
+    timeout: 120000
+- assertNotVisible: ".*could not be created.*"

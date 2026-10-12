@@ -43,6 +43,7 @@ export const english = {
   'signUp.backToName': 'Back to your name',
   'signUp.stepName': 'Name',
   'signUp.stepAccount': 'Account',
+  'signUp.stepDone': 'Done',
   'signUp.nameTitle': 'What should we call you?',
   'signUp.nameWords': 'Use the name your students know you by. It greets you every time you sign in.',
   'signUp.name': 'Your Name',
@@ -64,9 +65,13 @@ export const english = {
   'signUp.badEmail': 'Enter an email address in the form name@school.edu.',
   'signUp.missingPassword': 'Choose a password to create your profile.',
   'signUp.shortPassword': 'Choose a password of at least {least} characters.',
-  'signUp.emailTaken': 'A profile already uses that email on this phone. Sign in with it instead.',
+  'signUp.emailTaken': 'An account with this email already exists. Sign in with it instead.',
   'signUp.making': 'Creating your profile…',
-  'signUp.created': 'Profile created. Log in with your email and password.',
+  'signUp.created': 'Profile Created',
+  'signUp.doneWords': 'Your account is ready. Welcome to {app}, {name}.',
+  'signUp.doneSaved': 'Your details have been saved and will be available when you reopen the app.',
+  'signUp.doneNotSaved': 'Your profile is ready on this phone. This phone could not write it down, so you may have to make it again when you reopen the app.',
+  'signUp.toDashboard': 'Go to Dashboard',
   'signUp.couldNotCreate': 'Your profile could not be created just now. Try again.',
 
   // Home.

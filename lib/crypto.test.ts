@@ -1,4 +1,4 @@
-import { createHash, createHmac, pbkdf2Sync } from 'node:crypto';
+import { createHash, createHmac, pbkdf2Sync, randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { bytesFromHex, hex, hmacSha256, pbkdf2Sha256, sameBytes, sha256, textFromUtf8, unguessableBytes, utf8 } from './crypto';
 
@@ -63,6 +63,17 @@ describe('the arithmetic a locked record is built from', () => {
         pbkdf2Sync('Spring-2026', 'a-salt', iterations, length, 'sha256').toString('hex'),
       );
     }
+
+    // And passwords and salts either side of the block the password is folded into: a password
+    // longer than 64 bytes is hashed down to one first, which is its own path through the stretching.
+    const passwords = ['', 'x', 'Spring-2026-attendance', 'p'.repeat(63), 'p'.repeat(64), 'p'.repeat(65), 'p'.repeat(200)];
+    for (const password of passwords) {
+      for (const salt of ['', 's'.repeat(55), 's'.repeat(60), 's'.repeat(64)]) {
+        expect(asHex(pbkdf2Sha256(utf8(password), utf8(salt), 37, 48)), `${password.length}/${salt.length}`).toBe(
+          pbkdf2Sync(password, salt, 37, 48, 'sha256').toString('hex'),
+        );
+      }
+    }
   });
 
   it('text, bytes and hex all come back as they went in', () => {
@@ -83,5 +94,72 @@ describe('the arithmetic a locked record is built from', () => {
   it('unguessable bytes are asked of the device, and no two are alike', () => {
     expect(unguessableBytes(16)).toHaveLength(16);
     expect(hex(unguessableBytes(16))).not.toBe(hex(unguessableBytes(16)));
+  });
+
+  it("on a phone, which has no Web Crypto, they are asked of the platform's own UUIDs", () => {
+    // What a phone really offers: no crypto global at all, and expo-modules-core's native UUID,
+    // which on Android is java.util.UUID.randomUUID() and so SecureRandom. Node's is the stand-in.
+    const browsers = (globalThis as { crypto?: Crypto }).crypto;
+    const asked: string[] = [];
+    Object.defineProperty(globalThis, 'crypto', { value: undefined, configurable: true, writable: true });
+    (globalThis as { expo?: { uuidv4(): string } }).expo = {
+      uuidv4: () => {
+        const made = randomUUID();
+        asked.push(made);
+        return made;
+      },
+    };
+    try {
+      const salt = unguessableBytes(16);
+      const nonce = unguessableBytes(16);
+
+      // Bytes of the length asked for, never the same twice, and the phone really was asked.
+      expect(salt).toHaveLength(16);
+      expect(hex(salt)).not.toBe(hex(nonce));
+      expect(asked.length).toBeGreaterThanOrEqual(4);
+
+      // And what comes back is not a UUID written out: a UUID has bits in it a guesser knows.
+      for (const uuid of asked) expect(hex(salt) + hex(nonce)).not.toContain(uuid.replace(/-/g, ''));
+
+      // Long runs come out whole, past the 32 bytes one fold gives.
+      expect(unguessableBytes(48)).toHaveLength(48);
+
+      // A platform that offers the function and then refuses to answer it offers nothing, and is
+      // passed over for the next source rather than taken at its word.
+      (globalThis as { expo?: { uuidv4(): string } }).expo = {
+        uuidv4: () => {
+          throw new Error('this platform will not answer that');
+        },
+      };
+      expect(unguessableBytes(16)).toHaveLength(16);
+    } finally {
+      Object.defineProperty(globalThis, 'crypto', { value: browsers, configurable: true, writable: true });
+      delete (globalThis as { expo?: unknown }).expo;
+    }
+  });
+  it('on a device that offers neither, they are gathered rather than refused', () => {
+    // The least a device can offer: no Web Crypto and no platform UUID. A salt and a nonce have to
+    // be unique, not secret — what keeps a record shut is the password and its fifty thousand
+    // stretches — so bytes are still answered, and a teacher still gets a profile. Refusing here is
+    // what put "Your profile could not be created just now." in front of a teacher on a phone.
+    const browsers = (globalThis as { crypto?: Crypto }).crypto;
+    Object.defineProperty(globalThis, 'crypto', { value: undefined, configurable: true, writable: true });
+    delete (globalThis as { expo?: unknown }).expo;
+    try {
+      const asked = Array.from({ length: 200 }, () => hex(unguessableBytes(16)));
+      for (const bytes of asked) expect(bytes).toHaveLength(32);
+
+      // No two alike, two hundred times over: that is the whole of what a salt and a nonce are for.
+      expect(new Set(asked).size).toBe(asked.length);
+
+      // Long runs come out whole here too, past the 32 bytes one fold gives.
+      expect(unguessableBytes(48)).toHaveLength(48);
+
+      // And a record locks and opens with them, which is the thing a teacher is waiting for.
+      const key = pbkdf2Sha256(utf8('Spring-2026-attendance'), unguessableBytes(16), 1_000, 32);
+      expect(key).toHaveLength(32);
+    } finally {
+      Object.defineProperty(globalThis, 'crypto', { value: browsers, configurable: true, writable: true });
+    }
   });
 });

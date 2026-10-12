@@ -279,3 +279,102 @@ Half-true, and waiting for the next requirement:
   a picture. On a cold runner the browser alone has taken longer than that. Every check written since
   requirement 4 carries `pictureTakesAWhile` (120s); **that one should be given it too** the next
   time anybody is in that file.
+
+## 7 — Make a profile on a phone (5708497f)
+
+What is here now:
+
+- **`lib/crypto.ts`'s `unguessableBytes()` answers on a phone.** This is the whole of the reported
+  bug: a sealed box asks for a salt and a nonce, there was one source for them
+  (`globalThis.crypto.getRandomValues`), a browser has it and **Hermes has not** — so every check
+  passed and every teacher saw "Your profile could not be created just now." Where there is no Web
+  Crypto the bytes now come from `globalThis.expo.uuidv4`, expo-modules-core's own native UUID,
+  which on Android is `java.util.UUID.randomUUID()` and so `SecureRandom`. Enough are gathered to
+  cover the bytes asked for and folded together with HMAC-SHA256, so nothing handed back is a UUID
+  written out. **No package was added**, deliberately: a new native module changes the app's
+  fingerprint, and the attempt would then have no test app to be walked in.
+- **`lib/accounts-file.ts` is the one line requirement 3 left waiting.** `accountsFile()` is no
+  longer `accountsIn([])` on a phone: `app/_layout.tsx` hands the store
+  `accountsOnThisPhone()`, which keeps the records as the text of one file in the app's documents
+  folder (`expo-file-system`, `import()`ed only when a record is read or written). The seam is
+  `KeptText`, so a check hands over text of its own and never loads a native module. **The same
+  swap is still waiting in `lib/classroom-data.ts`**, and `accountsKeptIn` is the shape to copy.
+- **The signup has a third step, "Done"**, built to this requirement's mockup: the three steps
+  ticked, *Profile Created*, the teacher's own name and email, what became of them, and **Go to
+  Dashboard**, which signs them in. `SignUpScreen`'s prop is now `onDone(teacher)`, not
+  `onCreated(said)`, and the login screen's `told` is gone with it — nobody is sent back to type
+  what they have just typed.
+
+Decisions taken, so they are not re-decided:
+
+- **The duplicate-email refusal says "An account with this email already exists."** — this
+  requirement's own words, in all five catalogues, in place of "A profile already uses that email".
+- `journeys/*.walk.yaml` are the first walks this repository has. The screen's own name and the
+  submit button **both** say "Create Profile", so a walk taps `text: Create Profile, index: 1`.
+  Give a new control words of its own if you would rather not count.
+- The checks in `app/create-profile-on-a-phone.test.tsx` take the browser's Web Crypto away and
+  leave the app with a phone's before they touch a screen. **Any check that is about what a phone
+  really does should do the same** — a browser is a generous machine and hides exactly this class
+  of bug.
+
+Half-true, and waiting for the next requirement:
+
+- **A teacher's classrooms, students and attendance still do not outlast the app**:
+  `classroomStore()` is still in memory, so a backup made on a real phone is still a backup of
+  nothing. The accounts now show how it is done.
+- The accounts file is written whole on every change. Two of them at once would be the last one
+  written, and a phone killed mid-write loses the file: the records then read as none, and a
+  teacher can sign up again but not back into what was there. Writing beside and moving over would
+  fix it the day anything else writes to that file.
+
+## 8 — Make a profile on a phone, again (a11b52ef)
+
+Attempt 7 found one reason the signup said "Your profile could not be created just now." and fixed
+it. A judge held a phone afterwards and read the same sentence. This is what was still wrong, and
+how to tell next time.
+
+What is here now:
+
+- **`hermes-engine-cli` is how you find out what a phone does.** `npm install --no-save --prefix
+  /tmp/h hermes-engine-cli` gives you a linux `hermes` binary; `npx esbuild` a probe that imports
+  `lib/crypto.ts` and run it there, and you are looking at the engine the app really runs, with no
+  `globalThis.crypto` and no `globalThis.expo`. That is how both findings below were measured, and
+  it costs about a minute. `npx expo export:embed --platform android --bundle-output /tmp/b.js` is
+  the other half: it shows what Metro actually compiled, which is how `import('expo-file-system')`
+  was ruled out (it becomes `asyncRequire` over a module that is in the bundle, and resolves).
+- **`unguessableBytes()` no longer refuses, ever.** Web Crypto, then `globalThis.expo.uuidv4`, then
+  a seed folded out of the clock, a run counter and a long spread of `Math.random()`. The reasoning
+  is in the comment and it matters: a salt and a nonce have to be **unique**, not secret — they are
+  written beside the record in the clear — so the last resort costs a record nothing, while
+  throwing cost a teacher their whole profile. **Do not put the throw back.**
+- **`addAccount` answers `boolean` and never throws**, and never writes over a file it could not
+  read (that file could be another teacher's). `submitSignUp`'s outcome carries `saved`, and the
+  third step says `signUp.doneSaved` or `signUp.doneNotSaved` accordingly. A phone with no folder of
+  its own now reads as keeping no records rather than throwing, so a first profile can be made on
+  it. **`teacherMatching` was deliberately left strict**: a phone that cannot be read should tell a
+  teacher signing in that it could not check, not that their password is wrong.
+- **`lib/crypto.ts` is about four times faster and gives the same answers.** `compress()` is the one
+  place a block is hashed; `keyStates()`/`stretchOnce()` compress the password's two HMAC block
+  states once per PBKDF2 call instead of once per round. Locking a record went from 18.8s to 4.3s
+  under Hermes on a CI machine. The rotations are written out inline because a helper call cost
+  about half the throughput — if you tidy that back into a function, measure it.
+- **The checks in `app/create-profile-on-a-phone.test.tsx` now take everything away**: no Web
+  Crypto, no `globalThis.expo.uuidv4`, and in two of them no file the phone will read or write.
+  All seven were pushed red first, with the judge's own sentence in the failure output. **A check
+  that hands the app a source of unguessable bytes proves nothing about a phone** — that was the
+  whole of why attempt 7 passed CI and failed in a hand.
+
+Half-true, and waiting for the next requirement:
+
+- **Four seconds on a CI machine is ten to twenty on a phone**, and the JS thread is blocked for all
+  of it — the screen says "Creating your profile…" and the button is disabled, so it reads as
+  working, but it is not quick. The next halving is `markOf`: it stretches the email a second full
+  50,000 times, deliberately (see its comment), so cutting it is a security decision somebody has
+  to take on purpose. Doing the stretching off the JS thread needs a native module, which changes
+  the app's fingerprint and leaves an attempt with no test app to be walked in.
+- **The exact reason attempt 7 failed on the judge's phone was never identified**, only the three
+  seams that could cause it, all of which are now closed. If this sentence is ever read on a phone
+  again, DoneMark's try strip now carries the error's own words from `createProfile`'s catch — read
+  the strip before guessing.
+- `classroomStore()` is still in memory (requirement 5 and 7's note stands). `lib/accounts-file.ts`
+  is the shape to copy, and it now shows how to fail softly as well.

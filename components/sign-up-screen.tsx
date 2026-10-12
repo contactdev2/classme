@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { sayError, tryMode } from '../lib/donemark-try';
 import { useDirection, useWords } from '../lib/i18n';
+import type { TeacherProfile } from '../lib/local-accounts';
+import { productName } from '../lib/product';
 import { notReadyFor, nameMissingFrom, shortestPassword, submitSignUp } from '../lib/sign-up';
 import { colors, radius, shadow, space } from '../lib/theme';
 
@@ -22,8 +25,8 @@ const fieldRow = {
 } as const;
 
 /**
- * One of the two steps, along the top: the step a teacher is on, the one they have finished, and
- * the one still ahead of them, told apart the way the prototype tells them apart — a tick for
+ * One of the three steps, along the top: the step a teacher is on, the ones they have finished, and
+ * the ones still ahead of them, told apart the way the prototype tells them apart — a tick for
  * what is done, the accent for where they are, and quieter for what has not been asked yet.
  */
 function Step({ mark, words, reached }: { mark: string; words: string; reached: boolean }) {
@@ -45,9 +48,15 @@ function Step({ mark, words, reached }: { mark: string; words: string; reached: 
   );
 }
 
+/** The line from one step to the next, filled in once the step it leads to has been reached. */
+function StepLine({ reached }: { reached: boolean }) {
+  return <View style={{ minWidth: 28, borderTopWidth: 2, borderTopColor: reached ? colors.accent : colors.line }} />;
+}
+
 /**
  * Where a teacher with no profile yet makes one: their name first, then the email and password
- * they will sign in with, as the prototype lays it out (mockup 3, "Progressive Steps").
+ * they will sign in with, and then the confirmation that it is made, as the prototype lays the
+ * three steps out (mockup 3, "Step Three Confirmation").
  *
  * Nothing here reaches off the phone. The profile is locked with the password they choose and kept
  * on this phone, which is the only place it is ever kept — so this screen works with no connection
@@ -56,7 +65,7 @@ function Step({ mark, words, reached }: { mark: string; words: string; reached: 
  * What they type is held here while they are typing it and nowhere else: not in a log, not in a
  * message, and never said back out of a field that is not asking for it.
  */
-export function SignUpScreen({ onBack, onCreated }: { onBack: () => void; onCreated: (said: string) => void }) {
+export function SignUpScreen({ onBack, onDone }: { onBack: () => void; onDone: (teacher: TeacherProfile) => void }) {
   const t = useWords();
   const dir = useDirection();
   const [onAccount, setOnAccount] = useState(false);
@@ -66,10 +75,20 @@ export function SignUpScreen({ onBack, onCreated }: { onBack: () => void; onCrea
   const [shown, setShown] = useState(false);
   const [said, setSaid] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // The profile, once it is made: the third step is standing on it, and it is what the teacher is
+  // handed on to the app with. Nothing of what they typed is in it — a name and an email, no more.
+  const [made, setMade] = useState<TeacherProfile | null>(null);
+  // Whether the phone wrote that record down. A phone with no folder of its own still gets its
+  // teacher a profile; what the third step says about it is the truth either way.
+  const [kept, setKept] = useState(true);
 
-  /** The way back: to the first step from the second, and out to the login screen from the first. */
+  /**
+   * The way back: to the first step from the second, and out to the login screen from the first —
+   * and from the third, out to the login screen too. The profile is already made by then, so there
+   * is nothing behind them to go back to and correct.
+   */
   function goBack() {
-    if (!onAccount) {
+    if (made || !onAccount) {
       onBack();
       return;
     }
@@ -107,16 +126,25 @@ export function SignUpScreen({ onBack, onCreated }: { onBack: () => void; onCrea
     try {
       const outcome = await submitSignUp(details);
       if (outcome.created) {
-        // Made. Nothing more to say here: this screen is done, and the app takes over — the
-        // sentence it says next belongs to the screen they are about to log in on.
+        // Made, and said so on the step the prototype ends on: their own name and email back, where
+        // they were saved, and the way on to the screen they work on. Nothing is left announced as
+        // something gone wrong, because nothing went wrong.
+        setSaid(null);
+        setKept(outcome.saved !== false);
+        setMade(outcome.teacher ?? { email: details.email.trim(), name: details.name.trim() });
         setBusy(false);
-        onCreated(outcome.said);
         return;
       }
       setSaid(outcome.said);
-    } catch {
+    } catch (wrong) {
       // What went wrong is never said in the words of the thing that failed, and never with any of
       // what was typed in it: a teacher reads what to do next, and nothing else.
+      //
+      // Nothing in making a profile should reach here any more — every step of it answers rather
+      // than throwing, which is this requirement's whole subject. So the error's own words go to
+      // DoneMark's strip, where only a preview ever shows them and a store build never does: the
+      // next person to read this sentence on a phone gets told what caused it, instead of guessing.
+      if (tryMode()) sayError(wrong);
       setSaid(t('signUp.couldNotCreate'));
     } finally {
       setBusy(false);
@@ -133,7 +161,7 @@ export function SignUpScreen({ onBack, onCreated }: { onBack: () => void; onCrea
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingBottom: 12 }}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={onAccount ? t('signUp.backToName') : t('signUp.backToLogin')}
+            accessibilityLabel={onAccount && !made ? t('signUp.backToName') : t('signUp.backToLogin')}
             onPress={goBack}
             style={{ backgroundColor: '#DCE8FB', borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 7 }}
           >
@@ -144,7 +172,7 @@ export function SignUpScreen({ onBack, onCreated }: { onBack: () => void; onCrea
           </Text>
         </View>
 
-        {/* The two steps, and which of them a teacher is standing on. */}
+        {/* The three steps, and which of them a teacher is standing on. */}
         <View
           style={{
             flexDirection: 'row',
@@ -156,26 +184,33 @@ export function SignUpScreen({ onBack, onCreated }: { onBack: () => void; onCrea
             marginBottom: 20,
           }}
         >
-          <Step mark={onAccount ? '✓' : '1'} words={t('signUp.stepName')} reached />
-          <View style={{ minWidth: 36, borderTopWidth: 2, borderTopColor: onAccount ? colors.accent : colors.line }} />
-          <Step mark="2" words={t('signUp.stepAccount')} reached={onAccount} />
+          <Step mark={onAccount || made ? '✓' : '1'} words={t('signUp.stepName')} reached />
+          <StepLine reached={onAccount || made !== null} />
+          <Step mark={made ? '✓' : '2'} words={t('signUp.stepAccount')} reached={onAccount || made !== null} />
+          <StepLine reached={made !== null} />
+          <Step mark={made ? '✓' : '3'} words={t('signUp.stepDone')} reached={made !== null} />
         </View>
 
         {/* What this step is for, in a sentence — greeting them by the name they just gave, once
-            they have given it. */}
+            they have given it, and welcoming them by it once the profile is made. */}
         <View style={{ alignItems: 'center', marginBottom: 18 }}>
           <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: space.tight, textAlign: 'center' }}>
-            {onAccount ? t('signUp.greeting', { name: name.trim() }) : t('signUp.nameTitle')}
+            {made ? t('signUp.created') : onAccount ? t('signUp.greeting', { name: name.trim() }) : t('signUp.nameTitle')}
           </Text>
           <Text style={{ fontSize: 13, color: colors.muted, textAlign: 'center' }}>
-            {onAccount ? t('signUp.accountWords') : t('signUp.nameWords')}
+            {made
+              ? t('signUp.doneWords', { app: productName(), name: made.name ?? made.email })
+              : onAccount
+                ? t('signUp.accountWords')
+                : t('signUp.nameWords')}
           </Text>
         </View>
 
-        {/* What this step asks for. */}
+        {/* What this step asks for — or, on the third, what it has just saved. */}
         <View
           style={{
             alignSelf: 'stretch',
+            alignItems: made ? 'center' : 'stretch',
             backgroundColor: colors.card,
             borderRadius: radius.card,
             paddingHorizontal: 20,
@@ -183,7 +218,75 @@ export function SignUpScreen({ onBack, onCreated }: { onBack: () => void; onCrea
             ...shadow.card,
           }}
         >
-          {onAccount ? (
+          {made ? (
+            <>
+              {/* The tick, as the prototype draws it: the accent inside the accent quietened. */}
+              <View
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#DCE8FB',
+                  borderRadius: radius.pill,
+                  padding: 12,
+                  marginBottom: space.step,
+                }}
+              >
+                <View
+                  style={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: colors.accent,
+                    borderRadius: radius.pill,
+                    paddingHorizontal: 11,
+                    paddingVertical: 7,
+                  }}
+                >
+                  <Text style={{ fontSize: 20, fontWeight: '700', color: colors.onAccent }}>✓</Text>
+                </View>
+              </View>
+
+              {/* Who the profile belongs to, as it was saved. */}
+              <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, textAlign: 'center' }}>
+                {made.name ?? made.email}
+              </Text>
+              <Text style={{ fontSize: 13, color: colors.muted, textAlign: 'center', marginTop: 4, marginBottom: 18 }}>
+                {made.email}
+              </Text>
+
+              {/* What became of it, which is the thing a teacher most wants to be told. */}
+              <View
+                style={{
+                  alignSelf: 'stretch',
+                  backgroundColor: colors.background,
+                  borderWidth: 1,
+                  borderColor: colors.line,
+                  borderRadius: radius.field,
+                  padding: 14,
+                  marginBottom: 18,
+                }}
+              >
+                <Text style={{ fontSize: 12, color: colors.muted }}>
+                  {kept ? t('signUp.doneSaved') : t('signUp.doneNotSaved')}
+                </Text>
+              </View>
+
+              {/* The way on, to the screen a teacher actually works on. */}
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => onDone(made)}
+                style={{
+                  alignSelf: 'stretch',
+                  alignItems: 'center',
+                  backgroundColor: colors.accent,
+                  borderRadius: radius.field,
+                  paddingVertical: 13,
+                  ...shadow.accent,
+                }}
+              >
+                <Text style={{ color: colors.onAccent, fontSize: 15, fontWeight: '700' }}>{t('signUp.toDashboard')}</Text>
+              </Pressable>
+            </>
+          ) : onAccount ? (
             <>
               <View style={{ marginBottom: space.step }}>
                 <FieldLabel>{t('login.email')}</FieldLabel>
@@ -297,17 +400,20 @@ export function SignUpScreen({ onBack, onCreated }: { onBack: () => void; onCrea
           ) : null}
         </View>
 
-        {/* Where a teacher who already has a profile goes instead. */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 6, marginTop: space.step }}>
-          <Text style={{ fontSize: 13, color: colors.faint }}>{t('signUp.haveProfile')}</Text>
-          <Pressable accessibilityRole="button" onPress={onBack}>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.accent }}>{t('signUp.signIn')}</Text>
-          </Pressable>
-        </View>
+        {/* Where a teacher who already has a profile goes instead — nothing to offer somebody
+            whose profile has just been made. */}
+        {made ? null : (
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 6, marginTop: space.step }}>
+            <Text style={{ fontSize: 13, color: colors.faint }}>{t('signUp.haveProfile')}</Text>
+            <Pressable accessibilityRole="button" onPress={onBack}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: colors.accent }}>{t('signUp.signIn')}</Text>
+            </Pressable>
+          </View>
+        )}
 
         {/* What the app promises about a profile before one is made: made here, kept here, and
             needing nothing of a network — said on the first step, where there is room to read it. */}
-        {onAccount ? null : (
+        {onAccount || made ? null : (
           <View
             style={{
               alignSelf: 'stretch',

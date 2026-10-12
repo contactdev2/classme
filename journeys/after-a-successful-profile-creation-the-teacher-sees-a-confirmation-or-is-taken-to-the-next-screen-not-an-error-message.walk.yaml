@@ -1,0 +1,29 @@
+appId: com.contactdev2.classme
+name: After a successful profile creation, the teacher sees a confirmation or is taken to the next screen, not an error message.
+---
+# What a teacher sees the moment their profile is made: the third step, ticked, with their own name
+# and email on it — and the way on from it to the screen they work on.
+- tapOn: "Create a profile"
+- tapOn: "Ms. Patel"
+- inputText: "Awa Diallo"
+- hideKeyboard
+- tapOn: "Continue"
+- tapOn: "you@school.edu"
+- inputText: "awa.diallo@riversidehigh.edu"
+- hideKeyboard
+- tapOn: "At least 8 characters"
+- inputText: "Harmattan-2026-register"
+- hideKeyboard
+- tapOn:
+    text: "Create Profile"
+    index: 1
+- extendedWaitUntil:
+    visible: "Profile Created.*"
+    timeout: 120000
+- assertVisible: "Done"
+- assertVisible: "Awa Diallo"
+- assertNotVisible: ".*could not be created.*"
+- tapOn: "Go to Dashboard"
+- extendedWaitUntil:
+    visible: "Awa Diallo.*"
+    timeout: 30000
