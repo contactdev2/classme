@@ -113,12 +113,42 @@ describe('the arithmetic a locked record is built from', () => {
       // Long runs come out whole, past the 32 bytes one fold gives.
       expect(unguessableBytes(48)).toHaveLength(48);
 
-      // A phone offering neither says so, rather than handing back bytes a guesser could predict.
-      delete (globalThis as { expo?: unknown }).expo;
-      expect(() => unguessableBytes(16)).toThrow();
+      // A platform that offers the function and then refuses to answer it offers nothing, and is
+      // passed over for the next source rather than taken at its word.
+      (globalThis as { expo?: { uuidv4(): string } }).expo = {
+        uuidv4: () => {
+          throw new Error('this platform will not answer that');
+        },
+      };
+      expect(unguessableBytes(16)).toHaveLength(16);
     } finally {
       Object.defineProperty(globalThis, 'crypto', { value: browsers, configurable: true, writable: true });
       delete (globalThis as { expo?: unknown }).expo;
+    }
+  });
+  it('on a device that offers neither, they are gathered rather than refused', () => {
+    // The least a device can offer: no Web Crypto and no platform UUID. A salt and a nonce have to
+    // be unique, not secret — what keeps a record shut is the password and its fifty thousand
+    // stretches — so bytes are still answered, and a teacher still gets a profile. Refusing here is
+    // what put "Your profile could not be created just now." in front of a teacher on a phone.
+    const browsers = (globalThis as { crypto?: Crypto }).crypto;
+    Object.defineProperty(globalThis, 'crypto', { value: undefined, configurable: true, writable: true });
+    delete (globalThis as { expo?: unknown }).expo;
+    try {
+      const asked = Array.from({ length: 200 }, () => hex(unguessableBytes(16)));
+      for (const bytes of asked) expect(bytes).toHaveLength(32);
+
+      // No two alike, two hundred times over: that is the whole of what a salt and a nonce are for.
+      expect(new Set(asked).size).toBe(asked.length);
+
+      // Long runs come out whole here too, past the 32 bytes one fold gives.
+      expect(unguessableBytes(48)).toHaveLength(48);
+
+      // And a record locks and opens with them, which is the thing a teacher is waiting for.
+      const key = pbkdf2Sha256(utf8('Spring-2026-attendance'), unguessableBytes(16), 1_000, 32);
+      expect(key).toHaveLength(32);
+    } finally {
+      Object.defineProperty(globalThis, 'crypto', { value: browsers, configurable: true, writable: true });
     }
   });
 });

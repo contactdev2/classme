@@ -59,6 +59,7 @@ export const french: Words = {
   'signUp.created': 'Profil créé',
   'signUp.doneWords': 'Votre compte est prêt. Bienvenue sur {app}, {name}.',
   'signUp.doneSaved': 'Vos informations sont enregistrées et seront là à la prochaine ouverture de l’application.',
+  'signUp.doneNotSaved': "Votre profil est prêt sur ce téléphone. Ce téléphone n'a pas pu l'enregistrer : vous devrez peut-être le recréer à la prochaine ouverture de l'application.",
   'signUp.toDashboard': 'Aller au tableau de bord',
   'signUp.couldNotCreate': "Votre profil n'a pas pu être créé pour le moment. Réessayez.",
 

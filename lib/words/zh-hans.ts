@@ -58,6 +58,7 @@ export const simplifiedChinese: Words = {
   'signUp.created': '个人资料已创建',
   'signUp.doneWords': '您的账户已就绪。欢迎使用 {app}，{name}。',
   'signUp.doneSaved': '您填写的信息已保存，下次打开应用时仍在。',
+  'signUp.doneNotSaved': '您的个人资料已在本机就绪。本机无法将其写入存储，重新打开应用后可能需要再次创建。',
   'signUp.toDashboard': '前往主页',
   'signUp.couldNotCreate': '暂时无法创建您的个人资料，请重试。',
 

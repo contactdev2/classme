@@ -58,6 +58,7 @@ export const japanese: Words = {
   'signUp.created': 'プロフィールを作成しました',
   'signUp.doneWords': 'アカウントの準備ができました。{app}へようこそ、{name}さん。',
   'signUp.doneSaved': '入力内容は保存されました。次にアプリを開いたときにも残っています。',
+  'signUp.doneNotSaved': 'このスマートフォンでプロフィールの準備ができました。本体に保存できなかったため、アプリを開き直すともう一度作成が必要になる場合があります。',
   'signUp.toDashboard': 'ホームへ進む',
   'signUp.couldNotCreate': 'ただいまプロフィールを作成できませんでした。もう一度お試しください。',
 

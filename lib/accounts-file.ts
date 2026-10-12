@@ -39,24 +39,41 @@ export function textFileWith(text: string | null = null): KeptText {
  *
  * It is asked for when a record is actually being read or written, not when this module loads, so a
  * check that hands over text of its own never reaches a native module it has no phone for.
+ *
+ * Answers null where this phone offers no folder at all — the native module did not come up, or the
+ * platform names no documents directory. **Nothing is kept on such a phone, so nothing can be lost
+ * there either**: a teacher holding one reads no records, and a teacher on one can still make their
+ * first profile, which is what the throw this replaced took away from them.
  */
+async function accountsFileOnThisPhone(): Promise<{ phone: typeof import('expo-file-system'); at: string } | null> {
+  let phone: typeof import('expo-file-system');
+  try {
+    phone = await import('expo-file-system');
+  } catch {
+    return null;
+  }
+  if (!phone?.documentDirectory) return null;
+  return { phone, at: `${phone.documentDirectory}${accountsFileName}` };
+}
+
+/** The text of that file, as something the records can be kept in. */
 export function accountsTextOnThisPhone(): KeptText {
-  const file = async () => {
-    const phone = await import('expo-file-system');
-    if (!phone.documentDirectory) throw new Error('this device offers no folder of its own to keep a record in');
-    return { phone, at: `${phone.documentDirectory}${accountsFileName}` };
-  };
   return {
     async read() {
-      const { phone, at } = await file();
-      const there = await phone.getInfoAsync(at);
+      const file = await accountsFileOnThisPhone();
+      // No folder at all is not a fault, and not a record either: it is a phone keeping nothing.
+      if (!file) return null;
+      const there = await file.phone.getInfoAsync(file.at);
       // Nothing written yet is not a fault: it is a phone nobody has signed up on.
       if (!there.exists) return null;
-      return phone.readAsStringAsync(at);
+      return file.phone.readAsStringAsync(file.at);
     },
     async write(text) {
-      const { phone, at } = await file();
-      await phone.writeAsStringAsync(at, text);
+      const file = await accountsFileOnThisPhone();
+      // Said out loud rather than passed over: whoever asked for this to be written down has to
+      // know it was not, so they can tell a teacher the truth about it.
+      if (!file) throw new Error('this device offers no folder of its own to keep a record in');
+      await file.phone.writeAsStringAsync(file.at, text);
     },
   };
 }

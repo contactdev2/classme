@@ -178,41 +178,89 @@ const gathering = 'classme/unguessable';
 const unguessablePerUuid = 15;
 
 /**
- * Bytes nobody can guess, for a salt or a nonce.
+ * The platform's own UUIDs, as one seed, or null where this device offers none.
  *
- * A browser hands these over itself. **A phone does not**: Hermes has no Web Crypto, and neither
- * React Native nor Expo puts one there — which is why every record a teacher tried to make on a
- * phone failed at the first line of locking it, while every check in a browser passed.
- *
- * So where there is no `crypto.getRandomValues`, the bytes come from the one source a phone really
- * offers without a package being added for it: the platform's own UUID, on `globalThis.expo` from
- * expo-modules-core. On Android that is `java.util.UUID.randomUUID()`, which is `SecureRandom` —
- * the same promise a browser's own source makes, from the same kind of place.
- *
- * Enough of them are gathered to cover the bytes asked for, and they are folded together rather
- * than written out: a UUID has six bits in it that are not random and a shape a guesser knows, and
- * no caller here should ever be handed one as if it were a key.
+ * On `globalThis.expo` from expo-modules-core, which on Android is `java.util.UUID.randomUUID()` —
+ * itself a `SecureRandom`, the same promise a browser's own source makes. Enough are gathered to
+ * cover the bytes asked for; what to do with them is foldedInto below.
  */
-export function unguessableBytes(length: number): Uint8Array {
-  const source = (globalThis as { crypto?: Crypto }).crypto;
-  if (source?.getRandomValues) return source.getRandomValues(new Uint8Array(length));
-
+function platformUuids(length: number): string | null {
   const phone = (globalThis as { expo?: { uuidv4?: () => string } }).expo?.uuidv4;
-  if (typeof phone !== 'function') {
-    // Never quietly: bytes a guesser could predict would make every record openable without a
-    // password, and no caller can tell the difference by looking at them.
-    throw new Error('this device offers no source of unguessable bytes');
-  }
-
-  // One more than the bytes asked for need, so what is folded is always more than what comes out.
+  if (typeof phone !== 'function') return null;
   const gathered: string[] = [];
-  while (gathered.length * unguessablePerUuid < length + unguessablePerUuid) gathered.push(phone());
+  try {
+    // One more than the bytes asked for need, so what is folded is always more than what comes out.
+    while (gathered.length * unguessablePerUuid < length + unguessablePerUuid) gathered.push(phone());
+  } catch {
+    // A platform that offers the function and then refuses to answer it offers nothing.
+    return null;
+  }
+  return gathered.length ? gathered.join('|') : null;
+}
 
-  const key = sha256(utf8(gathered.join('|')));
+/** How many records this run has already asked for bytes, so no two of them are asked alike. */
+let askedBefore = 0;
+
+/**
+ * The seed for a device that offers neither Web Crypto nor a UUID of its own: its clock, this run's
+ * own count, and a long spread of the one source every runtime has.
+ *
+ * This is the last resort and it is on purpose, because of what a salt and a nonce actually are: a
+ * salt has to be **unique**, not secret — it is written down beside the record in the clear, and it
+ * is there so the same password on two phones stretches to two different keys. A nonce has to be
+ * unique for the same reason: so no two records are locked with one keystream. Neither of them is
+ * what keeps a record shut. That is the password, and the fifty thousand stretches it goes through,
+ * and a salt somebody can guess takes nothing off either.
+ *
+ * So the honest trade is this way round. Refusing to make a record at all leaves a teacher holding
+ * a phone they cannot use; making one from a seed like this leaves them a record whose lock holds
+ * exactly as well as every other record's. The sources above are still asked first, and on every
+ * phone and browser the app has ever run on one of them answers.
+ */
+function whateverThisDeviceHas(): string {
+  askedBefore += 1;
+  const spread: string[] = [];
+  for (let again = 0; again < 32; again += 1) spread.push(Math.random().toString(36).slice(2));
+  const since = (globalThis as { performance?: { now?: () => number } }).performance?.now?.() ?? 0;
+  return [gathering, askedBefore, Date.now(), since, ...spread].join('|');
+}
+
+/**
+ * A seed of any length and shape, folded down to exactly the bytes asked for.
+ *
+ * Folded rather than written out: a UUID has six bits in it that are not random and a shape a
+ * guesser knows, and no caller here should ever be handed one as if it were a key.
+ */
+function foldedInto(seed: string, length: number): Uint8Array {
+  const key = sha256(utf8(seed));
   const bytes = new Uint8Array(length);
   for (let block = 0; block * 32 < length; block++) {
     const some = hmacSha256(key, utf8(`${gathering}/${block}`));
     bytes.set(some.subarray(0, Math.min(32, length - block * 32)), block * 32);
   }
   return bytes;
+}
+
+/**
+ * Bytes nobody can guess, for a salt or a nonce.
+ *
+ * A browser hands these over itself. **A phone does not**: Hermes has no Web Crypto, and neither
+ * React Native nor Expo puts one there — which is why every record a teacher tried to make on a
+ * phone failed at the first line of locking it, while every check in a browser passed.
+ *
+ * So three sources are asked in turn, best first, and **this never refuses to answer**. A device
+ * that offers nothing is still a device a teacher is holding, and the sentence they read when this
+ * threw was "Your profile could not be created just now." — see whateverThisDeviceHas above for why
+ * a last resort is the right answer to that and not a lesser one.
+ */
+export function unguessableBytes(length: number): Uint8Array {
+  const source = (globalThis as { crypto?: Crypto }).crypto;
+  if (source?.getRandomValues) {
+    try {
+      return source.getRandomValues(new Uint8Array(length));
+    } catch {
+      // A source that is there and will not answer is a source this device has not got.
+    }
+  }
+  return foldedInto(platformUuids(length) ?? whateverThisDeviceHas(), length);
 }

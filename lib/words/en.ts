@@ -70,6 +70,7 @@ export const english = {
   'signUp.created': 'Profile Created',
   'signUp.doneWords': 'Your account is ready. Welcome to {app}, {name}.',
   'signUp.doneSaved': 'Your details have been saved and will be available when you reopen the app.',
+  'signUp.doneNotSaved': 'Your profile is ready on this phone. This phone could not write it down, so you may have to make it again when you reopen the app.',
   'signUp.toDashboard': 'Go to Dashboard',
   'signUp.couldNotCreate': 'Your profile could not be created just now. Try again.',
 

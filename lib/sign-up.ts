@@ -19,6 +19,12 @@ export type SignUpOutcome = {
   said: string;
   /** The profile that was made, when one was: what is now locked in their own record, and no more. */
   teacher?: TeacherProfile;
+  /**
+   * Whether the phone really wrote the record down, when a profile was made. A phone with no folder
+   * of its own, or no room left in it, still gets its teacher a profile to work with today — but it
+   * will not be there tomorrow, and the screen has to be able to say so rather than promise it.
+   */
+  saved?: boolean;
 };
 
 /**
@@ -64,8 +70,13 @@ export function notReadyFor(typed: NewProfile): string | null {
  * this phone beside whatever is already here.
  *
  * Nothing is sent anywhere, nothing is asked of a network, and the answer is the same whether the
- * phone has a connection or not. An email some record here already belongs to is refused and said
- * out loud, because a teacher who cannot tell which of two profiles is theirs has lost both — and
+ * phone has a connection or not. A phone that will not keep the record still gets its teacher the
+ * profile — `saved` says it was not written down, and the screen says so in words. Making one is
+ * the phone's own arithmetic and the phone's own folder, so there is nothing here that can fail for
+ * a reason a teacher could do anything about.
+ *
+ * An email some record here already belongs to is refused and said out loud, because a teacher who
+ * cannot tell which of two profiles is theirs has lost both — and
  * because the refusal is about an address they have just typed themselves, so it tells them nothing
  * about this phone they did not already know.
  */
@@ -77,6 +88,6 @@ export async function submitSignUp(details: NewProfile): Promise<SignUpOutcome> 
   if (await emailAlreadyUsed(ready.email)) return { created: false, said: say('signUp.emailTaken') };
 
   const teacher: TeacherProfile = { email: ready.email, name: ready.name };
-  await addAccount(lockAccount({ email: ready.email, password: ready.password }, teacher));
-  return { created: true, said: say('signUp.created'), teacher };
+  const saved = await addAccount(lockAccount({ email: ready.email, password: ready.password }, teacher));
+  return { created: true, said: say('signUp.created'), teacher, saved };
 }

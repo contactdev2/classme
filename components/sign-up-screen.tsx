@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { sayError, tryMode } from '../lib/donemark-try';
 import { useDirection, useWords } from '../lib/i18n';
 import type { TeacherProfile } from '../lib/local-accounts';
 import { productName } from '../lib/product';
@@ -77,6 +78,9 @@ export function SignUpScreen({ onBack, onDone }: { onBack: () => void; onDone: (
   // The profile, once it is made: the third step is standing on it, and it is what the teacher is
   // handed on to the app with. Nothing of what they typed is in it — a name and an email, no more.
   const [made, setMade] = useState<TeacherProfile | null>(null);
+  // Whether the phone wrote that record down. A phone with no folder of its own still gets its
+  // teacher a profile; what the third step says about it is the truth either way.
+  const [kept, setKept] = useState(true);
 
   /**
    * The way back: to the first step from the second, and out to the login screen from the first —
@@ -126,14 +130,21 @@ export function SignUpScreen({ onBack, onDone }: { onBack: () => void; onDone: (
         // they were saved, and the way on to the screen they work on. Nothing is left announced as
         // something gone wrong, because nothing went wrong.
         setSaid(null);
+        setKept(outcome.saved !== false);
         setMade(outcome.teacher ?? { email: details.email.trim(), name: details.name.trim() });
         setBusy(false);
         return;
       }
       setSaid(outcome.said);
-    } catch {
+    } catch (wrong) {
       // What went wrong is never said in the words of the thing that failed, and never with any of
       // what was typed in it: a teacher reads what to do next, and nothing else.
+      //
+      // Nothing in making a profile should reach here any more — every step of it answers rather
+      // than throwing, which is this requirement's whole subject. So the error's own words go to
+      // DoneMark's strip, where only a preview ever shows them and a store build never does: the
+      // next person to read this sentence on a phone gets told what caused it, instead of guessing.
+      if (tryMode()) sayError(wrong);
       setSaid(t('signUp.couldNotCreate'));
     } finally {
       setBusy(false);
@@ -254,7 +265,9 @@ export function SignUpScreen({ onBack, onDone }: { onBack: () => void; onDone: (
                   marginBottom: 18,
                 }}
               >
-                <Text style={{ fontSize: 12, color: colors.muted }}>{t('signUp.doneSaved')}</Text>
+                <Text style={{ fontSize: 12, color: colors.muted }}>
+                  {kept ? t('signUp.doneSaved') : t('signUp.doneNotSaved')}
+                </Text>
               </View>
 
               {/* The way on, to the screen a teacher actually works on. */}
