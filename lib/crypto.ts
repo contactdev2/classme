@@ -19,8 +19,6 @@ const roundConstants = new Uint32Array([
 /** SHA-256's starting state: the first 32 bits of the square roots of the first eight primes. */
 const startingState = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
 
-const rotate = (word: number, by: number) => ((word >>> by) | (word << (32 - by))) >>> 0;
-
 /** The bytes of a string, as UTF-8. Written out, so no global has to be there for it. */
 export function utf8(text: string): Uint8Array {
   const bytes: number[] = [];
@@ -63,55 +61,121 @@ export function bytesFromHex(text: string): Uint8Array {
   return bytes;
 }
 
-/** SHA-256 of these bytes. */
-export function sha256(bytes: Uint8Array): Uint8Array {
-  const state = [...startingState];
+// The message schedule, kept here rather than made for every block. Nothing in this file yields
+// part way through a compression, so there is only ever one in flight.
+const schedule = new Uint32Array(64);
 
-  // The message, with the one bit and the bit count the standard ends it with.
-  const padded = new Uint8Array((Math.floor((bytes.length + 8) / 64) + 1) * 64);
-  padded.set(bytes);
-  padded[bytes.length] = 0x80;
-  const reading = new DataView(padded.buffer);
-  const bits = bytes.length * 8;
-  reading.setUint32(padded.length - 8, Math.floor(bits / 2 ** 32));
-  reading.setUint32(padded.length - 4, bits >>> 0);
-
-  const schedule = new Uint32Array(64);
-  for (let block = 0; block < padded.length; block += 64) {
-    for (let at = 0; at < 16; at++) schedule[at] = reading.getUint32(block + at * 4);
-    for (let at = 16; at < 64; at++) {
-      const before = schedule[at - 15];
-      const near = schedule[at - 2];
-      const spread = (rotate(before, 7) ^ rotate(before, 18) ^ (before >>> 3)) >>> 0;
-      const mixed = (rotate(near, 17) ^ rotate(near, 19) ^ (near >>> 10)) >>> 0;
-      schedule[at] = (schedule[at - 16] + spread + schedule[at - 7] + mixed) >>> 0;
-    }
-
-    let [a, b, c, d, e, f, g, h] = state;
-    for (let at = 0; at < 64; at++) {
-      const sigmaOne = (rotate(e, 6) ^ rotate(e, 11) ^ rotate(e, 25)) >>> 0;
-      const chosen = ((e & f) ^ (~e & g)) >>> 0;
-      const one = (h + sigmaOne + chosen + roundConstants[at] + schedule[at]) >>> 0;
-      const sigmaZero = (rotate(a, 2) ^ rotate(a, 13) ^ rotate(a, 22)) >>> 0;
-      const most = ((a & b) ^ (a & c) ^ (b & c)) >>> 0;
-      const two = (sigmaZero + most) >>> 0;
-      h = g;
-      g = f;
-      f = e;
-      e = (d + one) >>> 0;
-      d = c;
-      c = b;
-      b = a;
-      a = (one + two) >>> 0;
-    }
-
-    for (const [at, word] of [a, b, c, d, e, f, g, h].entries()) state[at] = (state[at] + word) >>> 0;
+/**
+ * One 64-byte block of a message, compressed into the state before it.
+ *
+ * The whole cost of SHA-256 is this function, and the whole cost of signing in or making a profile
+ * is this function called a few hundred thousand times — so it takes its block as sixteen words
+ * already read, keeps its state in place, and allocates nothing. Measured against the engine the
+ * phone actually runs (Hermes), padding and allocating a buffer for each block cost about three
+ * times this, and a `rotate(word, by)` helper called six times a round cost about twice it again —
+ * so the rotations are written out where they are read, however much that reads like a machine.
+ * The answers are the same answers: see lib/crypto.test.ts, which holds this to FIPS 180-4's
+ * published digests and to Node's own at every length a block boundary falls on.
+ */
+function compress(state: Uint32Array, block: Uint32Array): void {
+  for (let at = 0; at < 16; at++) schedule[at] = block[at];
+  for (let at = 16; at < 64; at++) {
+    const before = schedule[at - 15];
+    const near = schedule[at - 2];
+    const spread = (((before >>> 7) | (before << 25)) ^ ((before >>> 18) | (before << 14)) ^ (before >>> 3)) >>> 0;
+    const mixed = (((near >>> 17) | (near << 15)) ^ ((near >>> 19) | (near << 13)) ^ (near >>> 10)) >>> 0;
+    schedule[at] = (schedule[at - 16] + spread + schedule[at - 7] + mixed) >>> 0;
   }
 
+  let a = state[0];
+  let b = state[1];
+  let c = state[2];
+  let d = state[3];
+  let e = state[4];
+  let f = state[5];
+  let g = state[6];
+  let h = state[7];
+  for (let at = 0; at < 64; at++) {
+    const sigmaOne = (((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7))) >>> 0;
+    const chosen = ((e & f) ^ (~e & g)) >>> 0;
+    const one = (h + sigmaOne + chosen + roundConstants[at] + schedule[at]) >>> 0;
+    const sigmaZero = (((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10))) >>> 0;
+    const most = ((a & b) ^ (a & c) ^ (b & c)) >>> 0;
+    const two = (sigmaZero + most) >>> 0;
+    h = g;
+    g = f;
+    f = e;
+    e = (d + one) >>> 0;
+    d = c;
+    c = b;
+    b = a;
+    a = (one + two) >>> 0;
+  }
+
+  state[0] = (state[0] + a) >>> 0;
+  state[1] = (state[1] + b) >>> 0;
+  state[2] = (state[2] + c) >>> 0;
+  state[3] = (state[3] + d) >>> 0;
+  state[4] = (state[4] + e) >>> 0;
+  state[5] = (state[5] + f) >>> 0;
+  state[6] = (state[6] + g) >>> 0;
+  state[7] = (state[7] + h) >>> 0;
+}
+
+/** Four bytes of a message, read as the one big-endian word a block holds them as. */
+const wordAt = (bytes: Uint8Array, at: number) =>
+  ((bytes[at] << 24) | (bytes[at + 1] << 16) | (bytes[at + 2] << 8) | bytes[at + 3]) >>> 0;
+
+/** A word written back out as the four big-endian bytes a digest is read in. */
+function putWord(bytes: Uint8Array, at: number, word: number): void {
+  bytes[at] = (word >>> 24) & 0xff;
+  bytes[at + 1] = (word >>> 16) & 0xff;
+  bytes[at + 2] = (word >>> 8) & 0xff;
+  bytes[at + 3] = word & 0xff;
+}
+
+/**
+ * Carries on a hash that has already taken in `before` bytes, over these bytes and then the one bit
+ * and the bit count the standard ends a message with, leaving the answer in `state`.
+ *
+ * `before` is what lets an HMAC keep its key block: the state after compressing a key's padded
+ * block is a hash that has taken in 64 bytes, and this finishes it over the message.
+ */
+function digestOver(state: Uint32Array, bytes: Uint8Array, before: number): void {
+  const block = new Uint32Array(16);
+  let at = 0;
+  for (; at + 64 <= bytes.length; at += 64) {
+    for (let word = 0; word < 16; word++) block[word] = wordAt(bytes, at + word * 4);
+    compress(state, block);
+  }
+
+  // The tail, with the 0x80 bit and the length: one more block, or two where the tail leaves no
+  // room for the eight bytes the length takes.
+  const tail = bytes.length - at;
+  const last = new Uint8Array(tail < 56 ? 64 : 128);
+  last.set(bytes.subarray(at));
+  last[tail] = 0x80;
+  const bits = (before + bytes.length) * 8;
+  putWord(last, last.length - 8, Math.floor(bits / 2 ** 32));
+  putWord(last, last.length - 4, bits >>> 0);
+  for (let over = 0; over < last.length; over += 64) {
+    for (let word = 0; word < 16; word++) block[word] = wordAt(last, over + word * 4);
+    compress(state, block);
+  }
+}
+
+/** A state, read out as the 32 bytes of digest it is. */
+function digestFrom(state: Uint32Array): Uint8Array {
   const digest = new Uint8Array(32);
-  const writing = new DataView(digest.buffer);
-  for (const [at, word] of state.entries()) writing.setUint32(at * 4, word);
+  for (let word = 0; word < 8; word++) putWord(digest, word * 4, state[word]);
   return digest;
+}
+
+/** SHA-256 of these bytes. */
+export function sha256(bytes: Uint8Array): Uint8Array {
+  const state = Uint32Array.from(startingState);
+  digestOver(state, bytes, 0);
+  return digestFrom(state);
 }
 
 const blockSize = 64;
@@ -133,28 +197,112 @@ export function hmacSha256(key: Uint8Array, message: Uint8Array): Uint8Array {
 }
 
 /**
+ * The two states an HMAC key becomes: the hash after it has taken in the key's inner block, and the
+ * hash after it has taken in the key's outer one.
+ *
+ * Computed once and then reused for every round, which is the whole trick below: the key of a
+ * PBKDF2 round is the password, and the password does not change between one round and the next, so
+ * re-padding and re-hashing it fifty thousand times over was fifty thousand times wasted.
+ */
+function keyStates(key: Uint8Array): { inner: Uint32Array; outer: Uint32Array } {
+  const padded = new Uint8Array(blockSize);
+  padded.set(key.length > blockSize ? sha256(key) : key);
+
+  const innerBlock = new Uint32Array(16);
+  const outerBlock = new Uint32Array(16);
+  for (let word = 0; word < 16; word++) {
+    let one = 0;
+    let other = 0;
+    for (let byte = 0; byte < 4; byte++) {
+      one = ((one << 8) | ((padded[word * 4 + byte] ^ 0x36) & 0xff)) >>> 0;
+      other = ((other << 8) | ((padded[word * 4 + byte] ^ 0x5c) & 0xff)) >>> 0;
+    }
+    innerBlock[word] = one;
+    outerBlock[word] = other;
+  }
+
+  const inner = Uint32Array.from(startingState);
+  compress(inner, innerBlock);
+  const outer = Uint32Array.from(startingState);
+  compress(outer, outerBlock);
+  return { inner, outer };
+}
+
+// The block one round of stretching is compressed from, kept here rather than made each time.
+const roundBlock = new Uint32Array(16);
+
+/**
+ * The outer half of an HMAC: a state holding the inner digest, turned into the HMAC itself.
+ *
+ * A 32-byte digest under a 64-byte key block is 96 bytes, which is exactly one block once the
+ * padding and the bit count are in it — so this is one compression and no buffer.
+ */
+function finishOuter(key: { outer: Uint32Array }, state: Uint32Array): void {
+  for (let word = 0; word < 8; word++) roundBlock[word] = state[word];
+  roundBlock[8] = 0x80000000;
+  for (let word = 9; word < 15; word++) roundBlock[word] = 0;
+  // 96 bytes in: the key's own block, and the 32 the digest is.
+  roundBlock[15] = (blockSize + 32) * 8;
+  state.set(key.outer);
+  compress(state, roundBlock);
+}
+
+/**
+ * One round of stretching: HMAC-SHA256 of a 32-byte message under a key already in its two states,
+ * written back over `into` — which the caller is welcome to pass as the message as well.
+ *
+ * Two compressions and nothing else: no buffer, no digest read out and read back in, and no padding
+ * worked out again. That is the whole of what a round of PBKDF2 has to be.
+ */
+function stretchOnce(key: { inner: Uint32Array; outer: Uint32Array }, message: Uint32Array, into: Uint32Array): void {
+  for (let word = 0; word < 8; word++) roundBlock[word] = message[word];
+  roundBlock[8] = 0x80000000;
+  for (let word = 9; word < 15; word++) roundBlock[word] = 0;
+  roundBlock[15] = (blockSize + 32) * 8;
+  into.set(key.inner);
+  compress(into, roundBlock);
+  finishOuter(key, into);
+}
+
+/**
  * PBKDF2-HMAC-SHA256: a password stretched into `length` bytes of key, `iterations` times over.
  * The stretching is the point — it costs whoever took the phone the same time per guess it costs
  * the teacher once, which is a price only one of them can afford.
+ *
+ * Which is exactly why the teacher's once has to be bearable. Measured on the engine a phone really
+ * runs, a round used to be four block compressions and three fresh buffers; it is now two
+ * compressions and nothing allocated, so a teacher waits about a sixth of what they waited before
+ * for the same number of rounds and the same answers. RFC 8018's published vectors are in
+ * lib/crypto.test.ts and have not moved.
  */
 export function pbkdf2Sha256(password: Uint8Array, salt: Uint8Array, iterations: number, length: number): Uint8Array {
   if (iterations < 1) throw new Error('a password must be stretched at least once');
-  const key = new Uint8Array(length);
+  const key = keyStates(password);
+  const stretched = new Uint8Array(length);
   const counted = new Uint8Array(salt.length + 4);
   counted.set(salt);
-  const counter = new DataView(counted.buffer);
 
+  const round = new Uint32Array(8);
+  const folded = new Uint32Array(8);
+  const read = new Uint8Array(32);
   for (let block = 0; block * 32 < length; block++) {
-    counter.setUint32(salt.length, block + 1);
-    let round = hmacSha256(password, counted);
-    const folded = round.slice();
+    // The first round is over the salt and this block's number, which is of no fixed length; every
+    // round after it is over the 32 bytes the round before it came to.
+    putWord(counted, salt.length, block + 1);
+    round.set(key.inner);
+    digestOver(round, counted, blockSize);
+    finishOuter(key, round);
+
+    folded.set(round);
     for (let again = 1; again < iterations; again++) {
-      round = hmacSha256(password, round);
-      for (let at = 0; at < folded.length; at++) folded[at] ^= round[at];
+      stretchOnce(key, round, round);
+      for (let word = 0; word < 8; word++) folded[word] = (folded[word] ^ round[word]) >>> 0;
     }
-    key.set(folded.subarray(0, Math.min(32, length - block * 32)), block * 32);
+
+    for (let word = 0; word < 8; word++) putWord(read, word * 4, folded[word]);
+    stretched.set(read.subarray(0, Math.min(32, length - block * 32)), block * 32);
   }
-  return key;
+  return stretched;
 }
 
 /**

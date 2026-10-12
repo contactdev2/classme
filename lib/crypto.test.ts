@@ -63,6 +63,17 @@ describe('the arithmetic a locked record is built from', () => {
         pbkdf2Sync('Spring-2026', 'a-salt', iterations, length, 'sha256').toString('hex'),
       );
     }
+
+    // And passwords and salts either side of the block the password is folded into: a password
+    // longer than 64 bytes is hashed down to one first, which is its own path through the stretching.
+    const passwords = ['', 'x', 'Spring-2026-attendance', 'p'.repeat(63), 'p'.repeat(64), 'p'.repeat(65), 'p'.repeat(200)];
+    for (const password of passwords) {
+      for (const salt of ['', 's'.repeat(55), 's'.repeat(60), 's'.repeat(64)]) {
+        expect(asHex(pbkdf2Sha256(utf8(password), utf8(salt), 37, 48)), `${password.length}/${salt.length}`).toBe(
+          pbkdf2Sync(password, salt, 37, 48, 'sha256').toString('hex'),
+        );
+      }
+    }
   });
 
   it('text, bytes and hex all come back as they went in', () => {
