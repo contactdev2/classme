@@ -2,8 +2,10 @@ import { useEffect } from 'react';
 import { Slot, type ErrorBoundaryProps } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { DonemarkTryStrip } from '../components/donemark-try-strip';
+import { accountsOnThisPhone } from '../lib/accounts-file';
 import { installDonemarkTry, sayError, tryMode } from '../lib/donemark-try';
 import { useDirection, useWords } from '../lib/i18n';
+import { keepAccountsIn } from '../lib/local-accounts';
 import { mirrorWithLanguage } from '../lib/mirror';
 import { askThisPhone, thisPhoneItself } from '../lib/phone-language';
 
@@ -18,6 +20,11 @@ mirrorWithLanguage();
 // at the app's root, because this is the one file only a real app loads: a check hands over a phone
 // of its own instead, and so never reaches a module that can only answer on a real phone.
 askThisPhone(thisPhoneItself);
+
+// The teachers' own records, in a file in this app's own documents folder, so a profile made this
+// morning is still there tomorrow. Installed here for the same reason the phone's language is: this
+// is the one file only a real app loads, and a check hands over records of its own instead.
+keepAccountsIn(accountsOnThisPhone());
 
 /** A screen that failed to draw: its words while the app is tried; a plain sentence for everybody else. */
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {

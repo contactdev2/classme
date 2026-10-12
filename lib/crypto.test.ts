@@ -1,4 +1,4 @@
-import { createHash, createHmac, pbkdf2Sync } from 'node:crypto';
+import { createHash, createHmac, pbkdf2Sync, randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { bytesFromHex, hex, hmacSha256, pbkdf2Sha256, sameBytes, sha256, textFromUtf8, unguessableBytes, utf8 } from './crypto';
 
@@ -83,5 +83,42 @@ describe('the arithmetic a locked record is built from', () => {
   it('unguessable bytes are asked of the device, and no two are alike', () => {
     expect(unguessableBytes(16)).toHaveLength(16);
     expect(hex(unguessableBytes(16))).not.toBe(hex(unguessableBytes(16)));
+  });
+
+  it("on a phone, which has no Web Crypto, they are asked of the platform's own UUIDs", () => {
+    // What a phone really offers: no crypto global at all, and expo-modules-core's native UUID,
+    // which on Android is java.util.UUID.randomUUID() and so SecureRandom. Node's is the stand-in.
+    const browsers = (globalThis as { crypto?: Crypto }).crypto;
+    const asked: string[] = [];
+    Object.defineProperty(globalThis, 'crypto', { value: undefined, configurable: true, writable: true });
+    (globalThis as { expo?: { uuidv4(): string } }).expo = {
+      uuidv4: () => {
+        const made = randomUUID();
+        asked.push(made);
+        return made;
+      },
+    };
+    try {
+      const salt = unguessableBytes(16);
+      const nonce = unguessableBytes(16);
+
+      // Bytes of the length asked for, never the same twice, and the phone really was asked.
+      expect(salt).toHaveLength(16);
+      expect(hex(salt)).not.toBe(hex(nonce));
+      expect(asked.length).toBeGreaterThanOrEqual(4);
+
+      // And what comes back is not a UUID written out: a UUID has bits in it a guesser knows.
+      for (const uuid of asked) expect(hex(salt) + hex(nonce)).not.toContain(uuid.replace(/-/g, ''));
+
+      // Long runs come out whole, past the 32 bytes one fold gives.
+      expect(unguessableBytes(48)).toHaveLength(48);
+
+      // A phone offering neither says so, rather than handing back bytes a guesser could predict.
+      delete (globalThis as { expo?: unknown }).expo;
+      expect(() => unguessableBytes(16)).toThrow();
+    } finally {
+      Object.defineProperty(globalThis, 'crypto', { value: browsers, configurable: true, writable: true });
+      delete (globalThis as { expo?: unknown }).expo;
+    }
   });
 });

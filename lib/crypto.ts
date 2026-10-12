@@ -168,13 +168,51 @@ export function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
   return differences === 0;
 }
 
-/** Bytes nobody can guess, for a salt or a nonce. */
+/** What the bytes gathered off a phone are folded together under, so they are nobody else's keys. */
+const gathering = 'classme/unguessable';
+
+/**
+ * How many bits of a UUID are the platform's own randomness: a version 4 UUID is 128 bits with six
+ * of them spoken for by the version and the variant. Counted down to whole bytes, to be safe.
+ */
+const unguessablePerUuid = 15;
+
+/**
+ * Bytes nobody can guess, for a salt or a nonce.
+ *
+ * A browser hands these over itself. **A phone does not**: Hermes has no Web Crypto, and neither
+ * React Native nor Expo puts one there — which is why every record a teacher tried to make on a
+ * phone failed at the first line of locking it, while every check in a browser passed.
+ *
+ * So where there is no `crypto.getRandomValues`, the bytes come from the one source a phone really
+ * offers without a package being added for it: the platform's own UUID, on `globalThis.expo` from
+ * expo-modules-core. On Android that is `java.util.UUID.randomUUID()`, which is `SecureRandom` —
+ * the same promise a browser's own source makes, from the same kind of place.
+ *
+ * Enough of them are gathered to cover the bytes asked for, and they are folded together rather
+ * than written out: a UUID has six bits in it that are not random and a shape a guesser knows, and
+ * no caller here should ever be handed one as if it were a key.
+ */
 export function unguessableBytes(length: number): Uint8Array {
   const source = (globalThis as { crypto?: Crypto }).crypto;
-  if (!source?.getRandomValues) {
+  if (source?.getRandomValues) return source.getRandomValues(new Uint8Array(length));
+
+  const phone = (globalThis as { expo?: { uuidv4?: () => string } }).expo?.uuidv4;
+  if (typeof phone !== 'function') {
     // Never quietly: bytes a guesser could predict would make every record openable without a
     // password, and no caller can tell the difference by looking at them.
     throw new Error('this device offers no source of unguessable bytes');
   }
-  return source.getRandomValues(new Uint8Array(length));
+
+  // One more than the bytes asked for need, so what is folded is always more than what comes out.
+  const gathered: string[] = [];
+  while (gathered.length * unguessablePerUuid < length + unguessablePerUuid) gathered.push(phone());
+
+  const key = sha256(utf8(gathered.join('|')));
+  const bytes = new Uint8Array(length);
+  for (let block = 0; block * 32 < length; block++) {
+    const some = hmacSha256(key, utf8(`${gathering}/${block}`));
+    bytes.set(some.subarray(0, Math.min(32, length - block * 32)), block * 32);
+  }
+  return bytes;
 }

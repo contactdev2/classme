@@ -279,3 +279,50 @@ Half-true, and waiting for the next requirement:
   a picture. On a cold runner the browser alone has taken longer than that. Every check written since
   requirement 4 carries `pictureTakesAWhile` (120s); **that one should be given it too** the next
   time anybody is in that file.
+
+## 7 — Make a profile on a phone (5708497f)
+
+What is here now:
+
+- **`lib/crypto.ts`'s `unguessableBytes()` answers on a phone.** This is the whole of the reported
+  bug: a sealed box asks for a salt and a nonce, there was one source for them
+  (`globalThis.crypto.getRandomValues`), a browser has it and **Hermes has not** — so every check
+  passed and every teacher saw "Your profile could not be created just now." Where there is no Web
+  Crypto the bytes now come from `globalThis.expo.uuidv4`, expo-modules-core's own native UUID,
+  which on Android is `java.util.UUID.randomUUID()` and so `SecureRandom`. Enough are gathered to
+  cover the bytes asked for and folded together with HMAC-SHA256, so nothing handed back is a UUID
+  written out. **No package was added**, deliberately: a new native module changes the app's
+  fingerprint, and the attempt would then have no test app to be walked in.
+- **`lib/accounts-file.ts` is the one line requirement 3 left waiting.** `accountsFile()` is no
+  longer `accountsIn([])` on a phone: `app/_layout.tsx` hands the store
+  `accountsOnThisPhone()`, which keeps the records as the text of one file in the app's documents
+  folder (`expo-file-system`, `import()`ed only when a record is read or written). The seam is
+  `KeptText`, so a check hands over text of its own and never loads a native module. **The same
+  swap is still waiting in `lib/classroom-data.ts`**, and `accountsKeptIn` is the shape to copy.
+- **The signup has a third step, "Done"**, built to this requirement's mockup: the three steps
+  ticked, *Profile Created*, the teacher's own name and email, what became of them, and **Go to
+  Dashboard**, which signs them in. `SignUpScreen`'s prop is now `onDone(teacher)`, not
+  `onCreated(said)`, and the login screen's `told` is gone with it — nobody is sent back to type
+  what they have just typed.
+
+Decisions taken, so they are not re-decided:
+
+- **The duplicate-email refusal says "An account with this email already exists."** — this
+  requirement's own words, in all five catalogues, in place of "A profile already uses that email".
+- `journeys/*.walk.yaml` are the first walks this repository has. The screen's own name and the
+  submit button **both** say "Create Profile", so a walk taps `text: Create Profile, index: 1`.
+  Give a new control words of its own if you would rather not count.
+- The checks in `app/create-profile-on-a-phone.test.tsx` take the browser's Web Crypto away and
+  leave the app with a phone's before they touch a screen. **Any check that is about what a phone
+  really does should do the same** — a browser is a generous machine and hides exactly this class
+  of bug.
+
+Half-true, and waiting for the next requirement:
+
+- **A teacher's classrooms, students and attendance still do not outlast the app**:
+  `classroomStore()` is still in memory, so a backup made on a real phone is still a backup of
+  nothing. The accounts now show how it is done.
+- The accounts file is written whole on every change. Two of them at once would be the last one
+  written, and a phone killed mid-write loses the file: the records then read as none, and a
+  teacher can sign up again but not back into what was there. Writing beside and moving over would
+  fix it the day anything else writes to that file.

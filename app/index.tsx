@@ -34,8 +34,8 @@ const fieldRow = {
  * screen itself.
  *
  * A teacher with no record on this phone yet goes the other way first: the login screen's own
- * invitation opens the screen where a profile is made, and making one comes back here to log in
- * with it.
+ * invitation opens the screen where a profile is made, and the profile it makes is signed in from
+ * its own last step — nobody is asked to type what they have just finished typing.
  *
  * Home, Settings and signup are components and not routes of their own on purpose: the app opening
  * on the login screen and nothing else is a requirement of its own, and this keeps '/' the only
@@ -45,9 +45,6 @@ export default function Login() {
   const [teacher, setTeacher] = useState<TeacherProfile | null>(null);
   const [inSettings, setInSettings] = useState(false);
   const [signingUp, setSigningUp] = useState(false);
-  // What the login screen is to say the moment it is drawn, when a teacher arrives at it having
-  // just made their profile. Nothing of what they typed is kept here: only the sentence.
-  const [told, setTold] = useState<string | null>(null);
 
   // The language this app opens in, settled before a teacher reads anything on it: the one their
   // phone is set to, or the one they chose themselves on a phone still set the way it was. It is
@@ -60,7 +57,6 @@ export default function Login() {
     const logOut = () => {
       setTeacher(null);
       setInSettings(false);
-      setTold(null);
     };
     return inSettings ? (
       <SettingsScreen teacher={teacher} onBack={() => setInSettings(false)} onLogOut={logOut} />
@@ -72,22 +68,17 @@ export default function Login() {
     return (
       <SignUpScreen
         onBack={() => setSigningUp(false)}
-        onCreated={(said) => {
+        onDone={(made) => {
+          // Their profile is made and it is theirs: they are signed in with it, which is where the
+          // last step of the signup says it is taking them.
           setSigningUp(false);
-          setTold(said);
+          setTeacher(made);
         }}
       />
     );
   }
   return (
-    <LoginScreen
-      onSignedIn={setTeacher}
-      onSignUp={() => {
-        setTold(null);
-        setSigningUp(true);
-      }}
-      told={told}
-    />
+    <LoginScreen onSignedIn={setTeacher} onSignUp={() => setSigningUp(true)} />
   );
 }
 
@@ -96,23 +87,14 @@ export default function Login() {
  * else: their email, their password, and the button that logs them in — and, under it, the way to
  * make a profile for a teacher who has not got one yet.
  */
-function LoginScreen({
-  onSignedIn,
-  onSignUp,
-  told = null,
-}: {
-  onSignedIn: (teacher: TeacherProfile) => void;
-  onSignUp: () => void;
-  /** A sentence to be standing on the screen as it opens: a profile just made, and ready to use. */
-  told?: string | null;
-}) {
+function LoginScreen({ onSignedIn, onSignUp }: { onSignedIn: (teacher: TeacherProfile) => void; onSignUp: () => void }) {
   const t = useWords();
   const dir = useDirection();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [shown, setShown] = useState(false);
   const [remember, setRemember] = useState(true);
-  const [said, setSaid] = useState<string | null>(told);
+  const [said, setSaid] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   /**
