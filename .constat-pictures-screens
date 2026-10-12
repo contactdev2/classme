@@ -1,0 +1,12 @@
+{
+  "branch": "constat/task-5708497f",
+  "screens": [],
+  "criteria": [
+    "When a teacher fills in the required signup fields correctly and submits, the profile is created without showing 'could not create the profile'.",
+    "After a successful profile creation, the teacher's name and details appear saved and can be retrieved when the app is reopened.",
+    "After a successful profile creation, the teacher sees a confirmation or is taken to the next screen, not an error message.",
+    "Require full name, valid email, and password of at least 8 characters.",
+    "Show 'An account with this email already exists' and prevent creation."
+  ],
+  "why": "DoneMark froze these onto the attempt: the acceptance criteria of the requirement it is for, and the screens those criteria name. The picture suite runs the checks whose names are these criteria and skips the rest; where it can match none of them it narrows by these screens instead, and says so. Honoured on this branch only."
+}
