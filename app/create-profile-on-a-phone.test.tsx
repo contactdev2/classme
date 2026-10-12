@@ -1,12 +1,14 @@
 // @vitest-environment jsdom
 // Making a profile on a phone, and not only in a browser.
 //
-// A browser hands the app a source of unguessable bytes of its own; a phone does not. So every
-// check here takes the browser's one away first and leaves the app with what a phone really offers
-// — the platform's own UUIDs, which is what expo-modules-core puts on `globalThis.expo` — and then
-// drives the real screens and reads the real records. That is the difference between a profile that
-// is made in a check and a profile that is made in a teacher's hand.
-import { randomUUID } from 'node:crypto';
+// A browser is a generous machine: it hands the app a source of unguessable bytes, and a check that
+// takes one has proved nothing about a phone. So every check in this file takes away everything the
+// app is allowed to assume — no Web Crypto, no platform UUID, and in two of them no file the phone
+// will read or write either — and then drives the real screens and reads the real records.
+//
+// That is the difference between a profile made in a check and a profile made in a teacher's hand:
+// a teacher holding a phone that answers none of those questions must still end up with a profile,
+// and must never be told it could not be created.
 import { afterEach, describe, expect, it } from 'vitest';
 import { setLanguage } from '../lib/i18n';
 import { keepLanguageIn, languageFileWith } from '../lib/language-file';
@@ -17,8 +19,8 @@ import {
   keepAccountsIn,
   lockAccount,
   openAccount,
-  type AccountsFile,
 } from '../lib/local-accounts';
+import { accountsKeptIn, textFileWith, type KeptText } from '../lib/accounts-file';
 import { open, settle, takePictureOf, type Screen } from '../test/screen';
 import TheApp from './index';
 
@@ -41,34 +43,49 @@ const working = 180_000;
 /** The sentence this whole requirement is about: it must be on no screen any of these checks reach. */
 const theOldFailure = 'could not be created';
 
-/**
- * The phone's own file of records, which is what makes a profile outlast the app being closed.
- *
- * Reached for here rather than imported at the top of the file on purpose: every other check in
- * this file still runs, and still says what it proves, while this one module does not exist yet.
- */
-type Kept = { read(): Promise<string | null>; write(text: string): Promise<void> };
-type RecordsOnAPhone = {
-  textFileWith(text?: string | null): Kept;
-  accountsKeptIn(file: Kept): AccountsFile;
-};
-// Named in a variable, and the bundler told to leave it alone, so that this one check is the only
-// one that stops when the module is not there: the others still run, and still say what they prove.
-const recordsModule = '../lib/accounts-file';
-const recordsOnAPhone = async (): Promise<RecordsOnAPhone> =>
-  (await import(/* @vite-ignore */ recordsModule)) as unknown as RecordsOnAPhone;
-
 // The browser's own source of unguessable bytes, kept so it can be given back afterwards.
 const browserCrypto = (globalThis as { crypto?: Crypto }).crypto;
 
 /**
- * A phone, as far as the app can tell: no Web Crypto anywhere, and the one source of unguessable
- * bytes a phone really has — expo-modules-core's own native UUID, which Android answers from
- * java.util.UUID.randomUUID(), itself a SecureRandom. Here it is Node's, which is the same promise.
+ * A phone that offers the app nothing of its own.
+ *
+ * No `crypto.getRandomValues`, because Hermes has none and neither React Native nor Expo puts one
+ * there; and no `globalThis.expo.uuidv4` either, because a phone that answers that is a phone whose
+ * native side came up — and a teacher whose did not must still be able to make a profile. This is
+ * the least a device can offer, and the app has to work on it.
  */
-function asAPhone(): void {
+function asAPhoneThatOffersNothing(): void {
   Object.defineProperty(globalThis, 'crypto', { value: undefined, configurable: true, writable: true });
-  (globalThis as { expo?: { uuidv4(): string } }).expo = { uuidv4: () => randomUUID() };
+  delete (globalThis as { expo?: unknown }).expo;
+}
+
+/** A phone whose own file will not take a record: the write is refused, every time. */
+function aFileThatCannotBeWritten(): KeptText & { tried: number } {
+  const file = {
+    tried: 0,
+    async read() {
+      return null;
+    },
+    async write() {
+      file.tried += 1;
+      throw new Error('this phone would not write that down');
+    },
+  };
+  return file;
+}
+
+/** A phone whose own file will not say what is in it: the read is refused, every time. */
+function aFileThatCannotBeRead(): KeptText & { written: string | null } {
+  const file = {
+    written: null as string | null,
+    async read(): Promise<string | null> {
+      throw new Error('this phone would not say what it keeps');
+    },
+    async write(text: string) {
+      file.written = text;
+    },
+  };
+  return file;
 }
 
 /** The browser given back its own, so nothing after these checks is run on a pretend phone. */
@@ -130,7 +147,7 @@ async function signIn(screen: Screen, email: string, secret: string): Promise<vo
 
 describe('Create a teacher profile on a phone', () => {
   it("When a teacher fills in the required signup fields correctly and submits, the profile is created without showing 'could not create the profile'.", async () => {
-    asAPhone();
+    asAPhoneThatOffersNothing();
     aPhoneWithNoProfile();
     const screen = await openTheApp();
     await openSignUp(screen);
@@ -160,8 +177,7 @@ describe('Create a teacher profile on a phone', () => {
   }, working);
 
   it("After a successful profile creation, the teacher's name and details appear saved and can be retrieved when the app is reopened.", async () => {
-    asAPhone();
-    const { textFileWith, accountsKeptIn } = await recordsOnAPhone();
+    asAPhoneThatOffersNothing();
 
     // This phone keeps its records in a file, the way a phone does, and the file is empty.
     const onThePhone = textFileWith(null);
@@ -203,7 +219,7 @@ describe('Create a teacher profile on a phone', () => {
   }, working);
 
   it('After a successful profile creation, the teacher sees a confirmation or is taken to the next screen, not an error message.', async () => {
-    asAPhone();
+    asAPhoneThatOffersNothing();
     aPhoneWithNoProfile();
     const screen = await openTheApp();
     await openSignUp(screen);
@@ -251,7 +267,7 @@ describe('Create a teacher profile on a phone', () => {
   }, working);
 
   it('Require full name, valid email, and password of at least 8 characters.', async () => {
-    asAPhone();
+    asAPhoneThatOffersNothing();
     aPhoneWithNoProfile();
     const screen = await openTheApp();
     await openSignUp(screen);
@@ -298,10 +314,11 @@ describe('Create a teacher profile on a phone', () => {
   }, working);
 
   it("Show 'An account with this email already exists' and prevent creation.", async () => {
-    // This phone already has a profile, and the email on it is the one about to be typed again.
+    // A phone that offers nothing, which already has a profile on it: the record was locked by the
+    // phone itself, with the phone's own arithmetic, and the email on it is about to be typed again.
+    asAPhoneThatOffersNothing();
     const theirs = lockAccount({ email: teacher.email, password }, teacher, checkIterations);
     keepAccountsIn(accountsIn([theirs]));
-    asAPhone();
 
     const screen = await openTheApp();
     await openSignUp(screen);
@@ -329,6 +346,56 @@ describe('Create a teacher profile on a phone', () => {
       "Create a teacher profile on a phone > Show 'An account with this email already exists' and prevent creation.",
       screen,
     );
+    screen.close();
+  }, working);
+  it('A phone that will not write the record down still makes the profile, and says what became of it.', async () => {
+    // A phone whose own folder answers nothing — no native file module, no room left, a store that
+    // refuses — is still a phone a teacher is holding. It must not cost them their profile.
+    asAPhoneThatOffersNothing();
+    const stubborn = aFileThatCannotBeWritten();
+    keepAccountsIn(accountsKeptIn(stubborn));
+
+    const screen = await openTheApp();
+    await openSignUp(screen);
+    await giveTheName(screen, teacher.name);
+    await giveTheAccount(screen, teacher.email, password);
+
+    // The phone really was asked, and really refused.
+    expect(stubborn.tried).toBeGreaterThan(0);
+
+    // And the teacher is told their profile is made, not that it could not be — with the truth
+    // about what became of it, rather than a promise this phone did not keep.
+    const read = screen.text();
+    expect(read).not.toContain(theOldFailure);
+    expect(read).toContain('Profile Created');
+    expect(read).toContain(teacher.name);
+    expect(read).toContain('could not write it down');
+    expect(read).not.toContain('will be available when you reopen the app');
+
+    // The way on is still a way on: they are signed in with the profile they just made.
+    await screen.press(/^Go to Dashboard$/);
+    await settleAll();
+    expect(() => screen.field(/^Password/i)).toThrow();
+    expect(screen.text()).toContain(teacher.name);
+    screen.close();
+  }, working);
+
+  it('A phone that will not say what it keeps still makes the profile, and writes nothing over.', async () => {
+    // A file that cannot be read is a file nothing may be written over: whatever is in it would be
+    // lost, and the app cannot know it is not another teacher's. So the profile is made and the
+    // file is left exactly as it was.
+    asAPhoneThatOffersNothing();
+    const silent = aFileThatCannotBeRead();
+    keepAccountsIn(accountsKeptIn(silent));
+
+    const screen = await openTheApp();
+    await openSignUp(screen);
+    await giveTheName(screen, teacher.name);
+    await giveTheAccount(screen, teacher.email, password);
+
+    expect(screen.text()).not.toContain(theOldFailure);
+    expect(screen.text()).toContain('Profile Created');
+    expect(silent.written).toBeNull();
     screen.close();
   }, working);
 });
