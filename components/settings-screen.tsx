@@ -6,9 +6,22 @@ import { classroomStore } from '../lib/classroom-data';
 import { initialsOf, nameOf } from '../lib/greeting';
 import { counted, languageNow, rememberLanguage, useDirection, useWords, type WordKey } from '../lib/i18n';
 import { defaultLanguage, languages, type Language } from '../lib/languages';
+import { phoneLanguage } from '../lib/phone-language';
 import type { TeacherProfile } from '../lib/local-accounts';
 import { productName } from '../lib/product';
 import { colors, radius, shadow, space } from '../lib/theme';
+
+/** The language the app opens in when nobody has pressed anything: the phone's own, where it has it. */
+const opensInWithoutAsking = (): Language['tag'] => phoneLanguage() ?? defaultLanguage;
+
+/** What a row says under a language's own name: what it is, which way it reads, and if it is the default. */
+type Saying = (key: WordKey, filling?: Record<string, string | number>) => string;
+
+function describe(t: Saying, language: Language, isDefault: boolean): string {
+  const name = t(`language.name.${language.tag}` as WordKey);
+  const said = language.rtl ? t('language.withRtl', { language: name }) : name;
+  return isDefault ? t('language.withDefault', { language: said }) : said;
+}
 
 /** The words over a group of cards, as the prototype sets them: small, quiet and in capitals. */
 function SectionTitle({ children }: { children: string }) {
@@ -316,7 +329,10 @@ export function SettingsScreen({
       </View>
 
       {/* The language the app is in. Pressing one is the whole of it: every screen is redrawn in it
-          at once, and the choice is kept on this phone for the next morning. */}
+          at once, and the choice is kept on this phone for the next morning. The one marked as the
+          default is the one the app opens in when nothing has been pressed here: the phone's own
+          language, and none of these four on a phone set to some other language, where the app
+          falls back to the English its own words are written in. */}
       <View style={{ marginHorizontal: space.gap, marginBottom: space.step }}>
         <SectionTitle>{t('language.title')}</SectionTitle>
         <View accessibilityRole="radiogroup" style={{ backgroundColor: colors.card, borderRadius: radius.card, padding: 8, ...shadow.card }}>
@@ -325,13 +341,7 @@ export function SettingsScreen({
               {after === 0 ? null : <View style={{ borderTopWidth: 1, borderTopColor: '#F0F3F8', marginHorizontal: 4, marginVertical: 6 }} />}
               <LanguageRow
                 language={language}
-                words={
-                  language.tag === defaultLanguage
-                    ? t('language.withDefault', { language: t(`language.name.${language.tag}` as WordKey) })
-                    : language.rtl
-                      ? t('language.withRtl', { language: t(`language.name.${language.tag}` as WordKey) })
-                      : t(`language.name.${language.tag}` as WordKey)
-                }
+                words={describe(t, language, language.tag === opensInWithoutAsking())}
                 chosen={languageNow() === language.tag}
                 choose={() => {
                   void rememberLanguage(language.tag);

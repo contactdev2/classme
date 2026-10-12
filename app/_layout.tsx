@@ -5,6 +5,7 @@ import { DonemarkTryStrip } from '../components/donemark-try-strip';
 import { installDonemarkTry, sayError, tryMode } from '../lib/donemark-try';
 import { useDirection, useWords } from '../lib/i18n';
 import { mirrorWithLanguage } from '../lib/mirror';
+import { askThisPhone, thisPhoneItself } from '../lib/phone-language';
 
 // DoneMark's try mode (template 50): does nothing unless a DoneMark preview set EXPO_PUBLIC_DONEMARK_TRY.
 installDonemarkTry();
@@ -12,6 +13,11 @@ installDonemarkTry();
 // The phone's own text layer, kept with the language the app is in: when a teacher chooses Arabic,
 // its keyboard and its alerts are mirrored along with the screens.
 mirrorWithLanguage();
+
+// The phone itself, asked which language it is set to — the app opens in that one. Installed here,
+// at the app's root, because this is the one file only a real app loads: a check hands over a phone
+// of its own instead, and so never reaches a module that can only answer on a real phone.
+askThisPhone(thisPhoneItself);
 
 /** A screen that failed to draw: its words while the app is tried; a plain sentence for everybody else. */
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
