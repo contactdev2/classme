@@ -8,7 +8,7 @@
       "package": "com.contactdev2.classme"
     },
     "runtimeVersion": {
-      "policy": "appVersion"
+      "policy": "fingerprint"
     },
     "plugins": [
       [
