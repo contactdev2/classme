@@ -1,0 +1,42 @@
+appId: com.contactdev2.classme
+name: Show 'An account with this email already exists' and prevent creation.
+---
+# One email, offered twice on the same phone. The first time it makes a profile; the second time the
+# app says so and makes nothing.
+- tapOn: "Create a profile"
+- tapOn: "Ms. Patel"
+- inputText: "Ines Moreau"
+- hideKeyboard
+- tapOn: "Continue"
+- tapOn: "you@school.edu"
+- inputText: "ines.moreau@riversidehigh.edu"
+- hideKeyboard
+- tapOn: "At least 8 characters"
+- inputText: "Rentree-2026-presence"
+- hideKeyboard
+- tapOn:
+    text: "Create Profile"
+    index: 1
+- extendedWaitUntil:
+    visible: "Profile Created.*"
+    timeout: 120000
+# Back out to the login screen, and in again as somebody else offering the same email.
+- tapOn: "Back to sign in"
+- tapOn: "Create a profile"
+- tapOn: "Ms. Patel"
+- inputText: "Tomas Okafor"
+- hideKeyboard
+- tapOn: "Continue"
+- tapOn: "you@school.edu"
+- inputText: "ines.moreau@riversidehigh.edu"
+- hideKeyboard
+- tapOn: "At least 8 characters"
+- inputText: "Toussaint-2026-presence"
+- hideKeyboard
+- tapOn:
+    text: "Create Profile"
+    index: 1
+- extendedWaitUntil:
+    visible: "An account with this email already exists.*"
+    timeout: 120000
+- assertNotVisible: "Profile Created.*"
