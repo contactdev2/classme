@@ -1,13 +1,10 @@
 {
   "branch": "constat/session-3-324a1a86",
-  "screens": [
-    "the Home"
-  ],
+  "screens": [],
   "criteria": [
-    "The welcome screen shows a 'Get Started' button.",
-    "Three onboarding slides explain attendance, organization, and insights features.",
-    "Tapping 'Get Started' on the last slide leads to the Home dashboard.",
-    "Onboarding is skipped on future app opens once completed."
+    "The Classes list shows All, Active, and Archived filter tabs.",
+    "Each class card shows its name, period, and student count.",
+    "Tapping a class card opens its attendance dashboard."
   ],
   "why": "DoneMark froze these onto the attempt: the acceptance criteria of the requirement it is for, and the screens those criteria name. The picture suite runs the checks whose names are these criteria and skips the rest; where it can match none of them it narrows by these screens instead, and says so. Honoured on this branch only."
 }
