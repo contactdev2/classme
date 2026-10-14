@@ -24,6 +24,15 @@ name: After a successful profile creation, the teacher sees a confirmation or is
 - assertVisible: "Awa Diallo"
 - assertNotVisible: ".*could not be created.*"
 - tapOn: "Go to Dashboard"
+# A teacher on a phone nobody has been welcomed on meets the walkthrough on the way: the welcome,
+# three slides, and the way into the dashboard from the last of them.
+- extendedWaitUntil:
+    visible: "Get Started"
+    timeout: 30000
+- tapOn: "Get Started"
+- tapOn: "Next"
+- tapOn: "Next"
+- tapOn: "Get Started"
 - extendedWaitUntil:
     visible: "Awa Diallo.*"
     timeout: 30000

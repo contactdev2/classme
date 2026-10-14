@@ -6,6 +6,7 @@ import { catalogues, direction, languageNow, say, setLanguage, wordsAllowedToSta
 import { keepLanguageIn, languageFile, languageFileWith } from '../lib/language-file';
 import { languages, sourceLanguage, type Tag } from '../lib/languages';
 import { accountsIn, keepAccountsIn, lockAccount } from '../lib/local-accounts';
+import { keepOnboardingIn, onboardingIn } from '../lib/onboarding';
 import { phoneSaysItIsIn } from '../lib/phone-language';
 import { productName } from '../lib/product';
 import { versionLabel } from '../lib/version';
@@ -33,6 +34,9 @@ const picturing = 180_000;
  */
 function thisPhone(setTo: readonly string[], shown: Tag | null = null, matching: Tag | null = null): void {
   keepAccountsIn(accountsIn([lockAccount({ email: teacher.email, password }, teacher, checkIterations)]));
+  // The teacher of this phone has already been welcomed: the first morning's walkthrough is proved
+  // in app/complete-onboarding.test.tsx, and what is being read here is what comes after it.
+  keepOnboardingIn(onboardingIn(true));
   keepClassroomDataIn(classroomDataIn(nothingKeptYet()));
   keepBackupFilesIn(backupFilesIn());
   keepLanguageIn(languageFileWith(shown, matching));

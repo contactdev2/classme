@@ -378,3 +378,72 @@ Half-true, and waiting for the next requirement:
   the strip before guessing.
 - `classroomStore()` is still in memory (requirement 5 and 7's note stands). `lib/accounts-file.ts`
   is the shape to copy, and it now shows how to fail softly as well.
+
+## 9 — Complete first-time onboarding (2bbb040a)
+
+What is here now:
+
+- **`components/onboarding-screen.tsx` is the first morning with the app**: the welcome the agreed
+  prototype draws (the logo, the product's own name, the tagline, the picture, "A simpler way to
+  manage your classroom", the dots, **Get Started**) and then three slides — *Take Attendance in
+  Seconds*, *Organize Every Class*, *Gain Insights* — each counted `1/3`, `2/3`, `3/3`, with a way
+  back a step, **Next** and **Skip**, and on the last of them **Get Started**, which is the way into
+  Home. The drawings are made of this app's own rounded shapes and emoji, never an image file, and
+  carry no words a teacher has to read.
+- **`lib/onboarding.ts` is whether somebody has been welcomed on this phone**, behind the same kind
+  of seam as the accounts: `onboardingIn(false)` in memory for a check, `onboardingOnThisPhone()` —
+  the text of `classme-onboarding.json` in the app's own documents folder — installed by
+  `app/_layout.tsx`. `finishedOnboarding()` and `rememberOnboardingFinished()` **never throw**: a
+  phone that will not answer reads as nobody welcomed, which costs a teacher the welcome once more
+  and nothing else.
+- **`lib/accounts-file.ts` now exports `textOnThisPhone(name)`**, the generic it already had inside
+  it. `accountsTextOnThisPhone()` is that, with the accounts' own file name; the onboarding memory
+  is that, with its own. **Anything else that needs a file on the phone should use it** rather than
+  writing the expo-file-system dance a third time.
+- `app/index.tsx` holds the walkthrough between a teacher signing in — by either way in, the login
+  screen or the last step of the signup — and Home. Both ways go through one `signedIn(made)`, which
+  **asks the phone whether the walkthrough is finished before the screen changes**, so a returning
+  teacher never sees it flash past. **Still no new route**: requirement 1's `No other screen appears
+  before the login screen.` is still true and still has not had to be widened.
+
+Decisions taken, so they are not re-decided:
+
+- **The walkthrough comes after signing in, not before the login screen.** The criterion says the
+  last slide leads to the Home dashboard, and Home only exists for somebody signed in; and the app
+  opening on the login screen and nothing else is requirement 1's own criterion.
+- **What is remembered is "somebody has been welcomed on this phone", not which teacher.** An email
+  in the clear in that file would say out loud which teacher this phone knows — exactly what the
+  sign-in records go to some trouble not to say — and a phone belongs to one teacher, which is an
+  approved decision. `lib/onboarding.test.ts` holds that file to it.
+- **Skip counts as finished.** A teacher who has decided they do not want the walkthrough should not
+  be asked again tomorrow. It is on the slides that have a Next and not on the last one, where the
+  button beside it would go to the same place.
+- **The second slide is this requirement's own.** The chosen mockup draws 1/3 and 3/3 only; the
+  criterion asks for attendance, organisation and insights, so *Organize Every Class* was written to
+  the same shape as the two that were drawn.
+- `onboard.step` (`{at}/{of}`) is in `wordsAllowedToStay` in `lib/i18n.ts`: a count written as a
+  count is the same count in every language the app offers.
+- **Seven earlier check files now say out loud that their phone's teacher has already been
+  welcomed** (`keepOnboardingIn(onboardingIn(true))`), because they sign in and read Home and the
+  walkthrough would otherwise stand in front of it. That is a deliberate widening, not a quiet one:
+  the first morning itself is proved in `app/complete-onboarding.test.tsx`. **A new check that signs
+  a teacher in and expects Home must do the same**, or walk the four presses.
+- `journeys/tapping-get-started-on-the-last-slide-leads-to-the-home-dashboard.walk.yaml` is the walk
+  for a real phone: a profile made, the welcome, the three slides, and the dashboard. The signup walk
+  that ended on the dashboard was given the same four taps, because that is now the way there on a
+  phone nobody has been welcomed on.
+- `test/fonts/*.woff2` were gathered again (`node test/fonts/gather-fonts.mjs`) for the characters
+  the new catalogues brought. Run it whenever a catalogue gains a character.
+
+Half-true, and waiting for the next requirement:
+
+- **The walkthrough's three slides promise things the app cannot do yet.** Organising classes and
+  attendance insights are each their own requirement; the slides say what the app is for, not what
+  is behind a button today. The requirements that build them have nothing to change here.
+- **The memory is per phone, not per teacher.** Two teachers sharing one phone: the second one is
+  never welcomed. That follows the approved decision that a teacher opens the app on their own
+  phone; the day that stops being true, the honest fix is a mark of the teacher inside their own
+  sealed record, not their email in this file.
+- `classroomStore()` is still in memory (requirement 5, 7 and 8's note stands), so a backup made on
+  a real phone is still a backup of nothing. `lib/accounts-file.ts` and now `lib/onboarding.ts` both
+  show how a thing is kept on the phone.

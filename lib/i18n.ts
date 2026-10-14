@@ -32,14 +32,16 @@ export const catalogues: Record<Tag, Words> = {
 
 /**
  * The keys whose words are allowed to be the same as the English: a sample address, the name of an
- * arithmetic standard, and a sentence whose only English part is a brace. Every other key in every
- * other catalogue says something of its own — see the check that reads this list.
+ * arithmetic standard, a sentence whose only English part is a brace, and a count written as a
+ * count — 1/3 is 1/3 in every language the app offers. Every other key in every other catalogue
+ * says something of its own — see the check that reads this list.
  */
 export const wordsAllowedToStay: readonly WordKey[] = [
   'login.emailPlaceholder',
   'privacy.standardValue',
   'home.greetingLine',
   'home.greetingName',
+  'onboard.step',
 ];
 
 let current: Tag = defaultLanguage;

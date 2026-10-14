@@ -74,6 +74,23 @@ export const english = {
   'signUp.toDashboard': 'Go to Dashboard',
   'signUp.couldNotCreate': 'Your profile could not be created just now. Try again.',
 
+  // The first morning: the welcome a teacher is met with, and the three slides that say what the
+  // app is for before they are put to work.
+  'onboard.getStarted': 'Get Started',
+  'onboard.next': 'Next',
+  'onboard.skip': 'Skip',
+  'onboard.back': 'Back a step',
+  // Which slide of how many, written as a count: 1/3.
+  'onboard.step': '{at}/{of}',
+  'onboard.welcomeTitle': 'A simpler way to manage your classroom',
+  'onboard.welcomeWords': 'Take attendance, manage classes, and stay connected — all in one place.',
+  'onboard.attendanceTitle': 'Take Attendance in Seconds',
+  'onboard.attendanceWords': 'Mark your class, track progress, and never miss a day.',
+  'onboard.organiseTitle': 'Organize Every Class',
+  'onboard.organiseWords': 'Keep your classrooms, periods and students in order.',
+  'onboard.insightsTitle': 'Gain Insights',
+  'onboard.insightsWords': "View attendance trends and support every student's success.",
+
   // Home.
   'home.greetingMorning': 'Good morning',
   'home.greetingAfternoon': 'Good afternoon',

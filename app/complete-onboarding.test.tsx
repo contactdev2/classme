@@ -4,6 +4,8 @@ import { setLanguage } from '../lib/i18n';
 import { keepLanguageIn, languageFileWith } from '../lib/language-file';
 import { sourceLanguage } from '../lib/languages';
 import { accountsIn, keepAccountsIn, lockAccount } from '../lib/local-accounts';
+import { textFileWith } from '../lib/accounts-file';
+import { keepOnboardingIn, onboardingIn, onboardingKeptIn } from '../lib/onboarding';
 import { open, settle, takePictureOf, type Screen } from '../test/screen';
 import TheApp from './index';
 
@@ -28,9 +30,13 @@ const checkIterations = 1_000;
 // seconds. See app/land-on-home.test.tsx, which says the same.
 const pictureTakesAWhile = 120_000;
 
-/** This phone, with the teacher's own account on it, locked with their own password. */
+/**
+ * This phone: the teacher's own account on it, locked with their own password, and nobody welcomed
+ * on it yet — a phone the app has just been installed on.
+ */
 function phoneWithTheTeachersAccount(): void {
   keepAccountsIn(accountsIn([lockAccount({ email: teacher.email, password }, teacher, checkIterations)]));
+  keepOnboardingIn(onboardingIn(false));
 }
 
 /** A teacher arriving at the app and signing in with their own email and password. */
@@ -56,6 +62,7 @@ const homeWords = "Here's what's happening today.";
 
 afterEach(() => {
   keepAccountsIn(accountsIn([]));
+  keepOnboardingIn(onboardingIn(false));
 });
 
 describe('Complete first-time onboarding', () => {
@@ -148,6 +155,11 @@ describe('Complete first-time onboarding', () => {
   it('Onboarding is skipped on future app opens once completed.', async () => {
     phoneWithTheTeachersAccount();
 
+    // What this phone itself keeps: one file's text, outliving the app the way a real file does, so
+    // the second open below reads what the first one wrote down and not what is left in a variable.
+    const kept = textFileWith(null);
+    keepOnboardingIn(onboardingKeptIn(kept));
+
     // The first morning: the teacher signs in, is welcomed, walks the three slides, and reaches Home.
     let screen = await signIn();
     expect(screen.text()).toContain('A simpler way to manage');
@@ -156,6 +168,14 @@ describe('Complete first-time onboarding', () => {
     await settle();
     expect(screen.text()).toContain(homeWords);
     screen.close();
+
+    // The phone wrote it down, and what it wrote says that somebody was welcomed here and nothing
+    // about who: no name, no email, nothing of the teacher in it.
+    const written = (await kept.read()) ?? '';
+    expect(written).not.toBe('');
+    expect(written).not.toContain(teacher.email);
+    expect(written).not.toContain(teacher.name);
+    expect(written).not.toContain(password);
 
     // The app is closed and opened again — a fresh app, reading what the phone itself kept.
     screen = await signIn();

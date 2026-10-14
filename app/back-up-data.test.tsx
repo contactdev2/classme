@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ClassroomData } from '../lib/classroom-data';
 import { accountsIn, keepAccountsIn, lockAccount } from '../lib/local-accounts';
+import { keepOnboardingIn, onboardingIn } from '../lib/onboarding';
 import { open, takePictureOf } from '../test/screen';
 import TheApp from './index';
 import { setLanguage } from '../lib/i18n';
@@ -68,6 +69,9 @@ async function parts() {
 async function aPhoneWith(data: ClassroomData, backupsAlreadySaved: Record<string, string> = {}) {
   const { classroomDataIn, keepClassroomDataIn, backupFilesIn, keepBackupFilesIn } = await parts();
   keepAccountsIn(accountsIn([lockAccount({ email: teacher.email, password }, teacher, checkIterations)]));
+  // The teacher of this phone has already been welcomed: the first morning's walkthrough is proved
+  // in app/complete-onboarding.test.tsx, and what is being read here is what comes after it.
+  keepOnboardingIn(onboardingIn(true));
   keepClassroomDataIn(classroomDataIn(data));
   keepBackupFilesIn(backupFilesIn(backupsAlreadySaved));
 }

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { HomeScreen } from '../components/home-screen';
+import { OnboardingScreen } from '../components/onboarding-screen';
 import { SettingsScreen } from '../components/settings-screen';
 import { SignUpScreen } from '../components/sign-up-screen';
 import { openInPhoneLanguage, useDirection, useWords } from '../lib/i18n';
 import type { TeacherProfile } from '../lib/local-accounts';
+import { finishedOnboarding, rememberOnboardingFinished } from '../lib/onboarding';
 import { productName } from '../lib/product';
 import { credentialsFrom, missingFrom, submitSignIn } from '../lib/sign-in';
 import { colors, radius, shadow, space } from '../lib/theme';
@@ -37,14 +39,20 @@ const fieldRow = {
  * invitation opens the screen where a profile is made, and the profile it makes is signed in from
  * its own last step — nobody is asked to type what they have just finished typing.
  *
- * Home, Settings and signup are components and not routes of their own on purpose: the app opening
- * on the login screen and nothing else is a requirement of its own, and this keeps '/' the only
- * screen there is.
+ * The first teacher signed in on a phone nobody has been welcomed on meets the walkthrough before
+ * Home: a welcome and three slides saying what the app is for. What it is for is read once, so the
+ * phone is asked whether it is finished at the moment somebody signs in, and told when it is — from
+ * the next morning on they go straight to Home. See lib/onboarding.ts.
+ *
+ * Home, Settings, the walkthrough and the signup are components and not routes of their own on
+ * purpose: the app opening on the login screen and nothing else is a requirement of its own, and
+ * this keeps '/' the only screen there is.
  */
 export default function Login() {
   const [teacher, setTeacher] = useState<TeacherProfile | null>(null);
   const [inSettings, setInSettings] = useState(false);
   const [signingUp, setSigningUp] = useState(false);
+  const [welcomed, setWelcomed] = useState(false);
 
   // The language this app opens in, settled before a teacher reads anything on it: the one their
   // phone is set to, or the one they chose themselves on a phone still set the way it was. It is
@@ -53,11 +61,34 @@ export default function Login() {
     void openInPhoneLanguage();
   }, []);
 
+  /**
+   * Somebody signed in, by whichever of the two ways in they came. The phone is asked whether the
+   * walkthrough has been finished on it before the screen behind this changes, so a teacher who has
+   * seen it never sees it flash past them on the way to Home.
+   */
+  async function signedIn(made: TeacherProfile) {
+    setWelcomed(await finishedOnboarding());
+    setTeacher(made);
+  }
+
   if (teacher) {
     const logOut = () => {
       setTeacher(null);
       setInSettings(false);
     };
+    if (!welcomed) {
+      return (
+        <OnboardingScreen
+          onDone={() => {
+            // Onward to Home, and remembered on the phone so tomorrow morning opens on Home. A
+            // phone that would not write it down says so to nobody: the teacher is on their way,
+            // and the honest cost is being welcomed once more.
+            setWelcomed(true);
+            void rememberOnboardingFinished();
+          }}
+        />
+      );
+    }
     return inSettings ? (
       <SettingsScreen teacher={teacher} onBack={() => setInSettings(false)} onLogOut={logOut} />
     ) : (
@@ -72,13 +103,13 @@ export default function Login() {
           // Their profile is made and it is theirs: they are signed in with it, which is where the
           // last step of the signup says it is taking them.
           setSigningUp(false);
-          setTeacher(made);
+          void signedIn(made);
         }}
       />
     );
   }
   return (
-    <LoginScreen onSignedIn={setTeacher} onSignUp={() => setSigningUp(true)} />
+    <LoginScreen onSignedIn={(made) => void signedIn(made)} onSignUp={() => setSigningUp(true)} />
   );
 }
 

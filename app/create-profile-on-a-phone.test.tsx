@@ -20,6 +20,7 @@ import {
   lockAccount,
   openAccount,
 } from '../lib/local-accounts';
+import { keepOnboardingIn, onboardingIn } from '../lib/onboarding';
 import { accountsKeptIn, textFileWith, type KeptText } from '../lib/accounts-file';
 import { open, settle, takePictureOf, type Screen } from '../test/screen';
 import TheApp from './index';
@@ -97,6 +98,9 @@ function asABrowserAgain(): void {
 /** A phone with no profile on it at all: which is what a teacher signing up is holding. */
 function aPhoneWithNoProfile(): void {
   keepAccountsIn(accountsIn([]));
+  // The teacher of this phone has already been welcomed: the first morning's walkthrough is proved
+  // in app/complete-onboarding.test.tsx, and what is being read here is what comes after it.
+  keepOnboardingIn(onboardingIn(true));
 }
 
 afterEach(() => {
