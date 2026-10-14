@@ -151,6 +151,7 @@ export const simplifiedChinese: Words = {
   'roster.all': '全部',
   'roster.counted': '{name} ({many})',
   'roster.tally': '{name}: {many}',
+  'roster.summary': '出勤汇总',
   'roster.search': '搜索学生',
   'roster.searchPlaceholder': '搜索学生…',
   'roster.noneTitle': '没有可显示的学生',

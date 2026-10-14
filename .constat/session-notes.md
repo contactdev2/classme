@@ -644,3 +644,62 @@ Half-true, and waiting for the next requirement:
   walk could not reach one student to tap. The three criteria are proved in
   `app/mark-exceptions.test.tsx`, which was pushed red first — all three failing with
   `0 buttons saying /^Chloe Kim\b/ on this screen`, which is the register as requirement 11 left it.
+
+## 13 — Review the attendance summary before saving (7bc7b74b)
+
+What is here now:
+
+- **The summary bar at the foot of the register is a named group of its own** — `role="group"`,
+  called `roster.summary` (*Attendance summary*) to a screen reader — holding Present, Absent and
+  Late with the count against each, in the prototype's own order. It was already drawn (requirement
+  11 put it there); what this requirement added is that **it can be told apart from the filter pills
+  above it**, which say counts of their own, and that **each count is one phrase to a screen
+  reader** ('Present: 20'), not a number loose on the screen. A check finds the bar by that group
+  and nothing else: `[role="group"]` is the summary bar and there is exactly one of it.
+- **Each count's number is written in that mark's own colour** (`markColours`), with the words
+  around it in the screen's ink, as the agreed prototype draws it. That needed the phrase cut in
+  two, so **`lib/i18n.ts` gained `sayAround(key, around, filling)`**: a key's words cut around one
+  of its fillings — `{ before, piece, after }` — made in *this language's own* phrase, so a language
+  that writes the number first is cut where its own number falls. `say` and it share one `fillIn`.
+  Use it wherever one filling has to be drawn differently from the words round it; the whole phrase
+  still goes on the element as its `accessibilityLabel`, which is what keeps it one phrase to ears
+  and keeps `screen.readable()` honest.
+- **`lib/roster.ts` gained `summaryMarks` and `summaryOfRoster`** — `{ counts, total, addsUp }`.
+  `summaryMarks` is the three the bar writes; a check holds **every mark in `markOrder`** to having
+  a column in it, so a fourth mark cannot be added later and go uncounted, and `addsUp` says out
+  loud that the counts come to the class rather than leaving it assumed. The screen reads the bar
+  off `summaryOfRoster` and holds no rule of its own. Nothing is stored — a summary is worked out
+  from the marks in hand each time it is read, which is the approved decision and is also why the
+  bar follows a tap in the same breath.
+- **`test/react-native-dom.tsx`: a `Text` inside another `Text` is now drawn inline**, which is
+  react-native-web's own translation (a `createContext` says whether words are already inside
+  words). Without it the browser put 'Present:' and the 20 on two lines and the picture showed a
+  screen nobody holding the phone would see. **This screen is the only one that nests `Text`**, so
+  nothing else moved.
+
+Decisions taken, so they are not re-decided:
+
+- **The bar adds up the whole class, never the part of it on the screen.** A filter or a search
+  changes which rows are drawn and nothing else; the checks hold that (asked for the 2 absent, the
+  bar still says 20 / 2 / 2). A summary that followed the filter would be a different number every
+  time a teacher looked something up, which is the opposite of a check before saving.
+- **No total is written on the bar.** The prototype draws three numbers and the filter row above
+  already says `All (24)`; criterion 3 is about the three *adding up* to the class, and that is
+  proved rather than printed.
+- `roster.summary` is new in all five catalogues, and `test/fonts/*.woff2` were gathered again
+  (`node test/fonts/gather-fonts.mjs`) for the characters it brought.
+
+Half-true, and waiting for the next requirement:
+
+- **Saving is still its own requirement**, and this one deliberately did not start it: `Save
+  Attendance` is drawn, sits under the summary bar in the same unscrolling foot, and is **still not
+  announced as a button**. Give it a role the moment it does something. The open question from
+  requirement 11 is still open and still has to be answered on purpose: **what a register re-opened
+  after a save shows — the saved marks, or Present again.**
+- **`classroomStore()` is still in memory** (requirements 5, 7, 8, 9, 10, 11 and 12's note stands),
+  so on a real phone the register says "No classes yet" and the summary bar reads 0 / 0 / 0 under
+  it. Everything proved here is proved against data a check hands over.
+- **No walk was written**, for requirement 11 and 12's reason: a phone cannot yet make a classroom,
+  so a walk could not reach a register with a student on it. The three criteria are proved in
+  `app/review-attendance-summary.test.tsx`, pushed red first — all three failing with
+  `0 summary bars on this screen, wanted exactly one`.

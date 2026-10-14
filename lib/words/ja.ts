@@ -151,6 +151,7 @@ export const japanese: Words = {
   'roster.all': 'すべて',
   'roster.counted': '{name} ({many})',
   'roster.tally': '{name}: {many}',
+  'roster.summary': '出欠の集計',
   'roster.search': '生徒を検索',
   'roster.searchPlaceholder': '生徒を検索…',
   'roster.noneTitle': '表示する生徒がいません',

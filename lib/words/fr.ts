@@ -154,6 +154,7 @@ export const french: Words = {
   'roster.all': 'Tous',
   'roster.counted': '{name} ({many})',
   'roster.tally': '{name}: {many}',
+  'roster.summary': 'Récapitulatif des présences',
   'roster.search': 'Rechercher un élève',
   'roster.searchPlaceholder': 'Rechercher un élève…',
   'roster.noneTitle': 'Aucun élève à afficher',

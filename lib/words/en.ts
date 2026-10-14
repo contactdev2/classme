@@ -174,6 +174,9 @@ export const english = {
   'roster.counted': '{name} ({many})',
   // The same, at the foot of the screen, where the class is added up.
   'roster.tally': '{name}: {many}',
+  // The bar along the foot of the register, where the class is added up for a teacher's one look
+  // before they keep it: what that bar is called to a screen reader.
+  'roster.summary': 'Attendance summary',
   'roster.search': 'Search students',
   'roster.searchPlaceholder': 'Search students...',
   'roster.noneTitle': 'No students to show',

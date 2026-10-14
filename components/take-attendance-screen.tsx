@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import type { ClassroomData, Student } from '../lib/classroom-data';
-import { useDirection, useWords, type WordKey } from '../lib/i18n';
+import { sayAround, useDirection, useWords, type WordKey } from '../lib/i18n';
 import {
   classToMarkIn,
   countedBy,
@@ -13,6 +13,7 @@ import {
   rosterFilters,
   rosterOf,
   rosterShown,
+  summaryOfRoster,
   tallyOfRoster,
   type RosterFilter,
 } from '../lib/roster';
@@ -58,6 +59,11 @@ const tintOf = (colour: string) => (/^#[0-9a-f]{6}$/i.test(colour) ? `${colour}1
  * keeping the register is its own requirement — so what is held here is the register as it stands
  * under the teacher's thumb.
  *
+ * Along the foot, beside the way to keep it, the class is added up: Present, Absent and Late, each
+ * with how many stand at it, for the one look a teacher gives a register before they save it. The
+ * three come to the number of students in the class, they follow every tap at once, and they add up
+ * the whole class and not the part of it a filter or a search happens to be showing.
+ *
  * The clock is a prop so a check can arrive on a particular morning; on a phone it is the phone's.
  */
 export function TakeAttendanceScreen({
@@ -94,6 +100,10 @@ export function TakeAttendanceScreen({
   const markNext = (student: Student) => setMarks((standing) => markedAs(standing, student.id, nextMarkAfter(markOf(standing, student))));
 
   const tally = tallyOfRoster(roster, marks);
+  // How the class stands, for the look a teacher gives the bar before they keep the register:
+  // worked out from the marks under their thumb, never kept beside them, so a tap on one student's
+  // status moves it in the same breath.
+  const summary = summaryOfRoster(roster, marks);
   const showing = rosterShown(roster, marks, filter, looking);
 
   return (
@@ -310,12 +320,33 @@ export function TakeAttendanceScreen({
           paddingBottom: 18,
         }}
       >
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: space.snug }}>
-          {(['Present', 'Absent', 'Late'] as const).map((mark) => (
-            <Text key={mark} style={{ fontSize: 13, fontWeight: '600', color: colors.text }}>
-              {t('roster.tally', { name: t(markLook[mark].name), many: countedBy(tally, mark) })}
-            </Text>
-          ))}
+        <View
+          role="group"
+          accessibilityLabel={t('roster.summary')}
+          style={{ flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: space.snug }}
+        >
+          {summary.counts.map(({ mark, many }) => {
+            // The mark's own word, and its count written in the mark's own colour: three numbers a
+            // teacher reads at a glance, which is the whole use of a summary. The phrase is cut in
+            // the language's own words, so a language that writes the number first still reads
+            // right — and the whole of it is what a screen reader says, in one breath.
+            const said = t('roster.tally', { name: t(markLook[mark].name), many });
+            const { before, piece, after } = sayAround('roster.tally', 'many', {
+              name: t(markLook[mark].name),
+              many,
+            });
+            return (
+              <Text
+                key={mark}
+                accessibilityLabel={said}
+                style={{ fontSize: 13, fontWeight: '600', color: colors.text }}
+              >
+                {before}
+                <Text style={{ fontSize: 13, fontWeight: '700', color: markLook[mark].colour }}>{piece}</Text>
+                {after}
+              </Text>
+            );
+          })}
         </View>
         {/* Keeping the register is its own requirement — the marks a teacher changes and the record
             they become are one piece of work — so the button the prototype draws is drawn here and,

@@ -156,6 +156,7 @@ export const arabic: Words = {
   'roster.all': 'الكل',
   'roster.counted': '{name} ({many})',
   'roster.tally': '{name}: {many}',
+  'roster.summary': 'ملخص الحضور',
   'roster.search': 'ابحث عن طالب',
   'roster.searchPlaceholder': 'ابحث عن طالب…',
   'roster.noneTitle': 'لا طلاب لعرضهم',

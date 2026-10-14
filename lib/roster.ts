@@ -90,6 +90,41 @@ export const countedBy = (tally: RosterTally, filter: RosterFilter): number =>
   filter === 'all' ? tally.total : filter === 'Present' ? tally.present : filter === 'Absent' ? tally.absent : tally.late;
 
 /**
+ * The marks the summary bar at the foot of the register adds a class up in, in the order it writes
+ * them. Every mark a student can stand at is here, which is what makes the bar a check worth
+ * making: three numbers that come to the class in front of the teacher. A fourth mark added to
+ * markOrder and not to this is a student counted nowhere, and summaryOfRoster says so of itself.
+ */
+export const summaryMarks: readonly AttendanceMark[] = ['Present', 'Absent', 'Late'];
+
+/**
+ * The summary bar's own reading of a register: each mark with how many stand at it, the total the
+ * class comes to, and whether the two agree. Nothing is kept — a summary is worked out from the
+ * marks in hand every time it is read, so it cannot drift from the register it is a summary of.
+ */
+export type RosterSummary = {
+  counts: { mark: AttendanceMark; many: number }[];
+  total: number;
+  addsUp: boolean;
+};
+
+/**
+ * How a class stands, for a teacher's one look before they save it: the three counts, the number of
+ * students in the class, and whether the counts add up to it. They do as long as every mark has a
+ * column on the bar; `addsUp` is that promise kept out loud rather than assumed, so a mark nobody
+ * counted shows up as a summary that does not add up instead of as a quietly wrong number.
+ */
+export function summaryOfRoster(students: Student[], marks: MarkedRoster): RosterSummary {
+  const tally = tallyOfRoster(students, marks);
+  const counts = summaryMarks.map((mark) => ({ mark, many: countedBy(tally, mark) }));
+  return {
+    counts,
+    total: tally.total,
+    addsUp: counts.reduce((all, one) => all + one.many, 0) === tally.total,
+  };
+}
+
+/**
  * The students a teacher is looking at: the ones at the mark they asked for, and whose name has in
  * it what they typed into the search. An empty search asks for nobody in particular, so everybody
  * the filter allows is on the screen.
