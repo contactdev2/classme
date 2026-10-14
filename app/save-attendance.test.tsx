@@ -344,6 +344,14 @@ describe("Save the day's attendance and see confirmation", () => {
     // Nothing is changed in place: the data handed in still says what it said.
     expect(data.attendance.some((one) => one.classroomId === 'c-maths' && one.day === todayText)).toBe(false);
 
+    // The picture is the register itself: the whole class, the button a teacher presses, and the
+    // marks that are now on the phone showing against the names they were saved against.
+    await screen.press('Back to the register');
+    await settle();
+    expect(rowsOn(screen)).toHaveLength(theRoster.length);
+    expect(markShownFor(screen, 'Tyler Brooks')).toBe('Absent');
+    expect(screen.text()).toContain('Save Attendance');
+
     takePictureOf(
       "Save the day's attendance and see confirmation > Tapping 'Save Attendance' stores today's status for every student in the class.",
       screen,

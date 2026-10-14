@@ -703,3 +703,78 @@ Half-true, and waiting for the next requirement:
   so a walk could not reach a register with a student on it. The three criteria are proved in
   `app/review-attendance-summary.test.tsx`, pushed red first — all three failing with
   `0 summary bars on this screen, wanted exactly one`.
+
+## 14 — Save the day's attendance and see confirmation (1da3283e)
+
+What is here now:
+
+- **`Save Attendance` is a button, and it keeps the day.** One press turns the marks under the
+  teacher's thumb into one `AttendanceRecord` for **every student on the roster** — including the
+  ones nobody touched, because a day with twenty-two marks in a class of twenty-four is two students
+  nobody can say anything about afterwards — writes them to `classroomStore()`, and puts the
+  confirmation in front of the register. It is disabled while the write is happening (one press is
+  one save) and on a class with nobody in it.
+- **`lib/attendance-save.ts` is the whole of the keeping.** `recordsForRegister` makes the day's
+  records; `dataWithRegister` puts them **in place of** whatever was kept for that class on that day,
+  so a day saved twice is one day's register and every other day and class are untouched;
+  `savedRegisterFor` reads a saved day back as marks; `keepRegister` does the read-change-write and
+  **never throws** — it answers `null`, and the register stays open saying `roster.couldNotSave`.
+  `dayOfRegister`/`dayFromText` are a day and its way back. The screen holds no rule of its own.
+- **`components/attendance-saved-screen.tsx` is *Attendance Saved!***, built to the agreed
+  prototype: the way back to the register, *Attendance*, the `⋮`, and the card — the green tick,
+  the words, `{class} — {period}`, the day in words, who saved it, and the three tiles (Present,
+  Absent, Late) in `markColours` on a wash of themselves — then **View Class Report** into that
+  class's own dashboard, **Back to Home**, and the prototype's own note about editing today again.
+- **`AttendanceRecord` gained one optional field, `savedBy`** — the teacher's own name, from
+  `nameOf(teacher)`, which is the approved decision that who saved a day is kept with it. Optional
+  the way requirement 4 added a teacher's name and requirement 10 added `archived`: every mark made
+  before it existed — in a backup file — still reads as a mark, and `classroomDataIfWhole` accepts
+  it only as a string. **Add a field the same way.**
+- `app/index.tsx` hands the register the teacher and three ways on, and takes back what the phone
+  keeps the moment it is written (`onSaved={setTeaching}`), so the class report and the Classes list
+  show the day that has just been saved without reading the phone again. **Still no new route**:
+  requirement 1's `No other screen appears before the login screen.` is still true.
+- Eleven new word keys in all five catalogues (`roster.saving`, `roster.couldNotSave`, `saved.*`),
+  and `test/fonts/*.woff2` were gathered again (`node test/fonts/gather-fonts.mjs`).
+
+Decisions taken, so they are not re-decided:
+
+- **A register re-opened on a day already saved opens at what was saved**, not at everybody present.
+  That is requirement 11 and 13's open question, answered on purpose: the day is on the phone, the
+  confirmation says it can be edited again, and opening it all-present would be the app quietly
+  marking a class it was told nothing new about. `openAt()` in the screen is
+  `{...everyonePresent(roster), ...savedRegisterFor(...)}`, so a student added since is Present and
+  everybody else is where they were left. Requirement 11's `Each student's status starts as Present.`
+  still reads word for word: its phone has a term of marks and **nothing for today**.
+- **The confirmation is a screen the register shows, not a route and not app/index's.** The marks
+  are the register's, and so is the save; `TakeAttendanceScreen` returns `<AttendanceSavedScreen/>`
+  in its own place, which is why the way back at its top left is the same marks again.
+- **Nothing ever says 'Attendance Saved!' over nothing saved.** A phone that will not be written to
+  leaves the register open with `roster.couldNotSave` in an `accessibilityRole="alert"`, and nothing
+  is logged on the way past. That is the one lie this screen must not tell.
+- **The confirmation says who saved it** (`saved.by`), which the mockup does not draw. The approved
+  decision keeps the teacher's name on every record, and a criterion about what the record holds
+  reads better with the name on the screen than only in the store. A record that keeps no name of
+  its own is not named — `recordsForRegister` leaves `savedBy` out rather than inventing one.
+- **The tiles read `tally.*`** (the legend's plural nouns), not `mark.*`, and are labelled with
+  `roster.tally` so a screen reader hears 'Present: 20' as one phrase. The tick is drawn out of
+  padding and a round corner, never a pinned height, so the phone's largest text grows it.
+- **No walk was written**, for requirements 11, 12 and 13's reason: a phone still cannot make a
+  classroom, so a walk could not reach a register with a student on it to save. The three criteria
+  are proved in `app/save-attendance.test.tsx`, pushed red first — all three failing with
+  `Cannot find module '../lib/attendance-save'`.
+
+Half-true, and waiting for the next requirement:
+
+- **`classroomStore()` is still in memory** (requirements 5, 7, 8, 9, 10, 11, 12 and 13's note
+  stands), so on a real phone a register saved this morning is forgotten when the app closes — and
+  the register still says "No classes yet" because nothing can make a classroom. **This is now the
+  most expensive of the half-truths on this branch**: everything above it is real and proved, and
+  all of it is written to a store that does not outlast the app. `lib/accounts-file.ts` and
+  `lib/onboarding.ts` both show how a thing is kept on a phone; the line to replace is
+  `let store = ...` in `lib/classroom-data.ts`.
+- **The register is always today's**, and the `▾` on the class card still chooses nothing. A day
+  taken late — yesterday's register, on a morning after — has nowhere to be entered.
+- **Nothing edits a saved day from the Class Report**, which the confirmation's own last line
+  promises. The way back into today is the register itself, which now opens at what was saved; the
+  report's Students and Trends tabs are still their own requirements.

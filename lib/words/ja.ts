@@ -161,6 +161,19 @@ export const japanese: Words = {
   'roster.save': '出欠を保存',
   'roster.change': '{name} — {mark}。タップして変更します。',
 
+  'roster.saving': '保存中…',
+  'roster.couldNotSave': 'この端末に本日の出欠を保存できませんでした。もう一度お試しください。',
+
+  'saved.title': '出欠',
+  'saved.back': '出欠表に戻る',
+  'saved.done': '出欠を保存しました！',
+  'saved.where': '{class} · {period}',
+  'saved.when': '{day} {date}',
+  'saved.by': '保存者：{name}',
+  'saved.report': 'クラスレポートを見る',
+  'saved.home': 'ホームに戻る',
+  'saved.editWords': '本日の出欠はクラスレポートからいつでも編集できます。',
+
   'mark.present': '出席',
   'mark.absent': '欠席',
   'mark.late': '遅刻',

@@ -189,6 +189,24 @@ export const english = {
   // now, and that pressing it changes it.
   'roster.change': '{name} — {mark}. Tap to change.',
 
+  // What a teacher is told while the register is being kept, and if the phone would not keep it.
+  'roster.saving': 'Saving…',
+  'roster.couldNotSave': "Today's attendance could not be saved on this phone. Try again.",
+
+  // The confirmation that follows a register being kept: that it is saved, which register it was,
+  // the day it was taken on, who saved it, and the two ways on from it.
+  'saved.title': 'Attendance',
+  'saved.back': 'Back to the register',
+  'saved.done': 'Attendance Saved!',
+  // Which register was kept: the class, and the period it meets in.
+  'saved.where': '{class} — {period}',
+  // The day it was taken on, as this language writes a day and a date together.
+  'saved.when': '{day}, {date}',
+  'saved.by': 'Saved by {name}',
+  'saved.report': 'View Class Report',
+  'saved.home': 'Back to Home',
+  'saved.editWords': "You can edit today's attendance anytime from Class Report.",
+
   // The three marks, as a register says them of one student.
   'mark.present': 'Present',
   'mark.absent': 'Absent',

@@ -161,6 +161,19 @@ export const simplifiedChinese: Words = {
   'roster.save': '保存出勤',
   'roster.change': '{name} — {mark}。点击即可更改。',
 
+  'roster.saving': '正在保存…',
+  'roster.couldNotSave': '无法在此手机上保存今天的出勤。请重试。',
+
+  'saved.title': '出勤',
+  'saved.back': '返回点名表',
+  'saved.done': '出勤已保存！',
+  'saved.where': '{class} · {period}',
+  'saved.when': '{day} {date}',
+  'saved.by': '保存者：{name}',
+  'saved.report': '查看班级报告',
+  'saved.home': '返回主页',
+  'saved.editWords': '今天的出勤可随时在班级报告中修改。',
+
   'mark.present': '出勤',
   'mark.absent': '缺勤',
   'mark.late': '迟到',

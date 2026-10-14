@@ -131,9 +131,25 @@ export default function Login() {
       return <SettingsScreen teacher={teacher} onBack={() => setPlace('home')} onLogOut={logOut} />;
     }
     if (place === 'attendance') {
-      // Today's register, for the class the teacher opened or else the first of their own day.
+      // Today's register, for the class the teacher opened or else the first of their own day. What
+      // it writes to the phone is handed straight back, so the class's own report and the Classes
+      // list show the day that has just been saved without reading the phone again.
       return (
-        <TakeAttendanceScreen data={teaching} classroomId={openClass} onBack={() => setPlace(before)} />
+        <TakeAttendanceScreen
+          data={teaching}
+          teacher={teacher}
+          classroomId={openClass}
+          onBack={() => setPlace(before)}
+          onSaved={setTeaching}
+          onViewReport={(saved) => {
+            setOpenClass(saved);
+            setPlace('classes');
+          }}
+          onHome={() => {
+            setOpenClass(null);
+            setPlace('home');
+          }}
+        />
       );
     }
     if (place === 'classes') {

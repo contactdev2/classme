@@ -165,6 +165,19 @@ export const french: Words = {
   'roster.save': 'Enregistrer les présences',
   'roster.change': '{name} — {mark}. Touchez pour modifier.',
 
+  'roster.saving': 'Enregistrement…',
+  'roster.couldNotSave': "Les présences du jour n'ont pas pu être enregistrées sur ce téléphone. Réessayez.",
+
+  'saved.title': 'Présences',
+  'saved.back': 'Retour à la feuille de présence',
+  'saved.done': 'Présences enregistrées !',
+  'saved.where': '{class} · {period}',
+  'saved.when': '{day} {date}',
+  'saved.by': 'Enregistré par {name}',
+  'saved.report': 'Voir le rapport de classe',
+  'saved.home': "Retour à l'accueil",
+  'saved.editWords': 'Vous pouvez modifier les présences du jour à tout moment depuis le rapport de classe.',
+
   // Un élève d'une classe, qui peut être de l'un ou l'autre genre.
   'mark.present': 'Présent(e)',
   'mark.absent': 'Absent(e)',

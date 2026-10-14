@@ -167,6 +167,19 @@ export const arabic: Words = {
   'roster.save': 'حفظ الحضور',
   'roster.change': '{name} — {mark}. اضغط للتغيير.',
 
+  'roster.saving': 'جارٍ الحفظ…',
+  'roster.couldNotSave': 'لم يتم حفط حضور اليوم على هذا الهاتف. حاول مرة أخرى.',
+
+  'saved.title': 'الحضور',
+  'saved.back': 'الرجوع إلى كشف الحضور',
+  'saved.done': 'تم حفط الحضور!',
+  'saved.where': '{class} · {period}',
+  'saved.when': '{day} {date}',
+  'saved.by': 'حفطه {name}',
+  'saved.report': 'عرض تقرير الصف',
+  'saved.home': 'الرجوع إلى الرئيسية',
+  'saved.editWords': 'يمكنك تعديل حضور اليوم في أي وقت من تقرير الصف.',
+
   'mark.present': 'حاضر',
   'mark.absent': 'غائب',
   'mark.late': 'متأخر',

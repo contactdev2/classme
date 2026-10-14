@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { dayOfRegister, keepRegister, savedRegisterFor, type SavedRegister } from '../lib/attendance-save';
 import type { ClassroomData, Student } from '../lib/classroom-data';
+import { nameOf } from '../lib/greeting';
 import { sayAround, useDirection, useWords, type WordKey } from '../lib/i18n';
+import type { TeacherProfile } from '../lib/local-accounts';
 import {
   classToMarkIn,
   countedBy,
@@ -19,6 +22,7 @@ import {
 } from '../lib/roster';
 import { avatarWashes, colors, markColours, radius, shadow, space } from '../lib/theme';
 import { dateLabel, dayName } from '../lib/week';
+import { AttendanceSavedScreen } from './attendance-saved-screen';
 
 /** What each filter is called, and what the roster says when nobody answers it. */
 const filterWords: Record<RosterFilter, WordKey> = {
@@ -64,17 +68,35 @@ const tintOf = (colour: string) => (/^#[0-9a-f]{6}$/i.test(colour) ? `${colour}1
  * three come to the number of students in the class, they follow every tap at once, and they add up
  * the whole class and not the part of it a filter or a search happens to be showing.
  *
+ * Save Attendance keeps it: one record for every student in the class, on today's own date and
+ * under the name of the teacher who saved it, written to the phone and nowhere else — and then the
+ * confirmation that says so. A register re-opened on a day already saved opens at what was saved,
+ * not at everybody present: the day is on the phone, and a teacher coming back to it has a right to
+ * see what they kept. A phone that would not be written to says so and the register stays open, so
+ * nothing ever says it was saved when it was not.
+ *
  * The clock is a prop so a check can arrive on a particular morning; on a phone it is the phone's.
  */
 export function TakeAttendanceScreen({
   data,
+  teacher,
   classroomId = null,
   onBack,
+  onSaved,
+  onViewReport,
+  onHome,
   now = new Date(),
 }: {
   data: ClassroomData;
+  teacher: TeacherProfile;
   classroomId?: string | null;
   onBack: () => void;
+  /** Told what the phone keeps now, the moment a register is written to it. */
+  onSaved: (data: ClassroomData) => void;
+  /** Into that class's own report, which is where the confirmation offers to go. */
+  onViewReport: (classroomId: string) => void;
+  /** And out to Home, which is the other way the confirmation offers. */
+  onHome: () => void;
   now?: Date;
 }) {
   const t = useWords();
@@ -82,19 +104,62 @@ export function TakeAttendanceScreen({
   const classroom = classToMarkIn(data, classroomId);
   const roster = classroom ? rosterOf(data, classroom.id) : [];
 
-  // Where the register starts — everybody present — and where it stands once the teacher has
-  // marked the exceptions. The class it was seeded for is held beside it, so a teacher who changes
-  // which class they are marking gets that class's own register and not the last one's marks: the
-  // ids are another class's, and a roster read through them would show everybody present anyway,
-  // which would be a lie about a mark nobody had made.
-  const [marks, setMarks] = useState(() => everyonePresent(roster));
+  const today = dayOfRegister(now);
+
+  /**
+   * Where the register opens: at what was saved for this class today, if today has been saved, and
+   * at everybody present if it has not. A day on the phone is a day a teacher may want to correct,
+   * and opening it at everybody present would be the app quietly marking a class it was told
+   * nothing new about.
+   */
+  const openAt = (of: typeof classroom, students: Student[]) =>
+    of ? { ...everyonePresent(students), ...savedRegisterFor(data, of.id, today) } : {};
+
+  // Where the register stands once the teacher has marked the exceptions. The class it was seeded
+  // for is held beside it, so a teacher who changes which class they are marking gets that class's
+  // own register and not the last one's marks: the ids are another class's, and a roster read
+  // through them would show everybody present anyway, which would be a lie about a mark nobody
+  // had made.
+  const [marks, setMarks] = useState(() => openAt(classroom, roster));
   const [seededFor, setSeededFor] = useState(classroom?.id ?? null);
   if (seededFor !== (classroom?.id ?? null)) {
     setSeededFor(classroom?.id ?? null);
-    setMarks(everyonePresent(roster));
+    setMarks(openAt(classroom, roster));
   }
   const [filter, setFilter] = useState<RosterFilter>('all');
   const [looking, setLooking] = useState('');
+  // The register once it is kept, which is the confirmation this screen then shows; and what a
+  // teacher is told while it is being kept, or if the phone would not keep it.
+  const [saved, setSaved] = useState<SavedRegister | null>(null);
+  const [keeping, setKeeping] = useState(false);
+  const [said, setSaid] = useState<string | null>(null);
+
+  /**
+   * Save Attendance: today's register written to the phone, and the confirmation that follows it.
+   * One press is one save — a second while the first is being written is ignored — and a phone that
+   * would not be written to leaves the register open with a sentence saying so, because a screen
+   * saying 'Attendance Saved!' over nothing saved would be the one lie this screen must not tell.
+   */
+  async function keepIt() {
+    if (keeping || !classroom || roster.length === 0) return;
+    setKeeping(true);
+    setSaid(t('roster.saving'));
+    const kept = await keepRegister({
+      roster,
+      marks,
+      classroomId: classroom.id,
+      now,
+      savedBy: nameOf(teacher),
+    });
+    setKeeping(false);
+    if (!kept) {
+      setSaid(t('roster.couldNotSave'));
+      return;
+    }
+    setSaid(null);
+    onSaved(kept.data);
+    setSaved(kept.saved);
+  }
 
   /** One student's status pressed: that student on to the next of the three marks, nobody else. */
   const markNext = (student: Student) => setMarks((standing) => markedAs(standing, student.id, nextMarkAfter(markOf(standing, student))));
@@ -105,6 +170,21 @@ export function TakeAttendanceScreen({
   // status moves it in the same breath.
   const summary = summaryOfRoster(roster, marks);
   const showing = rosterShown(roster, marks, filter, looking);
+  const cannotKeep = keeping || !classroom || roster.length === 0;
+
+  // Today's register is on the phone: the confirmation is the screen now, and the register is
+  // behind it — the way back at the top of it opens this one again, at the marks that were kept.
+  if (saved && classroom) {
+    return (
+      <AttendanceSavedScreen
+        classroom={classroom}
+        saved={saved}
+        onBack={() => setSaved(null)}
+        onViewReport={() => onViewReport(saved.classroomId)}
+        onHome={onHome}
+      />
+    );
+  }
 
   return (
     <View style={{ flex: 1, direction: dir, backgroundColor: colors.background }}>
@@ -348,23 +428,34 @@ export function TakeAttendanceScreen({
             );
           })}
         </View>
-        {/* Keeping the register is its own requirement — the marks a teacher changes and the record
-            they become are one piece of work — so the button the prototype draws is drawn here and,
-            like the mark beside the screen's name, is deliberately not announced as a button yet. */}
-        <Text
+        {/* Keeping the register: one press writes today's mark for every student in the class to
+            the phone, and the confirmation takes this screen's place. There is nothing to keep in a
+            class with nobody in it, so on a phone with no roster the button says it does nothing
+            rather than answering a press with nothing. */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ disabled: cannotKeep }}
+          disabled={cannotKeep}
+          onPress={keepIt}
           style={{
-            textAlign: 'center',
+            alignItems: 'center',
             backgroundColor: colors.accent,
-            color: colors.onAccent,
             borderRadius: 14,
             paddingVertical: 14,
-            fontSize: 15,
-            fontWeight: '700',
+            opacity: cannotKeep ? 0.6 : 1,
             ...shadow.accent,
           }}
         >
-          {t('roster.save')}
-        </Text>
+          <Text style={{ textAlign: 'center', color: colors.onAccent, fontSize: 15, fontWeight: '700' }}>
+            {t('roster.save')}
+          </Text>
+        </Pressable>
+        {/* What the phone said about keeping it, where a screen reader is told about it. */}
+        {said ? (
+          <Text accessibilityRole="alert" style={{ fontSize: 13, color: colors.text, textAlign: 'center' }}>
+            {said}
+          </Text>
+        ) : null}
       </View>
     </View>
   );

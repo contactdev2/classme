@@ -32,7 +32,20 @@ export type Classroom = {
 export type Student = { id: string; classroomId: string; name: string; photo?: string };
 
 /** One mark against one student, on one day. */
-export type AttendanceRecord = { studentId: string; classroomId: string; day: string; mark: AttendanceMark };
+export type AttendanceRecord = {
+  studentId: string;
+  classroomId: string;
+  day: string;
+  mark: AttendanceMark;
+  /**
+   * The name of the teacher who saved the day this mark belongs to — an approved decision: who
+   * saved a given day's attendance is kept with it. Left out on a mark saved by nobody this app
+   * knows of, so every mark made before this field existed — in a backup file, say — still reads
+   * as a mark, and a phone whose record keeps no name of its own puts none here rather than one
+   * the app invented.
+   */
+  savedBy?: string;
+};
 
 /** Everything the phone keeps about a teacher's teaching, all together: what a backup carries. */
 export type ClassroomData = {
@@ -115,8 +128,14 @@ export function classroomDataIfWhole(value: unknown): ClassroomData | null {
     return isText(id) && isText(classroomId) && isText(name) && (photo === undefined || isText(photo));
   };
   const wholeMark = (one: unknown) => {
-    const { studentId, classroomId, day, mark } = (one ?? {}) as Record<string, unknown>;
-    return isText(studentId) && isText(classroomId) && isText(day) && attendanceMarks.includes(mark as AttendanceMark);
+    const { studentId, classroomId, day, mark, savedBy } = (one ?? {}) as Record<string, unknown>;
+    return (
+      isText(studentId) &&
+      isText(classroomId) &&
+      isText(day) &&
+      attendanceMarks.includes(mark as AttendanceMark) &&
+      (savedBy === undefined || isText(savedBy))
+    );
   };
 
   if (!classrooms.every(wholeClassroom) || !students.every(wholeStudent) || !attendance.every(wholeMark)) return null;
