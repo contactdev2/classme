@@ -778,3 +778,80 @@ Half-true, and waiting for the next requirement:
 - **Nothing edits a saved day from the Class Report**, which the confirmation's own last line
   promises. The way back into today is the register itself, which now opens at what was saved; the
   report's Students and Trends tabs are still their own requirements.
+
+## 15 — Check a student's attendance history (6f34165c)
+
+What is here now:
+
+- **A student's name on the register opens their own profile.** Their initials and their name
+  together are one `Pressable`, announced as a **link** (`accessibilityRole="link"`,
+  `student.open` — *Open Chloe Kim's profile*) and deliberately not as a button: the status beside
+  it on the same row is a button and changes a mark, and a register marked with a thumb must never
+  have two things on one row that look alike and do different things. **It is also why requirement
+  12's `[role="listitem"] [role="button"]` is still exactly 24** — if you make a name a button,
+  that check goes red and it is right to. `test/screen.tsx` presses a link now as well as a button
+  and a radio row.
+- **`components/student-profile-screen.tsx` is Student Profile**, built to the agreed prototype:
+  the way back to the register, the name of the screen, the `⋮`, the student's card (initials, name,
+  `{class} · {period}`), the Overview / Attendance / Notes tabs, the three tiles — **Attendance
+  Rate**, **Absences**, **Late** — *Recent Attendance* with the five most recent days and
+  **View All**, and then the one thing each tab has of its own: the Teacher Note card on Overview,
+  and the month added up (*April Summary*: Days Tracked, Present, Absent, Late) on Attendance.
+- **`components/student-history-screen.tsx` is Full Attendance Record**, which is what View All
+  opens: the student's card with their rate on it, the three counts of the whole record, and every
+  day the phone has a mark against their name, newest first, under the month each falls in — with
+  the places row along the foot, Attendance lit, as the prototype draws it on that screen.
+- **`lib/student-history.ts` is the whole of the reading**: `studentWithId`, `historyOf` (the days
+  against one student's name, newest first), `tallyOfHistory`, `recentDays`/`recentlyShown`,
+  `historyByMonth` and `latestMonth`. **Neither screen holds a rule of its own** — a sixth recent
+  day, or another order, is one line here. Nothing is stored: every rate, count and month summary is
+  worked out from the daily records each time it is read, which is the approved decision.
+- `components/student-look.ts` is what the two screens share: `dayLook` (each mark's word, colour
+  and sign — ✓ ✕ ⏰), `dateInWords` ('Apr 21, 2025'), `dayInWords` ('Apr 21, 2025 — Absent'),
+  `monthInWords` ('April 2025') and `washFor` (a student's own wash, by their place in their class's
+  register, so the same face is the same colour on every screen).
+- Twenty-four new `student.*` keys and **`monthFull.1`…`monthFull.12`** (a month written out, which
+  the record's headings and *April Summary* need) in all five catalogues; `student.in` and
+  `student.monthOf` are in `wordsAllowedToStay` — both are nothing but braces, and French writes a
+  month beside its year exactly as English does. `test/fonts/*.woff2` were gathered again.
+
+Decisions taken, so they are not re-decided:
+
+- **'View All' opens the whole record from either tab.** The prototype's Overview sends it to the
+  Attendance tab and only that tab's own View All to the full list; the criterion says View All
+  shows the complete attendance history, and a requirement's own lines win over the mockup. Both
+  tabs are one tap from the record and the Attendance tab is still one tap from its own tab.
+- **The profile is a screen the register shows, not a route** — the same decision the confirmation
+  took in requirement 14. `TakeAttendanceScreen` returns it in its own place, so the register stays
+  mounted with the teacher's marks standing behind it: looking a student up never costs a register.
+  `app/index.tsx` gained nothing but `onGo={goTo}` on the register, which is what the places row at
+  the foot of the full record goes through. **Still no new route**: requirement 1's check holds.
+- **The Teacher Note card says there is no note.** Nothing on the phone keeps a note against a
+  student, so Notes is drawn without a role (like the `⋮` and the `+` before it) and the card says
+  `student.noNote` rather than showing prose about a student that nobody wrote. **The notes
+  requirement has the card and the tab waiting for it.**
+- **The line under a student's name is their class and period**, where the prototype writes *Grade
+  10 · Student ID #1042*. A `Student` is a name and a photo (`lib/classroom-data.ts`) and nothing
+  else; a grade and a school id would have had to be invented. **A requirement that adds either
+  should put it here.**
+- **A rate is present ÷ every mark, rounded** (`rateOf`, shared with the class dashboard), so a
+  student late all term is not counted present. A student with nothing marked is 0% of nothing, and
+  the screen says `student.none` rather than drawing an empty month.
+
+Half-true, and waiting for the next requirement:
+
+- **`classroomStore()` is still in memory** (requirements 5, 7, 8, 9, 10, 11, 12, 13 and 14's note
+  stands): on a real phone a register saved this morning is forgotten when the app closes, and a
+  profile opened tomorrow has nothing in it. This is still the most expensive half-truth on the
+  branch. The line to replace is `let store = ...` in `lib/classroom-data.ts`.
+- **A name is only pressable on the register.** The class report's Students tab is still its own
+  requirement and still goes nowhere; when it arrives, it should open the same
+  `StudentProfileScreen` rather than a second profile — and it will need a way in that is not the
+  register, so the profile's `onBack` and its places row are worth making the caller's business.
+- **The photo is still initials.** A photo is kept against a student and drawing it needs an
+  `Image` the checks' stand-in has not got; that is the photo requirement's to add, here, on the
+  register, and at the top of the full record.
+- **No walk was written**, for requirements 11 to 14's reason: a phone still cannot make a classroom
+  or add a student, so a walk could not reach a name to press. The four criteria are proved in
+  `app/student-attendance-history.test.tsx`, pushed red first — all four failing with
+  `Cannot find module '../lib/student-history'`.

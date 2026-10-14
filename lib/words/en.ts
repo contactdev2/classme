@@ -128,6 +128,19 @@ export const english = {
   'month.10': 'Oct',
   'month.11': 'Nov',
   'month.12': 'Dec',
+  // A month written out in full, as the heading over the days of it and in a month's own summary.
+  'monthFull.1': 'January',
+  'monthFull.2': 'February',
+  'monthFull.3': 'March',
+  'monthFull.4': 'April',
+  'monthFull.5': 'May',
+  'monthFull.6': 'June',
+  'monthFull.7': 'July',
+  'monthFull.8': 'August',
+  'monthFull.9': 'September',
+  'monthFull.10': 'October',
+  'monthFull.11': 'November',
+  'monthFull.12': 'December',
   'week.date': '{month} {day}',
 
   // The Classes list: all of a teacher's own classes, and the way into any one of them.
@@ -206,6 +219,42 @@ export const english = {
   'saved.report': 'View Class Report',
   'saved.home': 'Back to Home',
   'saved.editWords': "You can edit today's attendance anytime from Class Report.",
+
+  // A student's own profile, opened from the register by their name: their attendance over time.
+  'student.open': "Open {name}'s profile",
+  'student.title': 'Student Profile',
+  'student.back': 'Back to the register',
+  // Which class of the teacher's own this student is in, and when it meets.
+  'student.in': '{class} · {period}',
+  'student.overview': 'Overview',
+  'student.attendance': 'Attendance',
+  'student.notes': 'Notes',
+  // The three numbers at the top of a profile: what the group of them is called to a screen
+  // reader, and what each of them is a number of.
+  'student.summary': 'Attendance summary',
+  'student.rate': 'Attendance Rate',
+  'student.absences': 'Absences',
+  'student.lates': 'Late',
+  'student.recent': 'Recent Attendance',
+  'student.viewAll': 'View All',
+  // What the list of a student's days is called to a screen reader.
+  'student.history': 'Attendance history',
+  // One day of it: the date it was taken on, and what the student was marked as.
+  'student.day': '{date} — {mark}',
+  // A day with the year on it, which a term read back in a later one needs.
+  'student.dayDate': '{date}, {year}',
+  'student.none': 'Nothing is marked against this student yet. Once you take attendance, their days show here.',
+  // The month a profile adds up at the foot of its Attendance tab.
+  'student.monthSummary': '{month} Summary',
+  'student.tracked': 'Days Tracked',
+  // The note a teacher keeps about a student, which nothing on the phone keeps yet.
+  'student.noteTitle': 'Teacher Note',
+  'student.noNote': 'No note has been kept for this student yet.',
+  // The whole record, behind 'View All'.
+  'student.fullTitle': 'Full Attendance Record',
+  'student.fullBack': 'Back to the profile',
+  // A month, as the heading over the days of it: 'April 2025'.
+  'student.monthOf': '{month} {year}',
 
   // The three marks, as a register says them of one student.
   'mark.present': 'Present',

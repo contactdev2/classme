@@ -20,9 +20,12 @@ import {
   tallyOfRoster,
   type RosterFilter,
 } from '../lib/roster';
+import { studentWithId } from '../lib/student-history';
 import { avatarWashes, colors, markColours, radius, shadow, space } from '../lib/theme';
 import { dateLabel, dayName } from '../lib/week';
 import { AttendanceSavedScreen } from './attendance-saved-screen';
+import type { Place } from './places-row';
+import { StudentProfileScreen } from './student-profile-screen';
 
 /** What each filter is called, and what the roster says when nobody answers it. */
 const filterWords: Record<RosterFilter, WordKey> = {
@@ -75,6 +78,10 @@ const tintOf = (colour: string) => (/^#[0-9a-f]{6}$/i.test(colour) ? `${colour}1
  * see what they kept. A phone that would not be written to says so and the register stays open, so
  * nothing ever says it was saved when it was not.
  *
+ * A student's own name on a row is the way into their profile: their attendance over time, their
+ * rate, and the whole record behind it. The register stays where it is while a teacher looks
+ * somebody up, marks and all, and the way back out of a profile is those same marks again.
+ *
  * The clock is a prop so a check can arrive on a particular morning; on a phone it is the phone's.
  */
 export function TakeAttendanceScreen({
@@ -85,6 +92,7 @@ export function TakeAttendanceScreen({
   onSaved,
   onViewReport,
   onHome,
+  onGo,
   now = new Date(),
 }: {
   data: ClassroomData;
@@ -97,6 +105,8 @@ export function TakeAttendanceScreen({
   onViewReport: (classroomId: string) => void;
   /** And out to Home, which is the other way the confirmation offers. */
   onHome: () => void;
+  /** Out to one of the app's own places, from the row along the foot of a student's full record. */
+  onGo: (place: Place) => void;
   now?: Date;
 }) {
   const t = useWords();
@@ -131,6 +141,9 @@ export function TakeAttendanceScreen({
   // The register once it is kept, which is the confirmation this screen then shows; and what a
   // teacher is told while it is being kept, or if the phone would not keep it.
   const [saved, setSaved] = useState<SavedRegister | null>(null);
+  // The student whose own profile is in front of the register, by the id the phone knows them by:
+  // a teacher who pressed a name to look somebody up, with their marks still standing behind it.
+  const [profileOf, setProfileOf] = useState<string | null>(null);
   const [keeping, setKeeping] = useState(false);
   const [said, setSaid] = useState<string | null>(null);
 
@@ -171,6 +184,24 @@ export function TakeAttendanceScreen({
   const summary = summaryOfRoster(roster, marks);
   const showing = rosterShown(roster, marks, filter, looking);
   const cannotKeep = keeping || !classroom || roster.length === 0;
+
+  // A student looked up: their own profile is the screen now, and the register is behind it —
+  // still mounted, still holding the marks the teacher had made, so looking somebody up never
+  // costs a register. The way back at the top of it is these same marks again.
+  const lookedUp = profileOf === null ? null : studentWithId(data, profileOf);
+  if (lookedUp) {
+    return (
+      <StudentProfileScreen
+        data={data}
+        student={lookedUp}
+        onBack={() => setProfileOf(null)}
+        onGo={(place) => {
+          setProfileOf(null);
+          onGo(place);
+        }}
+      />
+    );
+  }
 
   // Today's register is on the phone: the confirmation is the screen now, and the register is
   // behind it — the way back at the top of it opens this one again, at the marks that were kept.
@@ -336,12 +367,24 @@ export function TakeAttendanceScreen({
                 {/* The student's own initials, where the prototype draws their face. A photo is
                     kept against a student (lib/classroom-data.ts) and showing it here is its own
                     requirement; initials are what a register has for everybody. */}
-                <View style={{ backgroundColor: wash.wash, borderRadius: radius.pill, paddingHorizontal: 9, paddingVertical: 8 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: wash.ink }}>{initialsOf(student.name)}</Text>
-                </View>
-                <Text style={{ flex: 1, flexBasis: 120, fontSize: 14, fontWeight: '600', color: colors.text }}>
-                  {student.name}
-                </Text>
+                {/* Their initials and their name together are the way into their own profile:
+                    pressing them opens their attendance over time. It is announced as a link —
+                    something that takes a teacher to another screen — and not as a button, which
+                    on this row is what changes a mark; a register marked with a thumb must never
+                    have two things on one row that look alike and do different things. */}
+                <Pressable
+                  accessibilityRole="link"
+                  accessibilityLabel={t('student.open', { name: student.name })}
+                  onPress={() => setProfileOf(student.id)}
+                  style={{ flex: 1, flexBasis: 150, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}
+                >
+                  <View style={{ backgroundColor: wash.wash, borderRadius: radius.pill, paddingHorizontal: 9, paddingVertical: 8 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: wash.ink }}>{initialsOf(student.name)}</Text>
+                  </View>
+                  <Text style={{ flex: 1, flexBasis: 100, fontSize: 14, fontWeight: '600', color: colors.text }}>
+                    {student.name}
+                  </Text>
+                </Pressable>
                 {/* What they are marked as, and the way to change it: one press takes this one
                     student on to the next of the three marks. It is named by the student standing
                     on it, so a teacher reading the screen with their ears is told whose mark they

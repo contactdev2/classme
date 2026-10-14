@@ -64,7 +64,8 @@ async function theirTeaching(): Promise<ClassroomData> {
  *
  * From Home a teacher goes to their own classes — the list of them, and the attendance of any one
  * they open — and to today's register, where the class they opened, or else the first class of
- * their day, stands with everybody marked Present. What the phone keeps about their teaching is
+ * their day, stands with everybody marked Present, and where one student's name opens their own
+ * attendance over time. What the phone keeps about their teaching is
  * read once, as they sign in, and handed down to those screens, so none of them has anything to
  * wait for when it is drawn.
  *
@@ -149,6 +150,7 @@ export default function Login() {
             setOpenClass(null);
             setPlace('home');
           }}
+          onGo={goTo}
         />
       );
     }
