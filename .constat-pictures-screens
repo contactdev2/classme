@@ -2,9 +2,9 @@
   "branch": "constat/session-3-324a1a86",
   "screens": [],
   "criteria": [
-    "Tapping a student's status button changes it to Absent, Late, or Present.",
-    "Changing Chloe Kim's status to Absent updates her row to show Absent.",
-    "Changing Elena Wright's status to Late updates her row to show Late."
+    "A summary bar shows the count of Present, Absent, and Late students.",
+    "The counts update immediately when a status is changed.",
+    "The summary bar numbers add up to the total number of students in the class."
   ],
   "why": "DoneMark froze these onto the attempt: the acceptance criteria of the requirement it is for, and the screens those criteria name. The picture suite runs the checks whose names are these criteria and skips the rest; where it can match none of them it narrows by these screens instead, and says so. Honoured on this branch only."
 }
