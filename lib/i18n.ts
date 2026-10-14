@@ -31,7 +31,8 @@ export const catalogues: Record<Tag, Words> = {
 };
 
 /**
- * The keys whose words are allowed to be the same as the English: a sample address, the name of an
+ * The keys whose words are allowed to be the same as the English: a sample address, a sample school
+ * nobody translates, the name of an
  * arithmetic standard, a sentence whose only English part is a brace, a count written as a count —
  * 1/3 is 1/3 in every language the app offers — and a month beside its year, which French writes
  * exactly as English does. Every other key in every other catalogue
@@ -39,6 +40,7 @@ export const catalogues: Record<Tag, Words> = {
  */
 export const wordsAllowedToStay: readonly WordKey[] = [
   'login.emailPlaceholder',
+  'signUp.schoolPlaceholder',
   'privacy.standardValue',
   'home.greetingLine',
   'home.greetingName',

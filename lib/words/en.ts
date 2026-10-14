@@ -49,6 +49,8 @@ export const english = {
   'signUp.name': 'Your Name',
   // A sample name, so the field shows the shape of an answer rather than an empty box.
   'signUp.namePlaceholder': 'Ms. Patel',
+  'signUp.school': 'Your School (optional)',
+  'signUp.schoolPlaceholder': 'Riverside High',
   'signUp.continue': 'Continue',
   'signUp.greeting': 'Hi, {name}',
   'signUp.accountWords': 'Now set your email and password to finish signup.',
@@ -101,7 +103,7 @@ export const english = {
   'home.todayLabel': 'Today',
   'home.noClasses': 'No classes yet',
   'home.noClassesWords': 'Your periods, and the students in them, show here once you have a classroom.',
-  'home.account': 'Your account — settings',
+  'home.account': 'Your account — profile',
   'place.home': 'Home',
   'place.classes': 'Classes',
   'place.attendance': 'Attendance',
@@ -306,6 +308,15 @@ export const english = {
   'settings.help': 'Help & Support',
   'settings.logout': 'Logout',
   'settings.foot': '{product} v1.0 · Data stored securely on this device',
+
+  // ─── The profile menu ────────────────────────────────────────────────────────────────────────
+  'profile.title': 'Profile',
+  'profile.menu': 'Profile menu',
+  'profile.at': 'Teacher · {school}',
+  'profile.noSchool': 'School not added yet',
+  'profile.reports': 'Attendance Reports',
+  'profile.darkModeOn': 'Dark Mode is on',
+  'profile.darkModeOff': 'Dark Mode is off',
 
   // The backup itself, as a teacher is told about it.
   'backup.chooseLonger': 'Choose a backup password of at least 8 characters. Only this password opens the file.',

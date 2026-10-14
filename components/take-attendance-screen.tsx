@@ -21,7 +21,7 @@ import {
   type RosterFilter,
 } from '../lib/roster';
 import { studentWithId } from '../lib/student-history';
-import { avatarWashes, colors, markColours, radius, shadow, space } from '../lib/theme';
+import { avatarWashes, colors, markColours, radius, shadow, space, useAppearance } from '../lib/theme';
 import { dateLabel, dayName } from '../lib/week';
 import { AttendanceSavedScreen } from './attendance-saved-screen';
 import type { Place } from './places-row';
@@ -111,6 +111,9 @@ export function TakeAttendanceScreen({
 }) {
   const t = useWords();
   const dir = useDirection();
+  // Redrawn the moment a teacher flips Dark Mode in their own profile menu: the colours below are
+  // whichever of the two looks the app is wearing. See lib/theme.ts.
+  useAppearance();
   const classroom = classToMarkIn(data, classroomId);
   const roster = classroom ? rosterOf(data, classroom.id) : [];
 

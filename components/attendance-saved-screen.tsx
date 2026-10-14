@@ -2,7 +2,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { dayFromText, type SavedRegister } from '../lib/attendance-save';
 import type { AttendanceMark, Classroom } from '../lib/classroom-data';
 import { useDirection, useWords, type WordKey } from '../lib/i18n';
-import { colors, markColours, radius, shadow, space } from '../lib/theme';
+import { colors, markColours, radius, shadow, space, useAppearance } from '../lib/theme';
 import { dateLabel, dayName } from '../lib/week';
 
 /** Each mark's own colour and the word the tiles call it by: the legend's plural noun, not a mark. */
@@ -20,7 +20,9 @@ const washOf = (colour: string) => `${colour}14`;
  * kept, drawn out of this app's own colours. They carry no words and say nothing, so a teacher
  * reading the screen with their ears hears only what was saved.
  */
-const confetti = [
+// Made when a screen is drawn and not when this module loads: the colours in it are the ones the
+// app is wearing at that moment, so a teacher flipping Dark Mode redraws this with everything else.
+const confetti = () => [
   { top: 18, left: 30, size: 8, round: 2, colour: colors.accent },
   { top: 40, left: 62, size: 6, round: 999, colour: markColours.late },
   { top: 74, left: 24, size: 7, round: 2, colour: markColours.present },
@@ -62,6 +64,9 @@ export function AttendanceSavedScreen({
 }) {
   const t = useWords();
   const dir = useDirection();
+  // Redrawn the moment a teacher flips Dark Mode in their own profile menu: the colours below are
+  // whichever of the two looks the app is wearing. See lib/theme.ts.
+  useAppearance();
   // The day the register belongs to, said in words: read back out of the day that was saved, so
   // the screen says the day on the record and not whatever the clock has moved on to.
   const day = dayFromText(saved.day);
@@ -109,7 +114,7 @@ export function AttendanceSavedScreen({
           ...shadow.card,
         }}
       >
-        {confetti.map((one, n) => (
+        {confetti().map((one, n) => (
           <View
             key={n}
             style={{

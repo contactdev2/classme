@@ -40,6 +40,8 @@ export const french: Words = {
   'signUp.nameWords': 'Utilisez le nom que vos élèves vous donnent. Il vous accueille à chaque connexion.',
   'signUp.name': 'Votre nom',
   'signUp.namePlaceholder': 'Mme Patel',
+  'signUp.school': 'Votre école (facultatif)',
+  'signUp.schoolPlaceholder': 'Riverside High',
   'signUp.continue': 'Continuer',
   'signUp.greeting': 'Bonjour, {name}',
   'signUp.accountWords': 'Choisissez maintenant votre e-mail et votre mot de passe pour terminer.',
@@ -86,7 +88,7 @@ export const french: Words = {
   'home.todayLabel': "Aujourd'hui",
   'home.noClasses': 'Aucun cours pour le moment',
   'home.noClassesWords': 'Vos périodes, et les élèves qui y assistent, apparaîtront ici dès que vous aurez une classe.',
-  'home.account': 'Votre compte — réglages',
+  'home.account': 'Votre compte — profil',
   'place.home': 'Accueil',
   'place.classes': 'Cours',
   'place.attendance': 'Présences',
@@ -267,6 +269,15 @@ export const french: Words = {
   'settings.help': 'Aide et assistance',
   'settings.logout': 'Déconnexion',
   'settings.foot': '{product} v1.0 · Données conservées en sécurité sur cet appareil',
+
+  // ─── Le menu du profil ───────────────────────────────────────────────────────────────────────
+  'profile.title': 'Profil',
+  'profile.menu': 'Menu du profil',
+  'profile.at': 'Enseignant · {school}',
+  'profile.noSchool': 'École non renseignée',
+  'profile.reports': 'Rapports de présence',
+  'profile.darkModeOn': 'Le mode sombre est activé',
+  'profile.darkModeOff': 'Le mode sombre est désactivé',
 
   'backup.chooseLonger':
     "Choisissez un mot de passe de sauvegarde d'au moins 8 caractères. Seul ce mot de passe ouvre le fichier.",

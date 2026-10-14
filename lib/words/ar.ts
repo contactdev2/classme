@@ -39,6 +39,8 @@ export const arabic: Words = {
   'signUp.nameWords': 'استخدم الاسم الذي يعرفك به طلابك. سنرحب بك به في كل مرة تسجل فيها الدخول.',
   'signUp.name': 'اسمك',
   'signUp.namePlaceholder': 'الأستاذة باتيل',
+  'signUp.school': 'مدرستك (اختياري)',
+  'signUp.schoolPlaceholder': 'Riverside High',
   'signUp.continue': 'متابعة',
   'signUp.greeting': 'مرحبًا، {name}',
   'signUp.accountWords': 'حدد الآن بريدك الإلكتروني وكلمة المرور لإكمال التسجيل.',
@@ -85,7 +87,7 @@ export const arabic: Words = {
   'home.todayLabel': 'اليوم',
   'home.noClasses': 'لا توجد صفوف بعد',
   'home.noClassesWords': 'ستظهر هنا حصصك والطلاب فيها بعد أن يكون لديك صف.',
-  'home.account': 'حسابك — الإعدادات',
+  'home.account': 'حسابك — الملف الشخصي',
   'place.home': 'الرئيسية',
   'place.classes': 'الصفوف',
   'place.attendance': 'الحضور',
@@ -265,6 +267,15 @@ export const arabic: Words = {
   'settings.help': 'المساعدة والدعم',
   'settings.logout': 'تسجيل الخروج',
   'settings.foot': '{product} v1.0 · البيانات محفوظة بأمان على هذا الجهاز',
+
+  // ─── قائمة الملف الشخصي ──────────────────────────────────────────────────────────────────────
+  'profile.title': 'الملف الشخصي',
+  'profile.menu': 'قائمة الملف الشخصي',
+  'profile.at': 'مدرّس · {school}',
+  'profile.noSchool': 'لم تُضف المدرسة بعد',
+  'profile.reports': 'تقارير الحضور',
+  'profile.darkModeOn': 'الوضع الداكن مُفعَّل',
+  'profile.darkModeOff': 'الوضع الداكن غير مُفعَّل',
 
   'backup.chooseLonger': 'اختر كلمة مرور للنسخة الاحتياطية من 8 أحرف على الأقل. هذه الكلمة وحدها تفتح الملف.',
   'backup.making': 'جارٍ إنشاء النسخة الاحتياطية…',

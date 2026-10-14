@@ -9,7 +9,7 @@ import { defaultLanguage, languages, type Language } from '../lib/languages';
 import { phoneLanguage } from '../lib/phone-language';
 import type { TeacherProfile } from '../lib/local-accounts';
 import { productName } from '../lib/product';
-import { colors, radius, shadow, space } from '../lib/theme';
+import { colors, radius, shadow, space, useAppearance } from '../lib/theme';
 
 /** The language the app opens in when nobody has pressed anything: the phone's own, where it has it. */
 const opensInWithoutAsking = (): Language['tag'] => phoneLanguage() ?? defaultLanguage;
@@ -43,12 +43,14 @@ function SectionTitle({ children }: { children: string }) {
   );
 }
 
-const card = {
+// Made when a screen is drawn and not when this module loads: the colours in it are the ones the
+// app is wearing at that moment, so a teacher flipping Dark Mode redraws this with everything else.
+const card = () => ({
   backgroundColor: colors.card,
   borderRadius: radius.card,
   padding: space.step,
   ...shadow.card,
-} as const;
+} as const);
 
 /** One fact about where a teacher's data is: the thing on the left, the answer on the right. */
 function Fact({ says, answer, colour = colors.text }: { says: string; answer: string; colour?: string }) {
@@ -92,7 +94,7 @@ function Switch({ label, hint, mark, on, flip }: { label: string; hint: string; 
         style={{
           flexDirection: 'row',
           justifyContent: on ? 'flex-end' : 'flex-start',
-          backgroundColor: on ? colors.accent : '#D7E3F7',
+          backgroundColor: on ? colors.accent : colors.switchOff,
           borderRadius: 20,
           padding: 3,
           paddingHorizontal: 4,
@@ -113,12 +115,12 @@ function AccountRow({ mark, says, last = false }: { mark: string; says: string; 
         alignItems: 'center',
         gap: 12,
         padding: space.step,
-        ...(last ? {} : { borderBottomWidth: 1, borderBottomColor: '#F0F3F8' }),
+        ...(last ? {} : { borderBottomWidth: 1, borderBottomColor: colors.hairline }),
       }}
     >
       <Mark tint={colors.accentWash}>{mark}</Mark>
       <Text style={{ flex: 1, fontSize: 14, fontWeight: '600', color: colors.text }}>{says}</Text>
-      <Text style={{ fontSize: 14, color: '#B7C3D1' }}>›</Text>
+      <Text style={{ fontSize: 14, color: colors.chevron }}>›</Text>
     </View>
   );
 }
@@ -164,7 +166,7 @@ function LanguageRow({
         backgroundColor: chosen ? colors.accentWash : colors.card,
       }}
     >
-      <Mark tint={chosen ? '#DCE8FB' : colors.background}>{language.mark}</Mark>
+      <Mark tint={chosen ? colors.accentEdge : colors.background}>{language.mark}</Mark>
       <View style={{ flex: 1 }}>
         <Text style={{ fontSize: 14, fontWeight: chosen ? '700' : '600', color: colors.text }}>{language.native}</Text>
         <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>{words}</Text>
@@ -176,7 +178,7 @@ function LanguageRow({
         style={{
           borderRadius: radius.pill,
           borderWidth: 1.5,
-          borderColor: chosen ? colors.accent : '#D5DDE8',
+          borderColor: chosen ? colors.accent : colors.ring,
           backgroundColor: chosen ? colors.accent : colors.card,
           paddingHorizontal: 4,
         }}
@@ -204,6 +206,9 @@ export function SettingsScreen({
 }) {
   const t = useWords();
   const dir = useDirection();
+  // Redrawn the moment a teacher flips Dark Mode in their own profile menu: the colours below are
+  // whichever of the two looks the app is wearing. See lib/theme.ts.
+  useAppearance();
   const [backupPassword, setBackupPassword] = useState('');
   const [shown, setShown] = useState(false);
   const [said, setSaid] = useState<{ words: string; file?: string } | null>(null);
@@ -308,7 +313,7 @@ export function SettingsScreen({
           accessibilityRole="button"
           accessibilityLabel={t('settings.back')}
           onPress={onBack}
-          style={{ backgroundColor: '#DCE8FB', borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 7 }}
+          style={{ backgroundColor: colors.accentEdge, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 7 }}
         >
           <Text style={{ fontSize: 17, color: colors.accent }}>{dir === 'rtl' ? '→' : '←'}</Text>
         </Pressable>
@@ -318,7 +323,7 @@ export function SettingsScreen({
       </View>
 
       {/* Whose settings these are. The name is their own record's, read out of it at sign-in. */}
-      <View style={{ marginHorizontal: space.gap, marginBottom: space.step, flexDirection: 'row', alignItems: 'center', gap: 12, ...card }}>
+      <View style={{ marginHorizontal: space.gap, marginBottom: space.step, flexDirection: 'row', alignItems: 'center', gap: 12, ...card() }}>
         <View style={{ backgroundColor: colors.accent, borderRadius: 30, paddingHorizontal: 12, paddingVertical: 13 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: colors.onAccent }}>{initialsOf(teacher)}</Text>
         </View>
@@ -338,7 +343,7 @@ export function SettingsScreen({
         <View accessibilityRole="radiogroup" style={{ backgroundColor: colors.card, borderRadius: radius.card, padding: 8, ...shadow.card }}>
           {languages.map((language, after) => (
             <View key={language.tag}>
-              {after === 0 ? null : <View style={{ borderTopWidth: 1, borderTopColor: '#F0F3F8', marginHorizontal: 4, marginVertical: 6 }} />}
+              {after === 0 ? null : <View style={{ borderTopWidth: 1, borderTopColor: colors.hairline, marginHorizontal: 4, marginVertical: 6 }} />}
               <LanguageRow
                 language={language}
                 words={describe(t, language, language.tag === opensInWithoutAsking())}
@@ -350,29 +355,29 @@ export function SettingsScreen({
             </View>
           ))}
         </View>
-        <Text style={{ fontSize: 12, color: '#9AA7B8', marginTop: 10, paddingLeft: 4 }}>{t('language.note')}</Text>
+        <Text style={{ fontSize: 12, color: colors.faintest, marginTop: 10, paddingLeft: 4 }}>{t('language.note')}</Text>
       </View>
 
       <View style={{ marginHorizontal: space.gap, marginBottom: space.step }}>
         <SectionTitle>{t('settings.dataPrivacy')}</SectionTitle>
 
         {/* What is already true of a teacher's data, in plain facts they can check. */}
-        <View style={{ ...card, marginBottom: 12 }}>
+        <View style={{ ...card(), marginBottom: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Mark tint="#E4F8ED">🔒</Mark>
+            <Mark tint={colors.goodWash}>🔒</Mark>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>{t('settings.localStorage')}</Text>
               <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>{t('settings.localStorageWords')}</Text>
             </View>
-            <View style={{ backgroundColor: '#E4F8ED', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 }}>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: '#1FAE63' }}>{t('settings.active')}</Text>
+            <View style={{ backgroundColor: colors.goodWash, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 }}>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: colors.good }}>{t('settings.active')}</Text>
             </View>
           </View>
-          <View style={{ borderTopWidth: 1, borderTopColor: '#F0F3F8', marginTop: 14 }} />
+          <View style={{ borderTopWidth: 1, borderTopColor: colors.hairline, marginTop: 14 }} />
           {/* The app's own arithmetic, named as it is: PBKDF2 stretches the password, HMAC-SHA256
               locks and seals what it keeps. It does not say AES, because it does not use AES. */}
           <Fact says={t('settings.standard')} answer={t('privacy.standardValue')} />
-          <Fact says={t('settings.externalSync')} answer={t('settings.disabled')} colour="#E0574A" />
+          <Fact says={t('settings.externalSync')} answer={t('settings.disabled')} colour={colors.alarm} />
           <Fact
             says={t('settings.lastBackup')}
             answer={newest ? t('settings.backupOn', { when: newest.when || t('settings.saved') }) : t('settings.noBackupYet')}
@@ -380,7 +385,7 @@ export function SettingsScreen({
         </View>
 
         {/* The backup itself: a file of their own, locked with a password of their own. */}
-        <View style={{ ...card, marginBottom: 12 }}>
+        <View style={{ ...card(), marginBottom: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: space.snug }}>
             <Mark tint={colors.accentWash}>💾</Mark>
             <View style={{ flex: 1 }}>
@@ -453,7 +458,7 @@ export function SettingsScreen({
             </View>
           ) : null}
 
-          <View style={{ borderTopWidth: 1, borderTopColor: '#F0F3F8', marginTop: space.step, marginBottom: space.snug }} />
+          <View style={{ borderTopWidth: 1, borderTopColor: colors.hairline, marginTop: space.step, marginBottom: space.snug }} />
           <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text, marginBottom: space.tight }}>{t('settings.restoreTitle')}</Text>
           {backups.length ? (
             <>
@@ -507,14 +512,14 @@ export function SettingsScreen({
         {/* What the app promises about this data, where a teacher can read it. */}
         <View style={{ flexDirection: 'row', gap: 10, backgroundColor: colors.accentWash, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12 }}>
           <Text style={{ fontSize: 16 }}>💡</Text>
-          <Text style={{ flex: 1, fontSize: 12, color: '#3E536B' }}>{t('settings.promise')}</Text>
+          <Text style={{ flex: 1, fontSize: 12, color: colors.onWash }}>{t('settings.promise')}</Text>
         </View>
       </View>
 
       <View style={{ marginHorizontal: space.gap, marginBottom: space.step }}>
         <SectionTitle>{t('settings.preferences')}</SectionTitle>
         <View style={{ backgroundColor: colors.card, borderRadius: radius.card, ...shadow.card }}>
-          <View style={{ borderBottomWidth: 1, borderBottomColor: '#F0F3F8' }}>
+          <View style={{ borderBottomWidth: 1, borderBottomColor: colors.hairline }}>
             <Switch
               label={t('settings.darkMode')}
               hint={t('settings.darkModeHint')}
@@ -552,17 +557,17 @@ export function SettingsScreen({
             gap: 8,
             backgroundColor: colors.card,
             borderWidth: 1,
-            borderColor: '#FCE1DE',
+            borderColor: colors.alarmEdge,
             borderRadius: radius.card,
             padding: space.step,
             ...shadow.soft,
           }}
         >
-          <Text style={{ fontSize: 17, color: '#E0574A' }}>⏻</Text>
-          <Text style={{ fontSize: 15, fontWeight: '700', color: '#E0574A' }}>{t('settings.logout')}</Text>
+          <Text style={{ fontSize: 17, color: colors.alarm }}>⏻</Text>
+          <Text style={{ fontSize: 15, fontWeight: '700', color: colors.alarm }}>{t('settings.logout')}</Text>
         </Pressable>
 
-        <Text style={{ textAlign: 'center', fontSize: 11, color: '#9AA8B8', marginTop: 18 }}>
+        <Text style={{ textAlign: 'center', fontSize: 11, color: colors.faintest, marginTop: 18 }}>
           {t('settings.foot', { product: productName() })}
         </Text>
       </View>

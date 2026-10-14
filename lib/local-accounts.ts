@@ -18,6 +18,12 @@ export type TeacherProfile = {
   email: string;
   /** The name the school knows them by — 'Ms. Rivera'. A record made before names were kept has none. */
   name?: string;
+  /**
+   * The school they teach at — 'Riverside High'. Their own profile menu shows it under their name.
+   * Optional, as the name is: a record made before schools were kept opens exactly as it did, and
+   * a teacher who did not give one is not given one by the app.
+   */
+  school?: string;
 };
 
 /**
@@ -61,7 +67,14 @@ function markOf(email: string, salt: string, iterations: number): string {
 /** Locks a teacher's details into a record that only this password opens. */
 export function lockAccount(credentials: Credentials, profile: TeacherProfile, iterations: number = stretchedTimes): AccountRecord {
   const name = profile.name?.trim();
-  const inside = JSON.stringify(name ? { email: profile.email, name } : { email: profile.email });
+  const school = profile.school?.trim();
+  // Inside the lock, and only what the teacher gave: a field they left empty is left out of the
+  // record rather than written into it empty, so a record keeps nothing it was not told.
+  const inside = JSON.stringify({
+    email: profile.email,
+    ...(name ? { name } : {}),
+    ...(school ? { school } : {}),
+  });
   const box = sealBox(inside, credentials.password, accountLock, iterations);
   return { ...box, at: markOf(profile.email, box.salt, box.iterations) };
 }
@@ -77,7 +90,7 @@ export function openAccount(record: AccountRecord, credentials: Credentials): Te
   const opened = openBox(record, credentials.password, accountLock);
   if (opened === null) return null;
 
-  let inside: { email?: unknown; name?: unknown };
+  let inside: { email?: unknown; name?: unknown; school?: unknown };
   try {
     inside = JSON.parse(opened);
   } catch {
@@ -90,7 +103,11 @@ export function openAccount(record: AccountRecord, credentials: Credentials): Te
   // A record from before names were kept has none, and says so by leaving it out rather than by
   // offering an empty one: whoever greets this teacher then has only their email to go on.
   const name = typeof inside.name === 'string' ? inside.name.trim() : '';
-  return name ? { email: inside.email, name } : { email: inside.email };
+  // The school is kept the same way, and read back the same way: a record that has none says so by
+  // leaving it out, and the profile menu then says the school has not been added rather than
+  // showing one this teacher never typed.
+  const school = typeof inside.school === 'string' ? inside.school.trim() : '';
+  return { email: inside.email, ...(name ? { name } : {}), ...(school ? { school } : {}) };
 }
 
 /** Where the records live: the phone's own store behind one seam, so a check can hand over its own. */

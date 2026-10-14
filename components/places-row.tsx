@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from 'react-native';
 import { useWords } from '../lib/i18n';
-import { colors, space } from '../lib/theme';
+import { colors, space, useAppearance } from '../lib/theme';
 
 /**
  * The places the app has, along the bottom, as the prototype draws them. Home, Classes and
@@ -27,6 +27,9 @@ export type Place = 'home' | 'classes' | 'attendance';
  */
 export function PlacesRow({ here, onGo }: { here: Place; onGo: (place: Place) => void }) {
   const t = useWords();
+  // Redrawn the moment a teacher flips Dark Mode in their own profile menu: the colours below are
+  // whichever of the two looks the app is wearing. See lib/theme.ts.
+  useAppearance();
   return (
     <View
       style={{

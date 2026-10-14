@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useDirection, useWords, type WordKey } from '../lib/i18n';
 import { productName } from '../lib/product';
-import { colors, radius, shadow, space } from '../lib/theme';
+import { colors, radius, shadow, space, useAppearance } from '../lib/theme';
 
 /**
  * The three slides, in the order the agreed prototype puts them: taking attendance, keeping the
@@ -203,6 +203,9 @@ function Picture({ which, tint = colors.card }: { which: 'welcome' | 'attendance
 export function OnboardingScreen({ onDone }: { onDone: () => void }) {
   const t = useWords();
   const dir = useDirection();
+  // Redrawn the moment a teacher flips Dark Mode in their own profile menu: the colours below are
+  // whichever of the two looks the app is wearing. See lib/theme.ts.
+  useAppearance();
   // 0 is the welcome; 1, 2 and 3 are the slides of the walkthrough itself.
   const [at, setAt] = useState(0);
   const slide = at > 0 ? slides[at - 1] : null;

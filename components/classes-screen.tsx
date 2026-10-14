@@ -3,7 +3,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { classesShown, isArchived, studentsInClass, type ClassFilter } from '../lib/classes';
 import type { Classroom, ClassroomData } from '../lib/classroom-data';
 import { counted, useDirection, useWords, type WordKey } from '../lib/i18n';
-import { colors, radius, shadow, space } from '../lib/theme';
+import { colors, radius, shadow, space, useAppearance } from '../lib/theme';
 import { PlacesRow, type Place } from './places-row';
 
 /** The three filters, with the words each of them is named by and the sentence for an empty list. */
@@ -34,6 +34,9 @@ export function ClassesScreen({
 }) {
   const t = useWords();
   const dir = useDirection();
+  // Redrawn the moment a teacher flips Dark Mode in their own profile menu: the colours below are
+  // whichever of the two looks the app is wearing. See lib/theme.ts.
+  useAppearance();
   // Opens on the classes being taught, as the prototype draws it: the term in front of the teacher,
   // with the ones they have put away a press away.
   const [filter, setFilter] = useState<ClassFilter>('active');
@@ -133,6 +136,9 @@ function ClassCard({
   onOpen: (classroomId: string) => void;
 }) {
   const t = useWords();
+  // Redrawn the moment a teacher flips Dark Mode in their own profile menu: the colours below are
+  // whichever of the two looks the app is wearing. See lib/theme.ts.
+  useAppearance();
   return (
     <Pressable
       accessibilityRole="button"

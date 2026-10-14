@@ -5,16 +5,18 @@ import { ClassesScreen } from '../components/classes-screen';
 import { HomeScreen } from '../components/home-screen';
 import type { Place } from '../components/places-row';
 import { OnboardingScreen } from '../components/onboarding-screen';
+import { ProfileScreen } from '../components/profile-screen';
 import { SettingsScreen } from '../components/settings-screen';
 import { SignUpScreen } from '../components/sign-up-screen';
 import { TakeAttendanceScreen } from '../components/take-attendance-screen';
+import { openInKeptAppearance } from '../lib/appearance';
 import { classroomStore, nothingKeptYet, type ClassroomData } from '../lib/classroom-data';
 import { openInPhoneLanguage, useDirection, useWords } from '../lib/i18n';
 import type { TeacherProfile } from '../lib/local-accounts';
 import { finishedOnboarding, rememberOnboardingFinished } from '../lib/onboarding';
 import { productName } from '../lib/product';
 import { credentialsFrom, missingFrom, submitSignIn } from '../lib/sign-in';
-import { colors, radius, shadow, space } from '../lib/theme';
+import { colors, radius, shadow, space, useAppearance } from '../lib/theme';
 import { versionLabel } from '../lib/version';
 
 /** The words under a field, naming it, so a person knows what goes in it. */
@@ -22,7 +24,9 @@ function FieldLabel({ children }: { children: string }) {
   return <Text style={{ fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: space.tight }}>{children}</Text>;
 }
 
-const fieldRow = {
+// Made when a screen is drawn and not when this module loads: the colours in it are the ones the
+// app is wearing at that moment, so a teacher flipping Dark Mode redraws this with everything else.
+const fieldRow = () => ({
   flexDirection: 'row',
   alignItems: 'center',
   gap: 8,
@@ -32,7 +36,7 @@ const fieldRow = {
   borderRadius: radius.field,
   paddingHorizontal: 14,
   paddingVertical: 12,
-} as const;
+} as const);
 
 /**
  * What the phone keeps about this teacher's teaching, read as they sign in. A phone that will not
@@ -49,8 +53,9 @@ async function theirTeaching(): Promise<ClassroomData> {
 
 /**
  * The route the app opens on: the login screen, until a teacher's own record on this phone opens
- * with what they typed — and from then on, Home, greeting them by name, with Settings behind their
- * own avatar. Nobody is signed in when the app starts, so the first thing drawn is always the login
+ * with what they typed — and from then on, Home, greeting them by name, with their own profile menu
+ * behind their own avatar: their name and school, the way in to Classroom Settings, the Dark Mode
+ * switch, and the way out of the app. Nobody is signed in when the app starts, so the first thing drawn is always the login
  * screen itself.
  *
  * A teacher with no record on this phone yet goes the other way first: the login screen's own
@@ -69,13 +74,13 @@ async function theirTeaching(): Promise<ClassroomData> {
  * read once, as they sign in, and handed down to those screens, so none of them has anything to
  * wait for when it is drawn.
  *
- * Home, Settings, Classes, a class's attendance, today's register, the walkthrough and the signup
+ * Home, the profile menu, Settings, Classes, a class's attendance, today's register, the walkthrough and the signup
  * are components and not routes of their own on purpose: the app opening on the login screen and
  * nothing else is a requirement of its own, and this keeps '/' the only screen there is.
  */
 export default function Login() {
   const [teacher, setTeacher] = useState<TeacherProfile | null>(null);
-  const [place, setPlace] = useState<Place | 'settings'>('home');
+  const [place, setPlace] = useState<Place | 'profile' | 'settings'>('home');
   // Where a teacher was standing when they went to take attendance, so the way out of a register is
   // the way they came into it.
   const [before, setBefore] = useState<Place>('home');
@@ -89,6 +94,12 @@ export default function Login() {
   // read from the phone itself and nowhere else — see lib/i18n.ts.
   useEffect(() => {
     void openInPhoneLanguage();
+  }, []);
+
+  // And the look it opens in: the one this phone was left in, read off the phone itself and nowhere
+  // else — see lib/appearance.ts. The light it has always opened in, where nobody has chosen.
+  useEffect(() => {
+    void openInKeptAppearance();
   }, []);
 
   /**
@@ -128,6 +139,24 @@ export default function Login() {
         />
       );
     }
+    if (place === 'profile') {
+      // Their own account: the name and school their record keeps, the menu the prototype draws,
+      // the Dark Mode switch, and the way out of the app.
+      return (
+        <ProfileScreen
+          teacher={teacher}
+          onBack={() => setPlace('home')}
+          onOpenSettings={() => setPlace('settings')}
+          onOpenReports={() => {
+            // Attendance reports are read a class at a time, so this is the list of them: a class
+            // opened from it is that class's own report.
+            setOpenClass(null);
+            setPlace('classes');
+          }}
+          onLogOut={logOut}
+        />
+      );
+    }
     if (place === 'settings') {
       return <SettingsScreen teacher={teacher} onBack={() => setPlace('home')} onLogOut={logOut} />;
     }
@@ -163,7 +192,7 @@ export default function Login() {
         <ClassesScreen data={teaching} onOpenClass={setOpenClass} onGo={goTo} />
       );
     }
-    return <HomeScreen teacher={teacher} onOpenSettings={() => setPlace('settings')} onGo={goTo} />;
+    return <HomeScreen teacher={teacher} onOpenProfile={() => setPlace('profile')} onGo={goTo} />;
   }
   if (signingUp) {
     return (
@@ -191,6 +220,9 @@ export default function Login() {
 function LoginScreen({ onSignedIn, onSignUp }: { onSignedIn: (teacher: TeacherProfile) => void; onSignUp: () => void }) {
   const t = useWords();
   const dir = useDirection();
+  // Redrawn the moment a teacher flips Dark Mode in their own profile menu: the colours below are
+  // whichever of the two looks the app is wearing. See lib/theme.ts.
+  useAppearance();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [shown, setShown] = useState(false);
@@ -254,7 +286,7 @@ function LoginScreen({ onSignedIn, onSignUp }: { onSignedIn: (teacher: TeacherPr
         <Text accessibilityRole="header" style={{ fontSize: 24, fontWeight: '800', color: colors.text, letterSpacing: 0.3 }}>
           {productName()}
         </Text>
-        <Text style={{ fontSize: 12, color: '#7C8A9E', letterSpacing: 1, marginTop: 2 }}>{t('login.tagline')}</Text>
+        <Text style={{ fontSize: 12, color: colors.faintest, letterSpacing: 1, marginTop: 2 }}>{t('login.tagline')}</Text>
       </View>
 
       <View style={{ alignItems: 'center', marginBottom: space.room }}>
@@ -279,7 +311,7 @@ function LoginScreen({ onSignedIn, onSignUp }: { onSignedIn: (teacher: TeacherPr
       >
         <View style={{ marginBottom: space.step }}>
           <FieldLabel>{t('login.email')}</FieldLabel>
-          <View style={fieldRow}>
+          <View style={fieldRow()}>
             <Text style={{ fontSize: 15 }}>✉️</Text>
             <TextInput
               accessibilityLabel={t('login.email')}
@@ -299,7 +331,7 @@ function LoginScreen({ onSignedIn, onSignUp }: { onSignedIn: (teacher: TeacherPr
 
         <View style={{ marginBottom: space.snug }}>
           <FieldLabel>{t('login.password')}</FieldLabel>
-          <View style={fieldRow}>
+          <View style={fieldRow()}>
             <Text style={{ fontSize: 15 }}>🔒</Text>
             <TextInput
               accessibilityLabel={t('login.password')}
@@ -376,7 +408,7 @@ function LoginScreen({ onSignedIn, onSignUp }: { onSignedIn: (teacher: TeacherPr
 
       <View style={{ alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: space.snug, marginTop: space.gap, marginBottom: 18 }}>
         <View style={{ flex: 1, borderTopWidth: 1, borderTopColor: colors.line }} />
-        <Text style={{ fontSize: 12, color: '#9AA7B8' }}>{t('login.or')}</Text>
+        <Text style={{ fontSize: 12, color: colors.faintest }}>{t('login.or')}</Text>
         <View style={{ flex: 1, borderTopWidth: 1, borderTopColor: colors.line }} />
       </View>
 
@@ -442,7 +474,7 @@ function LoginScreen({ onSignedIn, onSignUp }: { onSignedIn: (teacher: TeacherPr
         paddingHorizontal: space.gap,
       }}
     >
-      <Text style={{ fontSize: 12, fontWeight: '600', color: '#9AA7B8', letterSpacing: 0.5, textAlign: 'center' }}>
+      <Text style={{ fontSize: 12, fontWeight: '600', color: colors.faintest, letterSpacing: 0.5, textAlign: 'center' }}>
         {versionLabel()}
       </Text>
     </View>

@@ -39,6 +39,8 @@ export const japanese: Words = {
   'signUp.nameWords': '生徒が呼んでいる名前をお使いください。ログインのたびにこの名前でお迎えします。',
   'signUp.name': 'お名前',
   'signUp.namePlaceholder': 'パテル先生',
+  'signUp.school': '学校名（任意）',
+  'signUp.schoolPlaceholder': 'Riverside High',
   'signUp.continue': '次へ',
   'signUp.greeting': '{name} さん、こんにちは',
   'signUp.accountWords': '続いて、メールアドレスとパスワードを設定してください。',
@@ -85,7 +87,7 @@ export const japanese: Words = {
   'home.todayLabel': '今日',
   'home.noClasses': 'クラスはまだありません',
   'home.noClassesWords': 'クラスを作成すると、時間割とその生徒がここに表示されます。',
-  'home.account': 'アカウント — 設定',
+  'home.account': 'アカウント — プロフィール',
   'place.home': 'ホーム',
   'place.classes': 'クラス',
   'place.attendance': '出欠',
@@ -259,6 +261,15 @@ export const japanese: Words = {
   'settings.help': 'ヘルプとサポート',
   'settings.logout': 'ログアウト',
   'settings.foot': '{product} v1.0 · データはこの端末に安全に保存されます',
+
+  // ─── プロフィールメニュー ────────────────────────────────────────────────────────────────────
+  'profile.title': 'プロフィール',
+  'profile.menu': 'プロフィールメニュー',
+  'profile.at': '教員 · {school}',
+  'profile.noSchool': '学校は未登録です',
+  'profile.reports': '出席レポート',
+  'profile.darkModeOn': 'ダークモードはオンです',
+  'profile.darkModeOff': 'ダークモードはオフです',
 
   'backup.chooseLonger': 'バックアップのパスワードは8文字以上にしてください。このパスワードだけがファイルを開けます。',
   'backup.making': 'バックアップを作成しています…',

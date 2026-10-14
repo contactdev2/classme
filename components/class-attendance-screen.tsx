@@ -4,7 +4,7 @@ import { lastDays, monthOnMonth, tallyFor, weeklyTrend, type Tally } from '../li
 import { classesToSwitchTo, classroomWithId } from '../lib/classes';
 import type { ClassroomData } from '../lib/classroom-data';
 import { useDirection, useWords, type WordKey } from '../lib/i18n';
-import { colors, markColours, radius, shadow, space } from '../lib/theme';
+import { colors, markColours, radius, shadow, space, useAppearance } from '../lib/theme';
 
 /** The stretch of days the dashboard reads, and the weeks the trend is drawn over. */
 const overTheLast = 30;
@@ -24,12 +24,14 @@ const tabs: { name: WordKey; here: boolean }[] = [
   { name: 'class.trends', here: false },
 ];
 
-const card = {
+// Made when a screen is drawn and not when this module loads: the colours in it are the ones the
+// app is wearing at that moment, so a teacher flipping Dark Mode redraws this with everything else.
+const card = () => ({
   backgroundColor: colors.card,
   borderRadius: radius.card,
   padding: space.step,
   ...shadow.card,
-} as const;
+} as const);
 
 /**
  * One class's attendance: the dashboard behind its own card in My Classes.
@@ -54,6 +56,9 @@ export function ClassAttendanceScreen({
 }) {
   const t = useWords();
   const dir = useDirection();
+  // Redrawn the moment a teacher flips Dark Mode in their own profile menu: the colours below are
+  // whichever of the two looks the app is wearing. See lib/theme.ts.
+  useAppearance();
   const [showing, setShowing] = useState(classroomId);
   const classroom = classroomWithId(data, showing) ?? classroomWithId(data, classroomId);
   const span = lastDays(now, overTheLast);
@@ -159,7 +164,7 @@ export function ClassAttendanceScreen({
         </View>
 
         {/* What the class's attendance comes to: the share present, and every mark counted. */}
-        <View style={{ ...card, marginHorizontal: space.step, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space.gap }}>
+        <View style={{ ...card(), marginHorizontal: space.step, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space.gap }}>
           {/* The ring: thick, round and sized by what is written inside it, so the phone's largest
               text makes the ring bigger rather than hiding the number in it. */}
           <View
@@ -195,7 +200,7 @@ export function ClassAttendanceScreen({
         </View>
 
         {/* How the weeks have gone, the week being taught last. */}
-        <View style={{ ...card, marginHorizontal: space.step, gap: 12 }}>
+        <View style={{ ...card(), marginHorizontal: space.step, gap: 12 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.tight }}>
             <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>{t('class.trend')}</Text>
             <Text style={{ fontSize: 13, fontWeight: '600', color: colors.accent }}>{t('class.weekly')}</Text>
@@ -214,7 +219,7 @@ export function ClassAttendanceScreen({
         </View>
 
         {/* What is worth saying about all of it, in one sentence. */}
-        <View style={{ ...card, marginHorizontal: space.step, flexDirection: 'row', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+        <View style={{ ...card(), marginHorizontal: space.step, flexDirection: 'row', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
           <Text style={{ fontSize: 16, backgroundColor: '#FEF3C7', borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 6 }}>💡</Text>
           <View style={{ flex: 1, flexBasis: 180, gap: 4 }}>
             <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>{t('class.insights')}</Text>

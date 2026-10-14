@@ -66,9 +66,14 @@ async function signIn(screen: Screen): Promise<void> {
   await settle();
 }
 
-/** Classroom Settings, reached the way the prototype sends a teacher there: their own avatar. */
+/**
+ * Classroom Settings, reached the way a teacher reaches it: their own avatar opens their profile
+ * menu, and Classroom Settings is the option on it that leads here.
+ */
 async function openSettings(screen: Screen): Promise<void> {
   await screen.press(say('home.account'));
+  await settle();
+  await screen.press(say('settings.title'));
   await settle();
 }
 

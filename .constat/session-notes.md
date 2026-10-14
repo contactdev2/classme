@@ -855,3 +855,85 @@ Half-true, and waiting for the next requirement:
   or add a student, so a walk could not reach a name to press. The four criteria are proved in
   `app/student-attendance-history.test.tsx`, pushed red first — all four failing with
   `Cannot find module '../lib/student-history'`.
+
+## 16 — Update profile and settings (fef6db18)
+
+What is here now:
+
+- **`components/profile-screen.tsx` is the teacher's own profile menu**, built to the agreed
+  prototype: the way back, *Profile*, the card with their initials, the name their record keeps and
+  `Teacher · {school}` under it with the prototype's own pencil beside it, then the menu — **Profile,
+  Classroom Settings, Students, Attendance Reports, Notifications** — then **Help & Support** and the
+  **Dark Mode** switch, and **Logout** at the foot, which is where the prototype draws it. It is what
+  **Home's avatar opens now**: `HomeScreen`'s prop is `onOpenProfile`, and Classroom Settings is one
+  option on this menu rather than the avatar's own destination. **Still no new route** — `app/` is
+  `_layout.tsx` and `index.tsx` — so requirement 1's `No other screen appears before the login
+  screen.` is still true and still has not had to be widened.
+- **`lib/theme.ts` holds two palettes now**: `lightColours` (the agreed round-3 palette, unchanged to
+  the hex) and `darkColours`, with `colors` the one object every screen already reads — *written
+  over* when the look changes rather than swapped, so a style built once where a module loads is
+  reading the same colours as the screen around it. `appearanceNow()`, `setAppearance()` and
+  `useAppearance()` are the i18n pattern exactly (`languageNow`/`setLanguage`/`useWords`), and
+  **every screen now calls `useAppearance()`** beside its `useWords()`. The palette gained names for
+  what used to be hex codes loose in the screens — `hairline`, `faintest`, `accentEdge`, `onWash`,
+  `alarm`, `alarmEdge`, `good`, `goodWash`, `switchOff`, `ring`, `chevron`. **Use a name, never a
+  hex**: a hex in a screen is a colour that will not follow a teacher into the dark.
+- **`lib/appearance.ts` keeps which look was chosen**, behind the same seam as the accounts and the
+  onboarding memory: `appearanceIn(null)` in memory for a check, `appearanceOnThisPhone()` — the text
+  of `classme-appearance.json` in the app's own documents folder — installed by `app/_layout.tsx`.
+  `rememberAppearance()` never throws, and `openInKeptAppearance()` is called by `app/index.tsx` as
+  the app opens, beside `openInPhoneLanguage()`.
+- **A teacher's school is kept inside their own locked record**, beside their name
+  (`TeacherProfile.school`), and asked for once — on the first step of the signup, under their name,
+  as the one field they may leave empty. Optional the way requirement 4 added the name and 10 added
+  `archived`: a record made before schools were kept opens exactly as it did, and the menu then says
+  `profile.noSchool` rather than showing a school nobody typed.
+- Nine new word keys in all five catalogues (`profile.*`, `signUp.school`, `signUp.schoolPlaceholder`
+  — the last in `wordsAllowedToStay`, a sample school nobody translates), and **`home.account` now
+  says profile rather than settings**, because that is where the avatar goes.
+- `test/screen.tsx` presses a **switch** now as well as a button, a radio row and a link: Dark Mode
+  is announced as the switch it is, and a finger does not care which of the four a screen called it.
+
+Decisions taken, so they are not re-decided:
+
+- **The dark palette lifts the accent and darkens what is written on it** (`onAccent` is near-black
+  in the dark): white on this app's own blue is thin to read against a dark card, dark ink on a
+  lifted blue is not. `markColours` and `avatarWashes` are **the same in both looks** on purpose —
+  a mark's colour is what it means, and green that meant present this morning cannot mean something
+  else this evening.
+- **Classroom Settings keeps its own Logout and its own `Back to Home`.** Settings is reached from
+  the profile menu now, but its way back still goes to Home, because that is what its own words say
+  and three earlier check files read them. Logging out works from either screen.
+- **Three check files were widened deliberately** — `back-up-data`, `localise-app` and
+  `open-in-phone-language` press the avatar and then **Classroom Settings**, because the avatar
+  opens the profile menu now. That is the deliberate widening requirement 1 asked for in writing,
+  not a quiet one.
+- **Attendance Reports opens My Classes**, where a class opened from the list is that class's own
+  report. Profile, Students, Notifications, Help & Support and the pencil on the card are drawn
+  because the prototype draws them and are **deliberately not announced as buttons** — the
+  established precedent. Each row is a `role="listitem"` named by its own words inside a
+  `role="list"` called *Profile menu*, so the menu reads as the list of options it is whether or not
+  an option leads anywhere yet. **Give one a role the moment you give it a destination.**
+- The four criteria are proved in `app/update-profile-and-settings.test.tsx`, pushed red first — two
+  failing on the menu that was not there, one on the school no record kept, one on
+  `Cannot find module '../lib/appearance'`. `journeys/tapping-logout-signs-the-teacher-out-of-the-app.walk.yaml`
+  is the first walk that reaches this screen on a real phone.
+
+Half-true, and waiting for the next requirement:
+
+- **Nothing edits a profile yet.** The pencil on the card and the Profile row open nothing, because
+  changing what is inside a locked record means re-sealing it, which takes the password that locks
+  it — and the app deliberately does not keep that after a submission (requirement 2's note). The
+  honest shape is a screen that asks for the password and re-locks the record; `lockAccount` already
+  makes it, and `AccountsFile` would need a way to put one record in place of another.
+- **Notifications is a row and a switch and no notifications.** No push service is used (an approved
+  decision), so what it could ever do is the phone's own local reminders, which nothing schedules.
+- **`classroomStore()` is still in memory** (requirements 5, 7, 8, 9, 10, 11, 12, 13, 14 and 15's
+  note stands): a register saved this morning is forgotten when the app closes. The accounts, the
+  onboarding memory and now the chosen look all show how a thing is kept on a phone — the line to
+  replace is `let store = ...` in `lib/classroom-data.ts`. **This is still the most expensive
+  half-truth on this branch.**
+- Dark Mode is a teacher's own choice and **never the phone's**: the app does not follow a phone set
+  to dark, the way it follows a phone set to French. Following it would be `Appearance.getColorScheme()`
+  from react-native, and the honest shape is a third setting — System — rather than a switch that
+  argues with the phone.

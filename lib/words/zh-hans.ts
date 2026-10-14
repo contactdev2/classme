@@ -39,6 +39,8 @@ export const simplifiedChinese: Words = {
   'signUp.nameWords': '请使用学生对您的称呼。每次登录时都会这样问候您。',
   'signUp.name': '您的姓名',
   'signUp.namePlaceholder': '帕特尔老师',
+  'signUp.school': '您的学校（可选）',
+  'signUp.schoolPlaceholder': 'Riverside High',
   'signUp.continue': '继续',
   'signUp.greeting': '您好，{name}',
   'signUp.accountWords': '现在设置电子邮件和密码以完成注册。',
@@ -85,7 +87,7 @@ export const simplifiedChinese: Words = {
   'home.todayLabel': '今天',
   'home.noClasses': '还没有课程',
   'home.noClassesWords': '创建班级后，课时和其中的学生会显示在这里。',
-  'home.account': '您的账户 — 设置',
+  'home.account': '您的账户 — 个人资料',
   'place.home': '首页',
   'place.classes': '班级',
   'place.attendance': '出勤',
@@ -258,6 +260,15 @@ export const simplifiedChinese: Words = {
   'settings.help': '帮助与支持',
   'settings.logout': '退出登录',
   'settings.foot': '{product} v1.0 · 数据安全地保存在本机',
+
+  // ─── 个人资料菜单 ────────────────────────────────────────────────────────────────────────────
+  'profile.title': '个人资料',
+  'profile.menu': '个人资料菜单',
+  'profile.at': '教师 · {school}',
+  'profile.noSchool': '尚未添加学校',
+  'profile.reports': '出勤报告',
+  'profile.darkModeOn': '深色模式已开启',
+  'profile.darkModeOff': '深色模式已关闭',
 
   'backup.chooseLonger': '请设置至少 8 个字符的备份密码。只有这个密码能打开该文件。',
   'backup.making': '正在创建备份…',

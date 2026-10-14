@@ -82,13 +82,17 @@ function aMondayMorning(): void {
   vi.setSystemTime(new Date('2025-04-21T08:12:00'));
 }
 
-/** A teacher signing in and going to Settings the way the prototype sends them: their own avatar. */
+/**
+ * A teacher signing in and going to Settings the way they go there: their own avatar opens their
+ * profile menu, and Classroom Settings is the option on it that leads here.
+ */
 async function openSettings() {
   const screen = open(<TheApp />);
   await screen.type(/Email/i, teacher.email);
   await screen.type(/^Password/i, password);
   await screen.press('Log In');
   await screen.press(/Your account/);
+  await screen.press('Classroom Settings');
   return screen;
 }
 

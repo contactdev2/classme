@@ -5,14 +5,16 @@ import { useDirection, useWords } from '../lib/i18n';
 import type { TeacherProfile } from '../lib/local-accounts';
 import { productName } from '../lib/product';
 import { notReadyFor, nameMissingFrom, shortestPassword, submitSignUp } from '../lib/sign-up';
-import { colors, radius, shadow, space } from '../lib/theme';
+import { colors, radius, shadow, space, useAppearance } from '../lib/theme';
 
 /** The words above a field, naming it, so a person knows what goes in it. */
 function FieldLabel({ children }: { children: string }) {
   return <Text style={{ fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: space.tight }}>{children}</Text>;
 }
 
-const fieldRow = {
+// Made when a screen is drawn and not when this module loads: the colours in it are the ones the
+// app is wearing at that moment, so a teacher flipping Dark Mode redraws this with everything else.
+const fieldRow = () => ({
   flexDirection: 'row',
   alignItems: 'center',
   gap: 8,
@@ -22,7 +24,7 @@ const fieldRow = {
   borderRadius: radius.field,
   paddingHorizontal: 14,
   paddingVertical: 12,
-} as const;
+} as const);
 
 /**
  * One of the three steps, along the top: the step a teacher is on, the ones they have finished, and
@@ -68,8 +70,12 @@ function StepLine({ reached }: { reached: boolean }) {
 export function SignUpScreen({ onBack, onDone }: { onBack: () => void; onDone: (teacher: TeacherProfile) => void }) {
   const t = useWords();
   const dir = useDirection();
+  // Redrawn the moment a teacher flips Dark Mode in their own profile menu: the colours below are
+  // whichever of the two looks the app is wearing. See lib/theme.ts.
+  useAppearance();
   const [onAccount, setOnAccount] = useState(false);
   const [name, setName] = useState('');
+  const [school, setSchool] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [shown, setShown] = useState(false);
@@ -115,7 +121,7 @@ export function SignUpScreen({ onBack, onDone }: { onBack: () => void; onDone: (
   async function createProfile() {
     // One press is one submission: a second one while the first is still being answered is ignored.
     if (busy) return;
-    const details = { name, email, password };
+    const details = { name, email, password, school };
     const notReady = notReadyFor(details);
     if (notReady) {
       setSaid(notReady);
@@ -163,7 +169,7 @@ export function SignUpScreen({ onBack, onDone }: { onBack: () => void; onDone: (
             accessibilityRole="button"
             accessibilityLabel={onAccount && !made ? t('signUp.backToName') : t('signUp.backToLogin')}
             onPress={goBack}
-            style={{ backgroundColor: '#DCE8FB', borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 7 }}
+            style={{ backgroundColor: colors.accentEdge, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 7 }}
           >
             <Text style={{ fontSize: 17, color: colors.accent }}>{dir === 'rtl' ? '→' : '←'}</Text>
           </Pressable>
@@ -225,7 +231,7 @@ export function SignUpScreen({ onBack, onDone }: { onBack: () => void; onDone: (
                 style={{
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: '#DCE8FB',
+                  backgroundColor: colors.accentEdge,
                   borderRadius: radius.pill,
                   padding: 12,
                   marginBottom: space.step,
@@ -290,7 +296,7 @@ export function SignUpScreen({ onBack, onDone }: { onBack: () => void; onDone: (
             <>
               <View style={{ marginBottom: space.step }}>
                 <FieldLabel>{t('login.email')}</FieldLabel>
-                <View style={fieldRow}>
+                <View style={fieldRow()}>
                   <Text style={{ fontSize: 15 }}>✉️</Text>
                   <TextInput
                     accessibilityLabel={t('login.email')}
@@ -310,7 +316,7 @@ export function SignUpScreen({ onBack, onDone }: { onBack: () => void; onDone: (
 
               <View style={{ marginBottom: space.tight }}>
                 <FieldLabel>{t('login.password')}</FieldLabel>
-                <View style={fieldRow}>
+                <View style={fieldRow()}>
                   <Text style={{ fontSize: 15 }}>🔒</Text>
                   <TextInput
                     accessibilityLabel={t('login.password')}
@@ -361,7 +367,7 @@ export function SignUpScreen({ onBack, onDone }: { onBack: () => void; onDone: (
             <>
               <View style={{ marginBottom: space.step }}>
                 <FieldLabel>{t('signUp.name')}</FieldLabel>
-                <View style={fieldRow}>
+                <View style={fieldRow()}>
                   <TextInput
                     accessibilityLabel={t('signUp.name')}
                     autoCapitalize="words"
@@ -372,6 +378,25 @@ export function SignUpScreen({ onBack, onDone }: { onBack: () => void; onDone: (
                     placeholderTextColor={colors.faint}
                     value={name}
                     onChangeText={setName}
+                    style={{ flex: 1, fontSize: 15, color: colors.text, paddingVertical: 0 }}
+                  />
+                </View>
+              </View>
+
+              {/* Where they teach. The one field on this screen a teacher may leave empty: the app
+                  can greet them and lock their record without it, and their own profile menu shows
+                  it under their name once they have given it. */}
+              <View style={{ marginBottom: space.step }}>
+                <FieldLabel>{t('signUp.school')}</FieldLabel>
+                <View style={fieldRow()}>
+                  <TextInput
+                    accessibilityLabel={t('signUp.school')}
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                    placeholder={t('signUp.schoolPlaceholder')}
+                    placeholderTextColor={colors.faint}
+                    value={school}
+                    onChangeText={setSchool}
                     style={{ flex: 1, fontSize: 15, color: colors.text, paddingVertical: 0 }}
                   />
                 </View>

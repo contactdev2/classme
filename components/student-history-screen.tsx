@@ -4,7 +4,7 @@ import type { AttendanceMark, ClassroomData, Student } from '../lib/classroom-da
 import { useDirection, useWords, type WordKey } from '../lib/i18n';
 import { initialsOf } from '../lib/roster';
 import { historyByMonth, historyOf, tallyOfHistory } from '../lib/student-history';
-import { colors, markColours, radius, shadow, space } from '../lib/theme';
+import { colors, markColours, radius, shadow, space, useAppearance } from '../lib/theme';
 import { PlacesRow, type Place } from './places-row';
 import { dateInWords, dayInWords, dayLook, monthInWords, washFor } from './student-look';
 
@@ -15,12 +15,14 @@ const counts: { of: AttendanceMark; name: WordKey; colour: string }[] = [
   { of: 'Late', name: 'tally.late', colour: markColours.late },
 ];
 
-const card = {
+// Made when a screen is drawn and not when this module loads: the colours in it are the ones the
+// app is wearing at that moment, so a teacher flipping Dark Mode redraws this with everything else.
+const card = () => ({
   backgroundColor: colors.card,
   borderRadius: radius.card,
   padding: space.step,
   ...shadow.card,
-} as const;
+} as const);
 
 /**
  * Full Attendance Record: every day the phone has a mark against one student's name, and not a
@@ -47,6 +49,9 @@ export function StudentHistoryScreen({
 }) {
   const t = useWords();
   const dir = useDirection();
+  // Redrawn the moment a teacher flips Dark Mode in their own profile menu: the colours below are
+  // whichever of the two looks the app is wearing. See lib/theme.ts.
+  useAppearance();
 
   const days = historyOf(data, student.id);
   const tally = tallyOfHistory(days);
@@ -81,7 +86,7 @@ export function StudentHistoryScreen({
         {/* Whose record this is, and what it comes to. */}
         <View
           style={{
-            ...card,
+            ...card(),
             marginHorizontal: space.step,
             flexDirection: 'row',
             alignItems: 'center',
@@ -118,7 +123,7 @@ export function StudentHistoryScreen({
               <View
                 key={one.of}
                 accessibilityLabel={t('roster.tally', { name: t(one.name), many })}
-                style={{ ...card, flexGrow: 1, flexBasis: 90, alignItems: 'center', gap: 2, paddingHorizontal: space.snug }}
+                style={{ ...card(), flexGrow: 1, flexBasis: 90, alignItems: 'center', gap: 2, paddingHorizontal: space.snug }}
               >
                 <Text style={{ fontSize: 16, fontWeight: '800', color: one.colour }}>{many}</Text>
                 <Text style={{ fontSize: 11, color: colors.muted, textAlign: 'center' }}>{t(one.name)}</Text>
@@ -168,7 +173,7 @@ export function StudentHistoryScreen({
         {/* A student nobody has marked yet: the record says so plainly rather than being an empty
             screen a teacher is left to interpret. */}
         {days.length === 0 ? (
-          <View style={{ ...card, marginHorizontal: space.step }}>
+          <View style={{ ...card(), marginHorizontal: space.step }}>
             <Text style={{ fontSize: 13, color: colors.muted }}>{t('student.none')}</Text>
           </View>
         ) : null}

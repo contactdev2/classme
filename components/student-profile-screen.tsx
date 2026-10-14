@@ -5,7 +5,7 @@ import type { ClassroomData, Student } from '../lib/classroom-data';
 import { sayAround, useDirection, useWords, type WordKey } from '../lib/i18n';
 import { initialsOf } from '../lib/roster';
 import { historyOf, latestMonth, recentDays, tallyOfHistory, type HistoryDay } from '../lib/student-history';
-import { colors, markColours, radius, shadow, space } from '../lib/theme';
+import { colors, markColours, radius, shadow, space, useAppearance } from '../lib/theme';
 import type { Place } from './places-row';
 import { StudentHistoryScreen } from './student-history-screen';
 import { dateInWords, dayInWords, dayLook, washFor, washOf } from './student-look';
@@ -19,12 +19,14 @@ const tabs: { tab: ProfileTab; name: WordKey }[] = [
   { tab: 'attendance', name: 'student.attendance' },
 ];
 
-const card = {
+// Made when a screen is drawn and not when this module loads: the colours in it are the ones the
+// app is wearing at that moment, so a teacher flipping Dark Mode redraws this with everything else.
+const card = () => ({
   backgroundColor: colors.card,
   borderRadius: radius.card,
   padding: space.step,
   ...shadow.card,
-} as const;
+} as const);
 
 /**
  * One student's own profile: their attendance over time, as a teacher looks it up.
@@ -57,6 +59,9 @@ export function StudentProfileScreen({
 }) {
   const t = useWords();
   const dir = useDirection();
+  // Redrawn the moment a teacher flips Dark Mode in their own profile menu: the colours below are
+  // whichever of the two looks the app is wearing. See lib/theme.ts.
+  useAppearance();
   const [tab, setTab] = useState<ProfileTab>('overview');
   const [showingAll, setShowingAll] = useState(false);
 
@@ -94,7 +99,7 @@ export function StudentProfileScreen({
     <View
       key={name}
       accessibilityLabel={t('roster.tally', { name: t(name), many: figure })}
-      style={{ ...card, flexGrow: 1, flexBasis: 90, alignItems: 'center', gap: 4, paddingHorizontal: space.snug }}
+      style={{ ...card(), flexGrow: 1, flexBasis: 90, alignItems: 'center', gap: 4, paddingHorizontal: space.snug }}
     >
       <Text style={{ fontSize: 22, fontWeight: '800', color: colour }}>{figure}</Text>
       <Text style={{ fontSize: 11, color: colors.muted, textAlign: 'center' }}>{t(name)}</Text>
@@ -159,7 +164,7 @@ export function StudentProfileScreen({
           register; initials are what the app has for everybody. */}
       <View
         style={{
-          ...card,
+          ...card(),
           marginHorizontal: space.step,
           flexDirection: 'row',
           alignItems: 'center',
@@ -258,7 +263,7 @@ export function StudentProfileScreen({
             </Pressable>
           )}
         </View>
-        <View role="list" accessibilityLabel={t('student.history')} style={{ ...card, paddingVertical: 2 }}>
+        <View role="list" accessibilityLabel={t('student.history')} style={{ ...card(), paddingVertical: 2 }}>
           {recent.map((one, n) => dayRow(one, n === recent.length - 1))}
           {/* A student nobody has marked yet says which emptiness it is, rather than showing an
               empty card under a heading. */}
@@ -271,7 +276,7 @@ export function StudentProfileScreen({
       {/* And the one thing each tab has of its own: on Overview, the note a teacher keeps about
           this student; on Attendance, the month they are in, added up. */}
       {tab === 'overview' ? (
-        <View style={{ ...card, marginHorizontal: space.step, flexDirection: 'row', alignItems: 'flex-start', flexWrap: 'wrap', gap: space.snug }}>
+        <View style={{ ...card(), marginHorizontal: space.step, flexDirection: 'row', alignItems: 'flex-start', flexWrap: 'wrap', gap: space.snug }}>
           <Text style={{ fontSize: 18 }}>💬</Text>
           <View style={{ flex: 1, flexBasis: 180, gap: 4 }}>
             <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>{t('student.noteTitle')}</Text>
@@ -279,7 +284,7 @@ export function StudentProfileScreen({
           </View>
         </View>
       ) : month ? (
-        <View style={{ ...card, marginHorizontal: space.step, gap: space.snug }}>
+        <View style={{ ...card(), marginHorizontal: space.step, gap: space.snug }}>
           <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>{monthSaid}</Text>
           <View
             role="group"

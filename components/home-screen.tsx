@@ -2,7 +2,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { greetingFor } from '../lib/greeting';
 import { useDirection, useWords } from '../lib/i18n';
 import type { TeacherProfile } from '../lib/local-accounts';
-import { colors, radius, shadow, space } from '../lib/theme';
+import { colors, radius, shadow, space, useAppearance } from '../lib/theme';
 import { schoolWeekOf } from '../lib/week';
 import { PlacesRow, type Place } from './places-row';
 
@@ -15,17 +15,20 @@ import { PlacesRow, type Place } from './places-row';
  */
 export function HomeScreen({
   teacher,
-  onOpenSettings,
+  onOpenProfile,
   onGo,
   now = new Date(),
 }: {
   teacher: TeacherProfile;
-  onOpenSettings: () => void;
+  onOpenProfile: () => void;
   onGo: (place: Place) => void;
   now?: Date;
 }) {
   const t = useWords();
   const dir = useDirection();
+  // Redrawn the moment a teacher flips Dark Mode in their own profile menu: the colours below are
+  // whichever of the two looks the app is wearing. See lib/theme.ts.
+  useAppearance();
   const greeting = greetingFor(teacher, now);
   const week = schoolWeekOf(now);
 
@@ -45,12 +48,13 @@ export function HomeScreen({
           <Text style={{ fontSize: 22, color: colors.text }}>☰</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.step }}>
             <Text style={{ fontSize: 20 }}>🔔</Text>
-            {/* Their own account, which is Classroom Settings — where what is done with their data
-                is told to them, where a backup is made, and where logging out now lives. */}
+            {/* Their own account, which is their profile menu — their name and the school their
+                record keeps, the way in to Classroom Settings, the Dark Mode switch, and the way
+                out of the app. */}
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t('home.account')}
-              onPress={onOpenSettings}
+              onPress={onOpenProfile}
               style={{
                 backgroundColor: colors.accentSoft,
                 borderRadius: radius.pill,
