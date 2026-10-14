@@ -2,11 +2,10 @@
   "branch": "constat/session-4-31db8811",
   "screens": [],
   "criteria": [
-    "A teacher can enter a new student's name and add them to a classroom.",
-    "After adding a student, their name appears in that classroom's student list.",
-    "Check uniqueness within each classroom only, so the same name can exist in different classrooms.",
-    "The list of students never contains two entries with the exact same name in the same classroom.",
-    "The app keeps a record of every student that was successfully added, including their name and classroom."
+    "Selecting a class opens its attendance overview.",
+    "The Trends tab shows overall attendance as a donut chart with Present, Absent, Late counts.",
+    "A weekly bar chart shows attendance trend over the past month.",
+    "A Key Insights card summarizes how attendance has changed compared to last month."
   ],
   "why": "DoneMark froze these onto the attempt: the acceptance criteria of the requirement it is for, and the screens those criteria name. The picture suite runs the checks whose names are these criteria and skips the rest; where it can match none of them it narrows by these screens instead, and says so. Honoured on this branch only."
 }
