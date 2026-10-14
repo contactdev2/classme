@@ -378,3 +378,562 @@ Half-true, and waiting for the next requirement:
   the strip before guessing.
 - `classroomStore()` is still in memory (requirement 5 and 7's note stands). `lib/accounts-file.ts`
   is the shape to copy, and it now shows how to fail softly as well.
+
+## 9 — Complete first-time onboarding (2bbb040a)
+
+What is here now:
+
+- **`components/onboarding-screen.tsx` is the first morning with the app**: the welcome the agreed
+  prototype draws (the logo, the product's own name, the tagline, the picture, "A simpler way to
+  manage your classroom", the dots, **Get Started**) and then three slides — *Take Attendance in
+  Seconds*, *Organize Every Class*, *Gain Insights* — each counted `1/3`, `2/3`, `3/3`, with a way
+  back a step, **Next** and **Skip**, and on the last of them **Get Started**, which is the way into
+  Home. The drawings are made of this app's own rounded shapes and emoji, never an image file, and
+  carry no words a teacher has to read.
+- **`lib/onboarding.ts` is whether somebody has been welcomed on this phone**, behind the same kind
+  of seam as the accounts: `onboardingIn(false)` in memory for a check, `onboardingOnThisPhone()` —
+  the text of `classme-onboarding.json` in the app's own documents folder — installed by
+  `app/_layout.tsx`. `finishedOnboarding()` and `rememberOnboardingFinished()` **never throw**: a
+  phone that will not answer reads as nobody welcomed, which costs a teacher the welcome once more
+  and nothing else.
+- **`lib/accounts-file.ts` now exports `textOnThisPhone(name)`**, the generic it already had inside
+  it. `accountsTextOnThisPhone()` is that, with the accounts' own file name; the onboarding memory
+  is that, with its own. **Anything else that needs a file on the phone should use it** rather than
+  writing the expo-file-system dance a third time.
+- `app/index.tsx` holds the walkthrough between a teacher signing in — by either way in, the login
+  screen or the last step of the signup — and Home. Both ways go through one `signedIn(made)`, which
+  **asks the phone whether the walkthrough is finished before the screen changes**, so a returning
+  teacher never sees it flash past. **Still no new route**: requirement 1's `No other screen appears
+  before the login screen.` is still true and still has not had to be widened.
+
+Decisions taken, so they are not re-decided:
+
+- **The walkthrough comes after signing in, not before the login screen.** The criterion says the
+  last slide leads to the Home dashboard, and Home only exists for somebody signed in; and the app
+  opening on the login screen and nothing else is requirement 1's own criterion.
+- **What is remembered is "somebody has been welcomed on this phone", not which teacher.** An email
+  in the clear in that file would say out loud which teacher this phone knows — exactly what the
+  sign-in records go to some trouble not to say — and a phone belongs to one teacher, which is an
+  approved decision. `lib/onboarding.test.ts` holds that file to it.
+- **Skip counts as finished.** A teacher who has decided they do not want the walkthrough should not
+  be asked again tomorrow. It is on the slides that have a Next and not on the last one, where the
+  button beside it would go to the same place.
+- **The second slide is this requirement's own.** The chosen mockup draws 1/3 and 3/3 only; the
+  criterion asks for attendance, organisation and insights, so *Organize Every Class* was written to
+  the same shape as the two that were drawn.
+- `onboard.step` (`{at}/{of}`) is in `wordsAllowedToStay` in `lib/i18n.ts`: a count written as a
+  count is the same count in every language the app offers.
+- **Seven earlier check files now say out loud that their phone's teacher has already been
+  welcomed** (`keepOnboardingIn(onboardingIn(true))`), because they sign in and read Home and the
+  walkthrough would otherwise stand in front of it. That is a deliberate widening, not a quiet one:
+  the first morning itself is proved in `app/complete-onboarding.test.tsx`. **A new check that signs
+  a teacher in and expects Home must do the same**, or walk the four presses.
+- `journeys/tapping-get-started-on-the-last-slide-leads-to-the-home-dashboard.walk.yaml` is the walk
+  for a real phone: a profile made, the welcome, the three slides, and the dashboard. The signup walk
+  that ended on the dashboard was given the same four taps, because that is now the way there on a
+  phone nobody has been welcomed on.
+- `test/fonts/*.woff2` were gathered again (`node test/fonts/gather-fonts.mjs`) for the characters
+  the new catalogues brought. Run it whenever a catalogue gains a character.
+
+Half-true, and waiting for the next requirement:
+
+- **The walkthrough's three slides promise things the app cannot do yet.** Organising classes and
+  attendance insights are each their own requirement; the slides say what the app is for, not what
+  is behind a button today. The requirements that build them have nothing to change here.
+- **The memory is per phone, not per teacher.** Two teachers sharing one phone: the second one is
+  never welcomed. That follows the approved decision that a teacher opens the app on their own
+  phone; the day that stops being true, the honest fix is a mark of the teacher inside their own
+  sealed record, not their email in this file.
+- `classroomStore()` is still in memory (requirement 5, 7 and 8's note stands), so a backup made on
+  a real phone is still a backup of nothing. `lib/accounts-file.ts` and now `lib/onboarding.ts` both
+  show how a thing is kept on the phone.
+
+## 10 — Browse and switch between classes (3e0408cc)
+
+What is here now:
+
+- **`components/classes-screen.tsx` is My Classes**, built to the agreed prototype: the way back to
+  Home, the screen's name, the `+` the prototype draws, the three filter tabs — **All**, **Active**,
+  **Archived** — and a card for each class with its subject icon on a wash of its own colour, its
+  name, `{period} · {n} students`, and the chevron into it. It opens on **Active**, as the prototype
+  draws it, and a class put away carries an *Archived* badge on its own card so the All list is
+  never a puzzle. An empty list says which emptiness it is (`classes.noneAll` / `noneActive` /
+  `noneArchived`) rather than showing nothing.
+- **`components/class-attendance-screen.tsx` is one class's dashboard**, which is what a card opens:
+  the class's name, *Last 30 days*, the row of pills that **switches straight to another class**,
+  the Overview / Students / Trends tabs with Overview the one in use, the ring with the share
+  present and the three counts beside it, the weekly trend, and one sentence of *Key Insights*.
+- **`lib/classes.ts`** is the reading of a teacher's classes: `classesShown(data, filter)`,
+  `studentsInClass`, `classroomWithId`, `classesToSwitchTo`, and `periodOrder`, which is how a list
+  sorts itself ('1st Period' before '2nd Period', 'Period 10' after 'Period 9'; a period with no
+  number in it sorts last, by name). **Neither screen holds a rule of its own** — add a filter here,
+  not in a screen.
+- **`lib/attendance-stats.ts`** is every number on the dashboard: `dayText` (a mark's own
+  '2025-04-21'), `lastDays`, `theDaysBefore`, `tallyFor`, `weeklyTrend` and `monthOnMonth`. Nothing
+  is stored: a rate is worked out from the daily marks each time it is read, which is an approved
+  decision. **The requirement that marks attendance should write records and nothing else** — every
+  summary in the app already follows from them.
+- `components/places-row.tsx` is the row along the bottom, **now shared by Home and Classes**. Home
+  and Classes are buttons in it; Attendance, Messages and More are still drawn with nothing behind
+  them and deliberately no role. `HomeScreen` gained `onOpenClasses`.
+- `app/index.tsx` holds where a teacher is standing (`place`) and which class they have opened, and
+  **reads the classroom data once, as they sign in** (`theirTeaching()`, which never throws), handing
+  it down. **Still no new route**: requirement 1's `No other screen appears before the login screen.`
+  is still true and still has not had to be widened. The requirement that *creates* a classroom will
+  need the data read again after it writes — give `ClassesScreen` a `reload` and call it there.
+
+Decisions taken, so they are not re-decided:
+
+- **`Classroom` gained one optional field, `archived`.** Optional on purpose, the way requirement 4
+  added a teacher's name: a classroom made before it existed — in a backup file — still reads as one
+  being taught. `classroomDataIfWhole` accepts it only as a boolean.
+- **`lib/theme.ts` gained `markColours`** (#22C55E, #EF4444, #F59E0B — the prototype's own three).
+  The agreed palette names one colour for text, one for what does something and one for what is
+  behind it; present, absent and late have to be told apart at a glance, and one accent cannot do
+  it. **Use these three wherever a mark is coloured**, and nowhere else.
+- **The donut is a ring, and the trend bars lie on their side.** React Native draws no conic
+  gradient without a drawing package, and a bar chart pinned to a height cannot grow with the
+  phone's largest text: the ring is a thick round border sized by the number written inside it, and
+  each week of the trend is a row — label, bar, percentage — that grows taller rather than clipping.
+  Nothing on either screen is pinned to a `line-height` or a `max-height`, and the checks hold that.
+- **`tally.present` / `tally.absent` / `tally.late` are the legend's words, not a mark's.** They are
+  plural nouns in the languages that want them ('Présences', 出勤). The requirement that marks a
+  student Present, Absent or Late should write its own `mark.*` keys for the buttons.
+- The dashboard's `⋯`, the list's `+`, and the Students and Trends tabs are drawn because the
+  prototype draws them and are **not announced as buttons**: each is its own requirement.
+- `classes.meta` (`{period} · {students}`) and `class.rate` (`{rate}%`) are in `wordsAllowedToStay`:
+  a count written as a count is the same count in every language.
+- `test/fonts/*.woff2` were gathered again for the characters the new catalogues brought
+  (`node test/fonts/gather-fonts.mjs`). Run it whenever a catalogue gains a character.
+
+Half-true, and waiting for the next requirement:
+
+- **Nothing on the phone creates a classroom yet** (requirement 5, 7, 8 and 9's note stands), and
+  `classroomStore()` is still in memory, so on a real phone the Classes list is empty and says so.
+  Everything on both screens is real and proved against data a check hands over; what is missing is
+  the screen that makes a class and a store that outlasts the app. `lib/accounts-file.ts` and
+  `lib/onboarding.ts` both show how a thing is kept on a phone.
+- **Home still says "No classes yet" even when the phone has classes.** Home's own card is the
+  classroom requirement's to fill (requirement 4's note), and filling it from this requirement would
+  have been building that one. It now has `lib/classes.ts` to fill it from.
+- **The dashboard's Students and Trends tabs go nowhere**, and the `+` on My Classes makes nothing.
+  Both are their own requirements; the screens have the place ready for them.
+- The class pills switch between the classes being taught, plus the open one if it was archived. A
+  teacher with twenty classes gets a wrapped block of pills rather than a row that scrolls sideways:
+  it reads at the largest text size, which a sideways scroll would not.
+
+## 11 — See every student marked Present by default (ec0a04c7)
+
+What is here now:
+
+- **`components/take-attendance-screen.tsx` is today's register**, built to the agreed prototype:
+  the way back, *Take Attendance*, the class card (its subject icon on a wash of its own colour, its
+  name, `{period} · {day}, {date}`), the four filters with their counts — **All (24)**,
+  **Present (24)**, **Absent (0)**, **Late (0)** — the search, a row for each student with their
+  initials and their mark, and along the foot *Present: 24 · Absent: 0 · Late: 0* with the
+  **Save Attendance** button the prototype draws. It opens with **every student on the roster marked
+  Present**, which is this requirement's whole point.
+- **`lib/roster.ts` is the reading of one class's register**: `rosterOf` (the class's students, in
+  the order a register is read in — by name), `markToStartWith` (`'Present'`), `everyonePresent`,
+  `markOf`, `tallyOfRoster`, `countedBy`, `rosterShown` (the filter and the search together),
+  `initialsOf`, and `classToMarkIn` — the class a teacher is marking, being the one they opened or
+  else the first of their own day. **The screen holds no rule of its own**: add one here.
+- **The row along the bottom now has a destination behind Attendance.** `Place` is
+  `'home' | 'classes' | 'attendance'`, `HomeScreen` takes `onGo` instead of `onOpenClasses`, and
+  `app/index.tsx` remembers where a teacher was standing (`before`) so the way out of a register is
+  the way they came into it. Messages and More are still drawn with nothing behind them and
+  deliberately no role. **Still no new route**: requirement 1's check has still not had to be widened.
+- `lib/week.ts` gained `dayName` (every day of the week, `day.sun`…`day.sat` — two new keys) and
+  `dateLabel`, which `lib/attendance-stats.ts` now imports rather than keeping a second copy of.
+- `lib/theme.ts` gained **`avatarWashes`**, the prototype's own seven pale washes with the ink for
+  each. A register is a column of two dozen faces and one wash down the whole of it reads as a wall;
+  each student takes the next wash along by their place in the roster. **Use these for a person's
+  initials**, and nowhere else.
+- `test/react-native-dom.tsx` now says `accessibilityLabel` on a plain `View` or `Text` as
+  `aria-label`, which is react-native-web's own translation. A row of the register is a `role="list"`
+  / `role="listitem"` named by the student standing on it — `role` and not `accessibilityRole`,
+  because React Native's ARIA `role` prop has `list` and `listitem` and `accessibilityRole` does not.
+
+Decisions taken, so they are not re-decided:
+
+- **Present is where a register starts, and it is not read off a saved mark.** Nothing on the phone
+  is consulted for today: `everyonePresent(roster)` is the opening state, full stop. The check
+  `Each student's status starts as Present.` holds that by giving the phone a term of marks with
+  **nothing for today** and reading the screen. **The requirement that saves attendance has to
+  decide, on purpose, what a register re-opened after a save shows** — the saved marks, or Present
+  again. Today's answer is Present because today has never been saved.
+- **`mark.present` / `mark.absent` / `mark.late` are a register's words for one student**
+  ('Présent(e)', 出席), beside `tally.*`, which stay the legend's plural nouns. The marking
+  requirement should use `mark.*` for its buttons.
+- `roster.counted` (`{name} ({many})`) and `roster.tally` (`{name}: {many}`) are in
+  `wordsAllowedToStay`: a count written as a count is the same count in every language.
+- **The status pill on a row, the `⋮`, the `▾` on the class card and `Save Attendance` are drawn
+  and deliberately not announced as buttons**, like the `+` on My Classes before them. Marking a
+  student, choosing another class from the card, and saving the register are each their own
+  requirement: **give each of them a role the moment you give it something to do.**
+- **The filters and the search do work**, because both are only a reading of the marks already in
+  hand and the screen is unreadable without them at 24 names. The empty answers say which emptiness
+  they are (`roster.noneTitle` with `roster.noneMarked` / `roster.noneFound`).
+- The avatar is initials, never the student's photo. A photo is kept against a student
+  (`lib/classroom-data.ts`) and drawing it needs an `Image` the checks' stand-in has not got;
+  **that is the photo requirement's to add**, here and on the class's own Students tab.
+- **No walk was written for this requirement.** A phone still cannot make a classroom, so a walk
+  could only reach the register and read "No classes yet" — it could not show one student, let alone
+  twenty-four. The three criteria are proved in `app/students-present-by-default.test.tsx`, which
+  was pushed red first.
+
+Half-true, and waiting for the next requirement:
+
+- **`classroomStore()` is still in memory** (requirements 5, 7, 8, 9 and 10's note stands), so on a
+  real phone the register says "No classes yet" and offers `roster.noClassWords`. Everything on the
+  screen is real and proved against data a check hands over; what is missing is the screen that
+  makes a class, the one that adds students to it, and a store that outlasts the app.
+  `lib/accounts-file.ts` and `lib/onboarding.ts` both show how a thing is kept on a phone.
+- **The marks are held in the screen and nowhere else.** `useState(() => everyonePresent(roster))`
+  is seeded once, so a teacher who leaves the register and comes back is back at everybody present,
+  and a class switched to from the card would not re-seed. The marking requirement should lift that
+  state to where it can be changed and saved, and re-seed it when the class changes.
+- **The register is always today's.** There is no way to take a past day's attendance, and the
+  class is the one opened or the first of the day — the `▾` on the card is where choosing another
+  belongs.
+
+## 12 — Mark exceptions like Absent or Late (8da3f0c0)
+
+What is here now:
+
+- **A student's status on the register is a button now**, and pressing it takes that one student
+  round the three marks: Present → Absent → Late → Present. The round is `markOrder` in
+  `lib/roster.ts`, with `nextMarkAfter` and `markedAs` (one student's mark changed, nobody else's,
+  nothing changed in place) beside it. **The screen still holds no rule of its own** — a fourth
+  mark, or another order, is one line in `lib/roster.ts`.
+- One new word key, `roster.change` (`'{name} — {mark}. Tap to change.'`), in all five catalogues:
+  what the button is called to a screen reader. **It is named by the student standing on it**, which
+  is what makes Chloe Kim's and Hannah Kim's two different buttons to a finger and to a check —
+  `screen.press(/^Chloe Kim\b/)` is how the checks tap one.
+- `components/take-attendance-screen.tsx` now keeps the marks **beside the class they were seeded
+  for** (`seededFor`), and re-seeds when that changes. Requirement 11's note said a class switched
+  to from the card would not re-seed; it does now, so the `▾` requirement has nothing to fix here.
+- **The Late pill draws the prototype's own ⏰** (`markLook.Late.before`). The clock is beside the
+  word and never instead of it, and it is not in the accessibility label: the word carries the
+  meaning on its own.
+- `test/fonts/*.woff2` were gathered again (`node test/fonts/gather-fonts.mjs`) for the characters
+  the new catalogue line brought.
+
+Decisions taken, so they are not re-decided:
+
+- **One button that goes round, not three buttons on every row.** A register is marked with a thumb
+  in the seconds between the bell and the lesson, and the exceptions are two or three names in
+  twenty-four. Three buttons a row would not read at the phone's largest text size, and a wrong tap
+  here is undone by tapping on round rather than by finding an undo. **If a later requirement wants
+  a sheet of three, `nextMarkAfter` is what it replaces, not the round itself.**
+- **Nothing is written to the phone.** The marks are held in the screen, exactly as before — this
+  requirement changes them, it does not keep them. The screen's own doc comment says so.
+
+Half-true, and waiting for the next requirement:
+
+- **Saving the register is still its own requirement.** `Save Attendance` is drawn and still
+  deliberately not announced as a button, and a teacher who leaves the register and comes back is
+  back at everybody present. That requirement has `marks`/`setMarks` in
+  `components/take-attendance-screen.tsx` to lift or to read, `AttendanceRecord` in
+  `lib/classroom-data.ts` to write, and requirement 11's open question to answer on purpose: **what
+  a register re-opened after a save shows — the saved marks, or Present again.**
+- **`classroomStore()` is still in memory** (requirements 5, 7, 8, 9, 10 and 11's note stands), so
+  on a real phone the register still says "No classes yet". `lib/accounts-file.ts` and
+  `lib/onboarding.ts` both show how a thing is kept on a phone.
+- **No walk was written**, for requirement 11's reason: a phone still cannot make a classroom, so a
+  walk could not reach one student to tap. The three criteria are proved in
+  `app/mark-exceptions.test.tsx`, which was pushed red first — all three failing with
+  `0 buttons saying /^Chloe Kim\b/ on this screen`, which is the register as requirement 11 left it.
+
+## 13 — Review the attendance summary before saving (7bc7b74b)
+
+What is here now:
+
+- **The summary bar at the foot of the register is a named group of its own** — `role="group"`,
+  called `roster.summary` (*Attendance summary*) to a screen reader — holding Present, Absent and
+  Late with the count against each, in the prototype's own order. It was already drawn (requirement
+  11 put it there); what this requirement added is that **it can be told apart from the filter pills
+  above it**, which say counts of their own, and that **each count is one phrase to a screen
+  reader** ('Present: 20'), not a number loose on the screen. A check finds the bar by that group
+  and nothing else: `[role="group"]` is the summary bar and there is exactly one of it.
+- **Each count's number is written in that mark's own colour** (`markColours`), with the words
+  around it in the screen's ink, as the agreed prototype draws it. That needed the phrase cut in
+  two, so **`lib/i18n.ts` gained `sayAround(key, around, filling)`**: a key's words cut around one
+  of its fillings — `{ before, piece, after }` — made in *this language's own* phrase, so a language
+  that writes the number first is cut where its own number falls. `say` and it share one `fillIn`.
+  Use it wherever one filling has to be drawn differently from the words round it; the whole phrase
+  still goes on the element as its `accessibilityLabel`, which is what keeps it one phrase to ears
+  and keeps `screen.readable()` honest.
+- **`lib/roster.ts` gained `summaryMarks` and `summaryOfRoster`** — `{ counts, total, addsUp }`.
+  `summaryMarks` is the three the bar writes; a check holds **every mark in `markOrder`** to having
+  a column in it, so a fourth mark cannot be added later and go uncounted, and `addsUp` says out
+  loud that the counts come to the class rather than leaving it assumed. The screen reads the bar
+  off `summaryOfRoster` and holds no rule of its own. Nothing is stored — a summary is worked out
+  from the marks in hand each time it is read, which is the approved decision and is also why the
+  bar follows a tap in the same breath.
+- **`test/react-native-dom.tsx`: a `Text` inside another `Text` is now drawn inline**, which is
+  react-native-web's own translation (a `createContext` says whether words are already inside
+  words). Without it the browser put 'Present:' and the 20 on two lines and the picture showed a
+  screen nobody holding the phone would see. **This screen is the only one that nests `Text`**, so
+  nothing else moved.
+
+Decisions taken, so they are not re-decided:
+
+- **The bar adds up the whole class, never the part of it on the screen.** A filter or a search
+  changes which rows are drawn and nothing else; the checks hold that (asked for the 2 absent, the
+  bar still says 20 / 2 / 2). A summary that followed the filter would be a different number every
+  time a teacher looked something up, which is the opposite of a check before saving.
+- **No total is written on the bar.** The prototype draws three numbers and the filter row above
+  already says `All (24)`; criterion 3 is about the three *adding up* to the class, and that is
+  proved rather than printed.
+- `roster.summary` is new in all five catalogues, and `test/fonts/*.woff2` were gathered again
+  (`node test/fonts/gather-fonts.mjs`) for the characters it brought.
+
+Half-true, and waiting for the next requirement:
+
+- **Saving is still its own requirement**, and this one deliberately did not start it: `Save
+  Attendance` is drawn, sits under the summary bar in the same unscrolling foot, and is **still not
+  announced as a button**. Give it a role the moment it does something. The open question from
+  requirement 11 is still open and still has to be answered on purpose: **what a register re-opened
+  after a save shows — the saved marks, or Present again.**
+- **`classroomStore()` is still in memory** (requirements 5, 7, 8, 9, 10, 11 and 12's note stands),
+  so on a real phone the register says "No classes yet" and the summary bar reads 0 / 0 / 0 under
+  it. Everything proved here is proved against data a check hands over.
+- **No walk was written**, for requirement 11 and 12's reason: a phone cannot yet make a classroom,
+  so a walk could not reach a register with a student on it. The three criteria are proved in
+  `app/review-attendance-summary.test.tsx`, pushed red first — all three failing with
+  `0 summary bars on this screen, wanted exactly one`.
+
+## 14 — Save the day's attendance and see confirmation (1da3283e)
+
+What is here now:
+
+- **`Save Attendance` is a button, and it keeps the day.** One press turns the marks under the
+  teacher's thumb into one `AttendanceRecord` for **every student on the roster** — including the
+  ones nobody touched, because a day with twenty-two marks in a class of twenty-four is two students
+  nobody can say anything about afterwards — writes them to `classroomStore()`, and puts the
+  confirmation in front of the register. It is disabled while the write is happening (one press is
+  one save) and on a class with nobody in it.
+- **`lib/attendance-save.ts` is the whole of the keeping.** `recordsForRegister` makes the day's
+  records; `dataWithRegister` puts them **in place of** whatever was kept for that class on that day,
+  so a day saved twice is one day's register and every other day and class are untouched;
+  `savedRegisterFor` reads a saved day back as marks; `keepRegister` does the read-change-write and
+  **never throws** — it answers `null`, and the register stays open saying `roster.couldNotSave`.
+  `dayOfRegister`/`dayFromText` are a day and its way back. The screen holds no rule of its own.
+- **`components/attendance-saved-screen.tsx` is *Attendance Saved!***, built to the agreed
+  prototype: the way back to the register, *Attendance*, the `⋮`, and the card — the green tick,
+  the words, `{class} — {period}`, the day in words, who saved it, and the three tiles (Present,
+  Absent, Late) in `markColours` on a wash of themselves — then **View Class Report** into that
+  class's own dashboard, **Back to Home**, and the prototype's own note about editing today again.
+- **`AttendanceRecord` gained one optional field, `savedBy`** — the teacher's own name, from
+  `nameOf(teacher)`, which is the approved decision that who saved a day is kept with it. Optional
+  the way requirement 4 added a teacher's name and requirement 10 added `archived`: every mark made
+  before it existed — in a backup file — still reads as a mark, and `classroomDataIfWhole` accepts
+  it only as a string. **Add a field the same way.**
+- `app/index.tsx` hands the register the teacher and three ways on, and takes back what the phone
+  keeps the moment it is written (`onSaved={setTeaching}`), so the class report and the Classes list
+  show the day that has just been saved without reading the phone again. **Still no new route**:
+  requirement 1's `No other screen appears before the login screen.` is still true.
+- Eleven new word keys in all five catalogues (`roster.saving`, `roster.couldNotSave`, `saved.*`),
+  and `test/fonts/*.woff2` were gathered again (`node test/fonts/gather-fonts.mjs`).
+
+Decisions taken, so they are not re-decided:
+
+- **A register re-opened on a day already saved opens at what was saved**, not at everybody present.
+  That is requirement 11 and 13's open question, answered on purpose: the day is on the phone, the
+  confirmation says it can be edited again, and opening it all-present would be the app quietly
+  marking a class it was told nothing new about. `openAt()` in the screen is
+  `{...everyonePresent(roster), ...savedRegisterFor(...)}`, so a student added since is Present and
+  everybody else is where they were left. Requirement 11's `Each student's status starts as Present.`
+  still reads word for word: its phone has a term of marks and **nothing for today**.
+- **The confirmation is a screen the register shows, not a route and not app/index's.** The marks
+  are the register's, and so is the save; `TakeAttendanceScreen` returns `<AttendanceSavedScreen/>`
+  in its own place, which is why the way back at its top left is the same marks again.
+- **Nothing ever says 'Attendance Saved!' over nothing saved.** A phone that will not be written to
+  leaves the register open with `roster.couldNotSave` in an `accessibilityRole="alert"`, and nothing
+  is logged on the way past. That is the one lie this screen must not tell.
+- **The confirmation says who saved it** (`saved.by`), which the mockup does not draw. The approved
+  decision keeps the teacher's name on every record, and a criterion about what the record holds
+  reads better with the name on the screen than only in the store. A record that keeps no name of
+  its own is not named — `recordsForRegister` leaves `savedBy` out rather than inventing one.
+- **The tiles read `tally.*`** (the legend's plural nouns), not `mark.*`, and are labelled with
+  `roster.tally` so a screen reader hears 'Present: 20' as one phrase. The tick is drawn out of
+  padding and a round corner, never a pinned height, so the phone's largest text grows it.
+- **No walk was written**, for requirements 11, 12 and 13's reason: a phone still cannot make a
+  classroom, so a walk could not reach a register with a student on it to save. The three criteria
+  are proved in `app/save-attendance.test.tsx`, pushed red first — all three failing with
+  `Cannot find module '../lib/attendance-save'`.
+
+Half-true, and waiting for the next requirement:
+
+- **`classroomStore()` is still in memory** (requirements 5, 7, 8, 9, 10, 11, 12 and 13's note
+  stands), so on a real phone a register saved this morning is forgotten when the app closes — and
+  the register still says "No classes yet" because nothing can make a classroom. **This is now the
+  most expensive of the half-truths on this branch**: everything above it is real and proved, and
+  all of it is written to a store that does not outlast the app. `lib/accounts-file.ts` and
+  `lib/onboarding.ts` both show how a thing is kept on a phone; the line to replace is
+  `let store = ...` in `lib/classroom-data.ts`.
+- **The register is always today's**, and the `▾` on the class card still chooses nothing. A day
+  taken late — yesterday's register, on a morning after — has nowhere to be entered.
+- **Nothing edits a saved day from the Class Report**, which the confirmation's own last line
+  promises. The way back into today is the register itself, which now opens at what was saved; the
+  report's Students and Trends tabs are still their own requirements.
+
+## 15 — Check a student's attendance history (6f34165c)
+
+What is here now:
+
+- **A student's name on the register opens their own profile.** Their initials and their name
+  together are one `Pressable`, announced as a **link** (`accessibilityRole="link"`,
+  `student.open` — *Open Chloe Kim's profile*) and deliberately not as a button: the status beside
+  it on the same row is a button and changes a mark, and a register marked with a thumb must never
+  have two things on one row that look alike and do different things. **It is also why requirement
+  12's `[role="listitem"] [role="button"]` is still exactly 24** — if you make a name a button,
+  that check goes red and it is right to. `test/screen.tsx` presses a link now as well as a button
+  and a radio row.
+- **`components/student-profile-screen.tsx` is Student Profile**, built to the agreed prototype:
+  the way back to the register, the name of the screen, the `⋮`, the student's card (initials, name,
+  `{class} · {period}`), the Overview / Attendance / Notes tabs, the three tiles — **Attendance
+  Rate**, **Absences**, **Late** — *Recent Attendance* with the five most recent days and
+  **View All**, and then the one thing each tab has of its own: the Teacher Note card on Overview,
+  and the month added up (*April Summary*: Days Tracked, Present, Absent, Late) on Attendance.
+- **`components/student-history-screen.tsx` is Full Attendance Record**, which is what View All
+  opens: the student's card with their rate on it, the three counts of the whole record, and every
+  day the phone has a mark against their name, newest first, under the month each falls in — with
+  the places row along the foot, Attendance lit, as the prototype draws it on that screen.
+- **`lib/student-history.ts` is the whole of the reading**: `studentWithId`, `historyOf` (the days
+  against one student's name, newest first), `tallyOfHistory`, `recentDays`/`recentlyShown`,
+  `historyByMonth` and `latestMonth`. **Neither screen holds a rule of its own** — a sixth recent
+  day, or another order, is one line here. Nothing is stored: every rate, count and month summary is
+  worked out from the daily records each time it is read, which is the approved decision.
+- `components/student-look.ts` is what the two screens share: `dayLook` (each mark's word, colour
+  and sign — ✓ ✕ ⏰), `dateInWords` ('Apr 21, 2025'), `dayInWords` ('Apr 21, 2025 — Absent'),
+  `monthInWords` ('April 2025') and `washFor` (a student's own wash, by their place in their class's
+  register, so the same face is the same colour on every screen).
+- Twenty-four new `student.*` keys and **`monthFull.1`…`monthFull.12`** (a month written out, which
+  the record's headings and *April Summary* need) in all five catalogues; `student.in` and
+  `student.monthOf` are in `wordsAllowedToStay` — both are nothing but braces, and French writes a
+  month beside its year exactly as English does. `test/fonts/*.woff2` were gathered again.
+
+Decisions taken, so they are not re-decided:
+
+- **'View All' opens the whole record from either tab.** The prototype's Overview sends it to the
+  Attendance tab and only that tab's own View All to the full list; the criterion says View All
+  shows the complete attendance history, and a requirement's own lines win over the mockup. Both
+  tabs are one tap from the record and the Attendance tab is still one tap from its own tab.
+- **The profile is a screen the register shows, not a route** — the same decision the confirmation
+  took in requirement 14. `TakeAttendanceScreen` returns it in its own place, so the register stays
+  mounted with the teacher's marks standing behind it: looking a student up never costs a register.
+  `app/index.tsx` gained nothing but `onGo={goTo}` on the register, which is what the places row at
+  the foot of the full record goes through. **Still no new route**: requirement 1's check holds.
+- **The Teacher Note card says there is no note.** Nothing on the phone keeps a note against a
+  student, so Notes is drawn without a role (like the `⋮` and the `+` before it) and the card says
+  `student.noNote` rather than showing prose about a student that nobody wrote. **The notes
+  requirement has the card and the tab waiting for it.**
+- **The line under a student's name is their class and period**, where the prototype writes *Grade
+  10 · Student ID #1042*. A `Student` is a name and a photo (`lib/classroom-data.ts`) and nothing
+  else; a grade and a school id would have had to be invented. **A requirement that adds either
+  should put it here.**
+- **A rate is present ÷ every mark, rounded** (`rateOf`, shared with the class dashboard), so a
+  student late all term is not counted present. A student with nothing marked is 0% of nothing, and
+  the screen says `student.none` rather than drawing an empty month.
+
+Half-true, and waiting for the next requirement:
+
+- **`classroomStore()` is still in memory** (requirements 5, 7, 8, 9, 10, 11, 12, 13 and 14's note
+  stands): on a real phone a register saved this morning is forgotten when the app closes, and a
+  profile opened tomorrow has nothing in it. This is still the most expensive half-truth on the
+  branch. The line to replace is `let store = ...` in `lib/classroom-data.ts`.
+- **A name is only pressable on the register.** The class report's Students tab is still its own
+  requirement and still goes nowhere; when it arrives, it should open the same
+  `StudentProfileScreen` rather than a second profile — and it will need a way in that is not the
+  register, so the profile's `onBack` and its places row are worth making the caller's business.
+- **The photo is still initials.** A photo is kept against a student and drawing it needs an
+  `Image` the checks' stand-in has not got; that is the photo requirement's to add, here, on the
+  register, and at the top of the full record.
+- **No walk was written**, for requirements 11 to 14's reason: a phone still cannot make a classroom
+  or add a student, so a walk could not reach a name to press. The four criteria are proved in
+  `app/student-attendance-history.test.tsx`, pushed red first — all four failing with
+  `Cannot find module '../lib/student-history'`.
+
+## 16 — Update profile and settings (fef6db18)
+
+What is here now:
+
+- **`components/profile-screen.tsx` is the teacher's own profile menu**, built to the agreed
+  prototype: the way back, *Profile*, the card with their initials, the name their record keeps and
+  `Teacher · {school}` under it with the prototype's own pencil beside it, then the menu — **Profile,
+  Classroom Settings, Students, Attendance Reports, Notifications** — then **Help & Support** and the
+  **Dark Mode** switch, and **Logout** at the foot, which is where the prototype draws it. It is what
+  **Home's avatar opens now**: `HomeScreen`'s prop is `onOpenProfile`, and Classroom Settings is one
+  option on this menu rather than the avatar's own destination. **Still no new route** — `app/` is
+  `_layout.tsx` and `index.tsx` — so requirement 1's `No other screen appears before the login
+  screen.` is still true and still has not had to be widened.
+- **`lib/theme.ts` holds two palettes now**: `lightColours` (the agreed round-3 palette, unchanged to
+  the hex) and `darkColours`, with `colors` the one object every screen already reads — *written
+  over* when the look changes rather than swapped, so a style built once where a module loads is
+  reading the same colours as the screen around it. `appearanceNow()`, `setAppearance()` and
+  `useAppearance()` are the i18n pattern exactly (`languageNow`/`setLanguage`/`useWords`), and
+  **every screen now calls `useAppearance()`** beside its `useWords()`. The palette gained names for
+  what used to be hex codes loose in the screens — `hairline`, `faintest`, `accentEdge`, `onWash`,
+  `alarm`, `alarmEdge`, `good`, `goodWash`, `switchOff`, `ring`, `chevron`. **Use a name, never a
+  hex**: a hex in a screen is a colour that will not follow a teacher into the dark.
+- **`lib/appearance.ts` keeps which look was chosen**, behind the same seam as the accounts and the
+  onboarding memory: `appearanceIn(null)` in memory for a check, `appearanceOnThisPhone()` — the text
+  of `classme-appearance.json` in the app's own documents folder — installed by `app/_layout.tsx`.
+  `rememberAppearance()` never throws, and `openInKeptAppearance()` is called by `app/index.tsx` as
+  the app opens, beside `openInPhoneLanguage()`.
+- **A teacher's school is kept inside their own locked record**, beside their name
+  (`TeacherProfile.school`), and asked for once — on the first step of the signup, under their name,
+  as the one field they may leave empty. Optional the way requirement 4 added the name and 10 added
+  `archived`: a record made before schools were kept opens exactly as it did, and the menu then says
+  `profile.noSchool` rather than showing a school nobody typed.
+- Nine new word keys in all five catalogues (`profile.*`, `signUp.school`, `signUp.schoolPlaceholder`
+  — the last in `wordsAllowedToStay`, a sample school nobody translates), and **`home.account` now
+  says profile rather than settings**, because that is where the avatar goes.
+- `test/screen.tsx` presses a **switch** now as well as a button, a radio row and a link: Dark Mode
+  is announced as the switch it is, and a finger does not care which of the four a screen called it.
+
+Decisions taken, so they are not re-decided:
+
+- **The dark palette lifts the accent and darkens what is written on it** (`onAccent` is near-black
+  in the dark): white on this app's own blue is thin to read against a dark card, dark ink on a
+  lifted blue is not. `markColours` and `avatarWashes` are **the same in both looks** on purpose —
+  a mark's colour is what it means, and green that meant present this morning cannot mean something
+  else this evening.
+- **Classroom Settings keeps its own Logout and its own `Back to Home`.** Settings is reached from
+  the profile menu now, but its way back still goes to Home, because that is what its own words say
+  and three earlier check files read them. Logging out works from either screen.
+- **Three check files were widened deliberately** — `back-up-data`, `localise-app` and
+  `open-in-phone-language` press the avatar and then **Classroom Settings**, because the avatar
+  opens the profile menu now. That is the deliberate widening requirement 1 asked for in writing,
+  not a quiet one.
+- **Attendance Reports opens My Classes**, where a class opened from the list is that class's own
+  report. Profile, Students, Notifications, Help & Support and the pencil on the card are drawn
+  because the prototype draws them and are **deliberately not announced as buttons** — the
+  established precedent. Each row is a `role="listitem"` named by its own words inside a
+  `role="list"` called *Profile menu*, so the menu reads as the list of options it is whether or not
+  an option leads anywhere yet. **Give one a role the moment you give it a destination.**
+- The four criteria are proved in `app/update-profile-and-settings.test.tsx`, pushed red first — two
+  failing on the menu that was not there, one on the school no record kept, one on
+  `Cannot find module '../lib/appearance'`. `journeys/tapping-logout-signs-the-teacher-out-of-the-app.walk.yaml`
+  is the first walk that reaches this screen on a real phone.
+
+Half-true, and waiting for the next requirement:
+
+- **Nothing edits a profile yet.** The pencil on the card and the Profile row open nothing, because
+  changing what is inside a locked record means re-sealing it, which takes the password that locks
+  it — and the app deliberately does not keep that after a submission (requirement 2's note). The
+  honest shape is a screen that asks for the password and re-locks the record; `lockAccount` already
+  makes it, and `AccountsFile` would need a way to put one record in place of another.
+- **Notifications is a row and a switch and no notifications.** No push service is used (an approved
+  decision), so what it could ever do is the phone's own local reminders, which nothing schedules.
+- **`classroomStore()` is still in memory** (requirements 5, 7, 8, 9, 10, 11, 12, 13, 14 and 15's
+  note stands): a register saved this morning is forgotten when the app closes. The accounts, the
+  onboarding memory and now the chosen look all show how a thing is kept on a phone — the line to
+  replace is `let store = ...` in `lib/classroom-data.ts`. **This is still the most expensive
+  half-truth on this branch.**
+- Dark Mode is a teacher's own choice and **never the phone's**: the app does not follow a phone set
+  to dark, the way it follows a phone set to French. Following it would be `Appearance.getColorScheme()`
+  from react-native, and the honest shape is a third setting — System — rather than a switch that
+  argues with the phone.

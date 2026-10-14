@@ -1,0 +1,170 @@
+// One class's roster, as the screen where attendance is taken reads it: who is in the class, what
+// each of them is marked as while the teacher is standing in front of them, and what that comes to.
+//
+// A register starts with everybody present. Marking a class is mostly marking the few who are not
+// there, so the roster opens with every student already at Present and a teacher changes what they
+// need to — which is the whole of why this screen is quick. Nothing here is read off a saved mark:
+// Present is where the roster starts, and the marks the phone keeps are the days already taken.
+//
+// The data itself is lib/classroom-data.ts; this is only the reading of it, so the screen holds no
+// rule of its own and a check can ask the same questions.
+
+import { classesShown, classroomWithId } from './classes';
+import type { AttendanceMark, Classroom, ClassroomData, Student } from './classroom-data';
+
+/** The mark every student on a roster starts at: full attendance, until the teacher says otherwise. */
+export const markToStartWith: AttendanceMark = 'Present';
+
+/** What a teacher is looking at on the roster: everybody, or only those at one of the three marks. */
+export type RosterFilter = 'all' | AttendanceMark;
+
+/** The four, in the order the screen offers them. */
+export const rosterFilters: readonly RosterFilter[] = ['all', 'Present', 'Absent', 'Late'];
+
+/** What each student in a class is marked as, by the id the phone knows them by. */
+export type MarkedRoster = Record<string, AttendanceMark>;
+
+/** The order a register is read in: by the student's own name, as this language sorts names. */
+const inRegisterOrder = (one: Student, other: Student): number => one.name.localeCompare(other.name);
+
+/**
+ * The students of one class, in the order a register is read in. This is the class's roster as the
+ * phone itself keeps it — no name is added to it and none is left off.
+ */
+export function rosterOf(data: ClassroomData, classroomId: string): Student[] {
+  return data.students.filter((one) => one.classroomId === classroomId).sort(inRegisterOrder);
+}
+
+/** A roster as it stands the moment it opens: every student on it marked Present. */
+export function everyonePresent(students: Student[]): MarkedRoster {
+  return Object.fromEntries(students.map((one) => [one.id, markToStartWith]));
+}
+
+/** What a student standing on the roster is marked as; Present for one nobody has changed. */
+export const markOf = (marks: MarkedRoster, student: Student): AttendanceMark => marks[student.id] ?? markToStartWith;
+
+/**
+ * The three marks in the order one press after another takes a student through them, starting at
+ * the one a register starts at.
+ *
+ * A register is marked with a thumb, in the few seconds between the bell and the lesson, and the
+ * exceptions are two or three names in twenty-four: a press that goes round the three is quicker
+ * than three buttons on every row, it leaves the roster readable at the phone's largest text size,
+ * and a wrong press is undone by pressing on round rather than by finding an undo.
+ */
+export const markOrder: readonly AttendanceMark[] = ['Present', 'Absent', 'Late'];
+
+/** The mark a student lands on when the one they are standing at is pressed. */
+export function nextMarkAfter(mark: AttendanceMark): AttendanceMark {
+  const at = markOrder.indexOf(mark);
+  return markOrder[(at + 1) % markOrder.length];
+}
+
+/**
+ * The roster as it stands after one student's mark is changed: that student at their new mark, and
+ * everybody else exactly where they were. Nothing is changed in place, so what a screen was holding
+ * a moment ago is still what it was.
+ */
+export function markedAs(marks: MarkedRoster, studentId: string, mark: AttendanceMark): MarkedRoster {
+  return { ...marks, [studentId]: mark };
+}
+
+/** How many of a roster stand at each of the three marks, and how many there are altogether. */
+export type RosterTally = { present: number; absent: number; late: number; total: number };
+
+export function tallyOfRoster(students: Student[], marks: MarkedRoster): RosterTally {
+  let present = 0;
+  let absent = 0;
+  let late = 0;
+  for (const student of students) {
+    const mark = markOf(marks, student);
+    if (mark === 'Present') present += 1;
+    else if (mark === 'Absent') absent += 1;
+    else late += 1;
+  }
+  return { present, absent, late, total: students.length };
+}
+
+/** How many of them this filter is asking about, which is the number written on it. */
+export const countedBy = (tally: RosterTally, filter: RosterFilter): number =>
+  filter === 'all' ? tally.total : filter === 'Present' ? tally.present : filter === 'Absent' ? tally.absent : tally.late;
+
+/**
+ * The marks the summary bar at the foot of the register adds a class up in, in the order it writes
+ * them. Every mark a student can stand at is here, which is what makes the bar a check worth
+ * making: three numbers that come to the class in front of the teacher. A fourth mark added to
+ * markOrder and not to this is a student counted nowhere, and summaryOfRoster says so of itself.
+ */
+export const summaryMarks: readonly AttendanceMark[] = ['Present', 'Absent', 'Late'];
+
+/**
+ * The summary bar's own reading of a register: each mark with how many stand at it, the total the
+ * class comes to, and whether the two agree. Nothing is kept — a summary is worked out from the
+ * marks in hand every time it is read, so it cannot drift from the register it is a summary of.
+ */
+export type RosterSummary = {
+  counts: { mark: AttendanceMark; many: number }[];
+  total: number;
+  addsUp: boolean;
+};
+
+/**
+ * How a class stands, for a teacher's one look before they save it: the three counts, the number of
+ * students in the class, and whether the counts add up to it. They do as long as every mark has a
+ * column on the bar; `addsUp` is that promise kept out loud rather than assumed, so a mark nobody
+ * counted shows up as a summary that does not add up instead of as a quietly wrong number.
+ */
+export function summaryOfRoster(students: Student[], marks: MarkedRoster): RosterSummary {
+  const tally = tallyOfRoster(students, marks);
+  const counts = summaryMarks.map((mark) => ({ mark, many: countedBy(tally, mark) }));
+  return {
+    counts,
+    total: tally.total,
+    addsUp: counts.reduce((all, one) => all + one.many, 0) === tally.total,
+  };
+}
+
+/**
+ * The students a teacher is looking at: the ones at the mark they asked for, and whose name has in
+ * it what they typed into the search. An empty search asks for nobody in particular, so everybody
+ * the filter allows is on the screen.
+ */
+export function rosterShown(
+  students: Student[],
+  marks: MarkedRoster,
+  filter: RosterFilter,
+  looking = '',
+): Student[] {
+  const wanted = looking.trim().toLocaleLowerCase();
+  return students.filter(
+    (one) =>
+      (filter === 'all' || markOf(marks, one) === filter) &&
+      (wanted === '' || one.name.toLocaleLowerCase().includes(wanted)),
+  );
+}
+
+/**
+ * A student's own initials, as the circle beside their name draws them: 'Aaliyah Carter' is AC, and
+ * somebody with one name to their name is the first two letters of it. Counted in characters and
+ * not in bytes, so a name written in any language keeps its own first letter.
+ */
+export function initialsOf(name: string): string {
+  const words = name.split(/\s+/).filter((one) => one !== '');
+  if (words.length === 0) return '';
+  const letters =
+    words.length === 1
+      ? [...words[0]].slice(0, 2)
+      : [[...words[0]][0], [...words[words.length - 1]][0]];
+  return letters.join('').toLocaleUpperCase();
+}
+
+/**
+ * The class a teacher is taking attendance in: the one they opened, if they opened one, and
+ * otherwise the first class of their own day. A phone with nothing taught on it has none, and the
+ * screen says so plainly rather than drawing an empty register.
+ */
+export function classToMarkIn(data: ClassroomData, opened: string | null = null): Classroom | null {
+  const open = opened === null ? null : classroomWithId(data, opened);
+  if (open) return open;
+  return classesShown(data, 'active')[0] ?? classesShown(data, 'all')[0] ?? null;
+}

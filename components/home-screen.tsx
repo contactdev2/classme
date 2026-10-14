@@ -2,23 +2,9 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { greetingFor } from '../lib/greeting';
 import { useDirection, useWords } from '../lib/i18n';
 import type { TeacherProfile } from '../lib/local-accounts';
-import { colors, radius, shadow, space } from '../lib/theme';
+import { colors, radius, shadow, space, useAppearance } from '../lib/theme';
 import { schoolWeekOf } from '../lib/week';
-
-/**
- * The places the app has, along the bottom, as the prototype draws them. Home is where a teacher
- * already is; the other four are each their own requirement, so — like 'Forgot password?' on the
- * login screen — they are drawn because the prototype draws them, and nothing is behind them yet.
- * They are deliberately not announced as buttons: a control that answers nothing should not say it
- * does.
- */
-const places = [
-  { key: 'place.home', mark: '⌂' },
-  { key: 'place.classes', mark: '◫' },
-  { key: 'place.attendance', mark: '📅' },
-  { key: 'place.messages', mark: '💬' },
-  { key: 'place.more', mark: '⋯' },
-] as const;
+import { PlacesRow, type Place } from './places-row';
 
 /**
  * Home: what a teacher lands on the moment their own record opens. It greets them by the name that
@@ -29,15 +15,20 @@ const places = [
  */
 export function HomeScreen({
   teacher,
-  onOpenSettings,
+  onOpenProfile,
+  onGo,
   now = new Date(),
 }: {
   teacher: TeacherProfile;
-  onOpenSettings: () => void;
+  onOpenProfile: () => void;
+  onGo: (place: Place) => void;
   now?: Date;
 }) {
   const t = useWords();
   const dir = useDirection();
+  // Redrawn the moment a teacher flips Dark Mode in their own profile menu: the colours below are
+  // whichever of the two looks the app is wearing. See lib/theme.ts.
+  useAppearance();
   const greeting = greetingFor(teacher, now);
   const week = schoolWeekOf(now);
 
@@ -57,12 +48,13 @@ export function HomeScreen({
           <Text style={{ fontSize: 22, color: colors.text }}>☰</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.step }}>
             <Text style={{ fontSize: 20 }}>🔔</Text>
-            {/* Their own account, which is Classroom Settings — where what is done with their data
-                is told to them, where a backup is made, and where logging out now lives. */}
+            {/* Their own account, which is their profile menu — their name and the school their
+                record keeps, the way in to Classroom Settings, the Dark Mode switch, and the way
+                out of the app. */}
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t('home.account')}
-              onPress={onOpenSettings}
+              onPress={onOpenProfile}
               style={{
                 backgroundColor: colors.accentSoft,
                 borderRadius: radius.pill,
@@ -128,34 +120,8 @@ export function HomeScreen({
         </View>
       </ScrollView>
 
-      {/* The app's places, along the bottom. It wraps rather than clips, so the phone's largest text
-          makes this row taller and never cuts a word off it. */}
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-around',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: space.snug,
-          paddingHorizontal: space.snug,
-          paddingVertical: 12,
-          backgroundColor: colors.card,
-          borderTopWidth: 1,
-          borderTopColor: colors.line,
-        }}
-      >
-        {places.map((place) => {
-          const here = place.key === 'place.home';
-          return (
-            <View key={place.key} style={{ alignItems: 'center', gap: 4 }}>
-              <Text style={{ fontSize: 18, color: here ? colors.accent : colors.faint }}>{place.mark}</Text>
-              <Text style={{ fontSize: 11, fontWeight: here ? '600' : '400', color: here ? colors.accent : colors.faint }}>
-                {t(place.key)}
-              </Text>
-            </View>
-          );
-        })}
-      </View>
+      {/* The app's own places, along the bottom, with Home the one the teacher is standing in. */}
+      <PlacesRow here="home" onGo={onGo} />
     </View>
   );
 }

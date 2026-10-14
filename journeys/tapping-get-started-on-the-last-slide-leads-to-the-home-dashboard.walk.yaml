@@ -1,0 +1,46 @@
+appId: com.contactdev2.classme
+name: Tapping 'Get Started' on the last slide leads to the Home dashboard.
+---
+# The first morning with the app on a phone of one's own: a profile is made, and then the teacher is
+# welcomed and told what the app is for — three slides — before the last Get Started puts them on
+# the Home dashboard, greeted by their own name.
+- tapOn: "Create a profile"
+- tapOn: "Ms. Patel"
+- inputText: "Ms. Rivera"
+- hideKeyboard
+- tapOn: "Continue"
+- tapOn: "you@school.edu"
+- inputText: "ms.rivera@riversidehigh.edu"
+- hideKeyboard
+- tapOn: "At least 8 characters"
+- inputText: "Spring-2026-attendance"
+- hideKeyboard
+# The screen's own name says "Create Profile" above the steps, and so does the button under the
+# password: the second of the two is the button.
+- tapOn:
+    text: "Create Profile"
+    index: 1
+# Stretching the password is the phone's own arithmetic, done once, and it is not quick.
+- extendedWaitUntil:
+    visible: "Profile Created.*"
+    timeout: 120000
+- tapOn: "Go to Dashboard"
+# The welcome, which is where a teacher who has never used this app lands.
+- extendedWaitUntil:
+    visible: "A simpler way to manage.*"
+    timeout: 30000
+- tapOn: "Get Started"
+- assertVisible: "Take Attendance.*"
+- assertVisible: "1/3"
+- tapOn: "Next"
+- assertVisible: "2/3"
+- tapOn: "Next"
+- assertVisible: "Gain Insights"
+- assertVisible: "3/3"
+# The last slide's own way in: the dashboard, with the teacher's own name on it.
+- tapOn: "Get Started"
+- extendedWaitUntil:
+    visible: "Ms. Rivera.*"
+    timeout: 30000
+- assertVisible: ".*what's happening today.*"
+- assertNotVisible: "3/3"

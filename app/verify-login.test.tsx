@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it } from 'vitest';
 import { accountsIn, keepAccountsIn, lockAccount, openAccount, type AccountRecord } from '../lib/local-accounts';
+import { keepOnboardingIn, onboardingIn } from '../lib/onboarding';
 import { submitSignIn } from '../lib/sign-in';
 import { open, takePictureOf } from '../test/screen';
 import LoginScreen from './index';
@@ -28,6 +29,9 @@ const checkIterations = 1_000;
 function phoneWithTheTeachersAccount(): AccountRecord {
   const record = lockAccount({ email: teacher.email, password }, teacher, checkIterations);
   keepAccountsIn(accountsIn([record]));
+  // The teacher of this phone has already been welcomed: the first morning's walkthrough is proved
+  // in app/complete-onboarding.test.tsx, and what is being read here is what comes after it.
+  keepOnboardingIn(onboardingIn(true));
   return record;
 }
 

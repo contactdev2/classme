@@ -1,13 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ClassAttendanceScreen } from '../components/class-attendance-screen';
+import { ClassesScreen } from '../components/classes-screen';
 import { HomeScreen } from '../components/home-screen';
+import type { Place } from '../components/places-row';
+import { OnboardingScreen } from '../components/onboarding-screen';
+import { ProfileScreen } from '../components/profile-screen';
 import { SettingsScreen } from '../components/settings-screen';
 import { SignUpScreen } from '../components/sign-up-screen';
+import { TakeAttendanceScreen } from '../components/take-attendance-screen';
+import { openInKeptAppearance } from '../lib/appearance';
+import { classroomStore, nothingKeptYet, type ClassroomData } from '../lib/classroom-data';
 import { openInPhoneLanguage, useDirection, useWords } from '../lib/i18n';
 import type { TeacherProfile } from '../lib/local-accounts';
+import { finishedOnboarding, rememberOnboardingFinished } from '../lib/onboarding';
 import { productName } from '../lib/product';
 import { credentialsFrom, missingFrom, submitSignIn } from '../lib/sign-in';
-import { colors, radius, shadow, space } from '../lib/theme';
+import { colors, radius, shadow, space, useAppearance } from '../lib/theme';
 import { versionLabel } from '../lib/version';
 
 /** The words under a field, naming it, so a person knows what goes in it. */
@@ -15,7 +24,9 @@ function FieldLabel({ children }: { children: string }) {
   return <Text style={{ fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: space.tight }}>{children}</Text>;
 }
 
-const fieldRow = {
+// Made when a screen is drawn and not when this module loads: the colours in it are the ones the
+// app is wearing at that moment, so a teacher flipping Dark Mode redraws this with everything else.
+const fieldRow = () => ({
   flexDirection: 'row',
   alignItems: 'center',
   gap: 8,
@@ -25,26 +36,58 @@ const fieldRow = {
   borderRadius: radius.field,
   paddingHorizontal: 14,
   paddingVertical: 12,
-} as const;
+} as const);
+
+/**
+ * What the phone keeps about this teacher's teaching, read as they sign in. A phone that will not
+ * answer reads as a phone with nothing taught on it: the screens then say so plainly rather than
+ * failing in front of a teacher, and nothing of theirs is written to a log on the way past.
+ */
+async function theirTeaching(): Promise<ClassroomData> {
+  try {
+    return await classroomStore().read();
+  } catch {
+    return nothingKeptYet();
+  }
+}
 
 /**
  * The route the app opens on: the login screen, until a teacher's own record on this phone opens
- * with what they typed — and from then on, Home, greeting them by name, with Settings behind their
- * own avatar. Nobody is signed in when the app starts, so the first thing drawn is always the login
+ * with what they typed — and from then on, Home, greeting them by name, with their own profile menu
+ * behind their own avatar: their name and school, the way in to Classroom Settings, the Dark Mode
+ * switch, and the way out of the app. Nobody is signed in when the app starts, so the first thing drawn is always the login
  * screen itself.
  *
  * A teacher with no record on this phone yet goes the other way first: the login screen's own
  * invitation opens the screen where a profile is made, and the profile it makes is signed in from
  * its own last step — nobody is asked to type what they have just finished typing.
  *
- * Home, Settings and signup are components and not routes of their own on purpose: the app opening
- * on the login screen and nothing else is a requirement of its own, and this keeps '/' the only
- * screen there is.
+ * The first teacher signed in on a phone nobody has been welcomed on meets the walkthrough before
+ * Home: a welcome and three slides saying what the app is for. What it is for is read once, so the
+ * phone is asked whether it is finished at the moment somebody signs in, and told when it is — from
+ * the next morning on they go straight to Home. See lib/onboarding.ts.
+ *
+ * From Home a teacher goes to their own classes — the list of them, and the attendance of any one
+ * they open — and to today's register, where the class they opened, or else the first class of
+ * their day, stands with everybody marked Present, and where one student's name opens their own
+ * attendance over time. What the phone keeps about their teaching is
+ * read once, as they sign in, and handed down to those screens, so none of them has anything to
+ * wait for when it is drawn.
+ *
+ * Home, the profile menu, Settings, Classes, a class's attendance, today's register, the walkthrough and the signup
+ * are components and not routes of their own on purpose: the app opening on the login screen and
+ * nothing else is a requirement of its own, and this keeps '/' the only screen there is.
  */
 export default function Login() {
   const [teacher, setTeacher] = useState<TeacherProfile | null>(null);
-  const [inSettings, setInSettings] = useState(false);
+  const [place, setPlace] = useState<Place | 'profile' | 'settings'>('home');
+  // Where a teacher was standing when they went to take attendance, so the way out of a register is
+  // the way they came into it.
+  const [before, setBefore] = useState<Place>('home');
+  const [openClass, setOpenClass] = useState<string | null>(null);
+  const [teaching, setTeaching] = useState<ClassroomData>(nothingKeptYet());
   const [signingUp, setSigningUp] = useState(false);
+  const [welcomed, setWelcomed] = useState(false);
 
   // The language this app opens in, settled before a teacher reads anything on it: the one their
   // phone is set to, or the one they chose themselves on a phone still set the way it was. It is
@@ -53,16 +96,103 @@ export default function Login() {
     void openInPhoneLanguage();
   }, []);
 
+  // And the look it opens in: the one this phone was left in, read off the phone itself and nowhere
+  // else — see lib/appearance.ts. The light it has always opened in, where nobody has chosen.
+  useEffect(() => {
+    void openInKeptAppearance();
+  }, []);
+
+  /**
+   * Somebody signed in, by whichever of the two ways in they came. The phone is asked whether the
+   * walkthrough has been finished on it before the screen behind this changes, so a teacher who has
+   * seen it never sees it flash past them on the way to Home.
+   */
+  async function signedIn(made: TeacherProfile) {
+    setWelcomed(await finishedOnboarding());
+    setTeaching(await theirTeaching());
+    setTeacher(made);
+  }
+
   if (teacher) {
     const logOut = () => {
       setTeacher(null);
-      setInSettings(false);
+      setPlace('home');
+      setBefore('home');
+      setOpenClass(null);
+      setTeaching(nothingKeptYet());
     };
-    return inSettings ? (
-      <SettingsScreen teacher={teacher} onBack={() => setInSettings(false)} onLogOut={logOut} />
-    ) : (
-      <HomeScreen teacher={teacher} onOpenSettings={() => setInSettings(true)} />
-    );
+    /** A teacher pressing one of the app's own places in the row along the bottom. */
+    const goTo = (going: Place) => {
+      if (going === 'attendance' && place !== 'attendance') setBefore(place === 'classes' ? 'classes' : 'home');
+      setPlace(going);
+    };
+    if (!welcomed) {
+      return (
+        <OnboardingScreen
+          onDone={() => {
+            // Onward to Home, and remembered on the phone so tomorrow morning opens on Home. A
+            // phone that would not write it down says so to nobody: the teacher is on their way,
+            // and the honest cost is being welcomed once more.
+            setWelcomed(true);
+            void rememberOnboardingFinished();
+          }}
+        />
+      );
+    }
+    if (place === 'profile') {
+      // Their own account: the name and school their record keeps, the menu the prototype draws,
+      // the Dark Mode switch, and the way out of the app.
+      return (
+        <ProfileScreen
+          teacher={teacher}
+          onBack={() => setPlace('home')}
+          onOpenSettings={() => setPlace('settings')}
+          onOpenReports={() => {
+            // Attendance reports are read a class at a time, so this is the list of them: a class
+            // opened from it is that class's own report.
+            setOpenClass(null);
+            setPlace('classes');
+          }}
+          onLogOut={logOut}
+        />
+      );
+    }
+    if (place === 'settings') {
+      return <SettingsScreen teacher={teacher} onBack={() => setPlace('home')} onLogOut={logOut} />;
+    }
+    if (place === 'attendance') {
+      // Today's register, for the class the teacher opened or else the first of their own day. What
+      // it writes to the phone is handed straight back, so the class's own report and the Classes
+      // list show the day that has just been saved without reading the phone again.
+      return (
+        <TakeAttendanceScreen
+          data={teaching}
+          teacher={teacher}
+          classroomId={openClass}
+          onBack={() => setPlace(before)}
+          onSaved={setTeaching}
+          onViewReport={(saved) => {
+            setOpenClass(saved);
+            setPlace('classes');
+          }}
+          onHome={() => {
+            setOpenClass(null);
+            setPlace('home');
+          }}
+          onGo={goTo}
+        />
+      );
+    }
+    if (place === 'classes') {
+      // A class the teacher has opened is in front of the list it was opened from; the way back out
+      // of it is to that same list.
+      return openClass ? (
+        <ClassAttendanceScreen data={teaching} classroomId={openClass} onBack={() => setOpenClass(null)} />
+      ) : (
+        <ClassesScreen data={teaching} onOpenClass={setOpenClass} onGo={goTo} />
+      );
+    }
+    return <HomeScreen teacher={teacher} onOpenProfile={() => setPlace('profile')} onGo={goTo} />;
   }
   if (signingUp) {
     return (
@@ -72,13 +202,13 @@ export default function Login() {
           // Their profile is made and it is theirs: they are signed in with it, which is where the
           // last step of the signup says it is taking them.
           setSigningUp(false);
-          setTeacher(made);
+          void signedIn(made);
         }}
       />
     );
   }
   return (
-    <LoginScreen onSignedIn={setTeacher} onSignUp={() => setSigningUp(true)} />
+    <LoginScreen onSignedIn={(made) => void signedIn(made)} onSignUp={() => setSigningUp(true)} />
   );
 }
 
@@ -90,6 +220,9 @@ export default function Login() {
 function LoginScreen({ onSignedIn, onSignUp }: { onSignedIn: (teacher: TeacherProfile) => void; onSignUp: () => void }) {
   const t = useWords();
   const dir = useDirection();
+  // Redrawn the moment a teacher flips Dark Mode in their own profile menu: the colours below are
+  // whichever of the two looks the app is wearing. See lib/theme.ts.
+  useAppearance();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [shown, setShown] = useState(false);
@@ -153,7 +286,7 @@ function LoginScreen({ onSignedIn, onSignUp }: { onSignedIn: (teacher: TeacherPr
         <Text accessibilityRole="header" style={{ fontSize: 24, fontWeight: '800', color: colors.text, letterSpacing: 0.3 }}>
           {productName()}
         </Text>
-        <Text style={{ fontSize: 12, color: '#7C8A9E', letterSpacing: 1, marginTop: 2 }}>{t('login.tagline')}</Text>
+        <Text style={{ fontSize: 12, color: colors.faintest, letterSpacing: 1, marginTop: 2 }}>{t('login.tagline')}</Text>
       </View>
 
       <View style={{ alignItems: 'center', marginBottom: space.room }}>
@@ -178,7 +311,7 @@ function LoginScreen({ onSignedIn, onSignUp }: { onSignedIn: (teacher: TeacherPr
       >
         <View style={{ marginBottom: space.step }}>
           <FieldLabel>{t('login.email')}</FieldLabel>
-          <View style={fieldRow}>
+          <View style={fieldRow()}>
             <Text style={{ fontSize: 15 }}>✉️</Text>
             <TextInput
               accessibilityLabel={t('login.email')}
@@ -198,7 +331,7 @@ function LoginScreen({ onSignedIn, onSignUp }: { onSignedIn: (teacher: TeacherPr
 
         <View style={{ marginBottom: space.snug }}>
           <FieldLabel>{t('login.password')}</FieldLabel>
-          <View style={fieldRow}>
+          <View style={fieldRow()}>
             <Text style={{ fontSize: 15 }}>🔒</Text>
             <TextInput
               accessibilityLabel={t('login.password')}
@@ -275,7 +408,7 @@ function LoginScreen({ onSignedIn, onSignUp }: { onSignedIn: (teacher: TeacherPr
 
       <View style={{ alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: space.snug, marginTop: space.gap, marginBottom: 18 }}>
         <View style={{ flex: 1, borderTopWidth: 1, borderTopColor: colors.line }} />
-        <Text style={{ fontSize: 12, color: '#9AA7B8' }}>{t('login.or')}</Text>
+        <Text style={{ fontSize: 12, color: colors.faintest }}>{t('login.or')}</Text>
         <View style={{ flex: 1, borderTopWidth: 1, borderTopColor: colors.line }} />
       </View>
 
@@ -341,7 +474,7 @@ function LoginScreen({ onSignedIn, onSignUp }: { onSignedIn: (teacher: TeacherPr
         paddingHorizontal: space.gap,
       }}
     >
-      <Text style={{ fontSize: 12, fontWeight: '600', color: '#9AA7B8', letterSpacing: 0.5, textAlign: 'center' }}>
+      <Text style={{ fontSize: 12, fontWeight: '600', color: colors.faintest, letterSpacing: 0.5, textAlign: 'center' }}>
         {versionLabel()}
       </Text>
     </View>

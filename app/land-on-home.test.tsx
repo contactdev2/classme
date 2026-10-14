@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { accountsIn, keepAccountsIn, lockAccount, stretchedTimes } from '../lib/local-accounts';
+import { keepOnboardingIn, onboardingIn } from '../lib/onboarding';
 import { open, takePictureOf } from '../test/screen';
 import TheApp from './index';
 import { setLanguage } from '../lib/i18n';
@@ -33,6 +34,9 @@ const pictureTakesAWhile = 120_000;
 /** This phone, with one account on it: the teacher's own, locked with their own password. */
 function phoneWithTheTeachersAccount(iterations = checkIterations): void {
   keepAccountsIn(accountsIn([lockAccount({ email: teacher.email, password }, teacher, iterations)]));
+  // The teacher of this phone has already been welcomed: the first morning's walkthrough is proved
+  // in app/complete-onboarding.test.tsx, and what is being read here is what comes after it.
+  keepOnboardingIn(onboardingIn(true));
 }
 
 /** The morning the prototype draws: a Monday, before noon, so the greeting is the morning's own. */

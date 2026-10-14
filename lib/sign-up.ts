@@ -5,10 +5,11 @@ import { say } from './i18n';
 import { addAccount, emailAlreadyUsed, lockAccount, type TeacherProfile } from './local-accounts';
 
 /**
- * What a teacher fills in to make a profile. These three words travel together and no further: they
- * are never written to a log, never put in a message, and never sent off the phone.
+ * What a teacher fills in to make a profile. These words travel together and no further: they are
+ * never written to a log, never put in a message, and never sent off the phone. The school is the
+ * one of them a teacher may leave empty — their own profile menu shows it when they gave one.
  */
-export type NewProfile = { name: string; email: string; password: string };
+export type NewProfile = { name: string; email: string; password: string; school?: string };
 
 /** How short a password is allowed to be. The screen says this number; so does the refusal. */
 export const shortestPassword = 8;
@@ -33,7 +34,10 @@ export type SignUpOutcome = {
  * is part of the password.
  */
 export function detailsFrom(typed: NewProfile): NewProfile {
-  return { name: typed.name.trim(), email: typed.email.trim(), password: typed.password };
+  const school = typed.school?.trim();
+  // The school is the one of the four a teacher may leave empty, so an empty one is left out of the
+  // details rather than carried along as an empty word.
+  return { name: typed.name.trim(), email: typed.email.trim(), password: typed.password, ...(school ? { school } : {}) };
 }
 
 /** An address a profile can be made with: a name, an @, and something with a dot in it after it. */
@@ -87,7 +91,7 @@ export async function submitSignUp(details: NewProfile): Promise<SignUpOutcome> 
   const ready = detailsFrom(details);
   if (await emailAlreadyUsed(ready.email)) return { created: false, said: say('signUp.emailTaken') };
 
-  const teacher: TeacherProfile = { email: ready.email, name: ready.name };
+  const teacher: TeacherProfile = { email: ready.email, name: ready.name, ...(ready.school ? { school: ready.school } : {}) };
   const saved = await addAccount(lockAccount({ email: ready.email, password: ready.password }, teacher));
   return { created: true, said: say('signUp.created'), teacher, saved };
 }

@@ -6,6 +6,7 @@ import { catalogues, direction, languageNow, say, setLanguage, wordsAllowedToSta
 import { keepLanguageIn, languageFile, languageFileWith } from '../lib/language-file';
 import { defaultLanguage, languages, type Tag } from '../lib/languages';
 import { accountsIn, keepAccountsIn, lockAccount } from '../lib/local-accounts';
+import { keepOnboardingIn, onboardingIn } from '../lib/onboarding';
 import { productName } from '../lib/product';
 import { versionLabel } from '../lib/version';
 import { english, type WordKey } from '../lib/words/en';
@@ -26,6 +27,9 @@ const picturing = 180_000;
 /** This phone: the teacher's own account on it, nothing taught yet, and this language remembered. */
 function thisPhone(remembered: Tag | null = null): void {
   keepAccountsIn(accountsIn([lockAccount({ email: teacher.email, password }, teacher, checkIterations)]));
+  // The teacher of this phone has already been welcomed: the first morning's walkthrough is proved
+  // in app/complete-onboarding.test.tsx, and what is being read here is what comes after it.
+  keepOnboardingIn(onboardingIn(true));
   keepClassroomDataIn(classroomDataIn(nothingKeptYet()));
   keepBackupFilesIn(backupFilesIn());
   keepLanguageIn(languageFileWith(remembered));
@@ -54,9 +58,14 @@ async function signIn(screen: Screen): Promise<void> {
   await settle();
 }
 
-/** Classroom Settings, reached the way the prototype sends a teacher there: their own avatar. */
+/**
+ * Classroom Settings, reached the way a teacher reaches it: their own avatar opens their profile
+ * menu, and Classroom Settings is the option on it that leads here.
+ */
 async function openSettings(screen: Screen): Promise<void> {
   await screen.press(say('home.account'));
+  await settle();
+  await screen.press(say('settings.title'));
   await settle();
 }
 

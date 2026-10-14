@@ -31,15 +31,26 @@ export const catalogues: Record<Tag, Words> = {
 };
 
 /**
- * The keys whose words are allowed to be the same as the English: a sample address, the name of an
- * arithmetic standard, and a sentence whose only English part is a brace. Every other key in every
- * other catalogue says something of its own — see the check that reads this list.
+ * The keys whose words are allowed to be the same as the English: a sample address, a sample school
+ * nobody translates, the name of an
+ * arithmetic standard, a sentence whose only English part is a brace, a count written as a count —
+ * 1/3 is 1/3 in every language the app offers — and a month beside its year, which French writes
+ * exactly as English does. Every other key in every other catalogue
+ * says something of its own — see the check that reads this list.
  */
 export const wordsAllowedToStay: readonly WordKey[] = [
   'login.emailPlaceholder',
+  'signUp.schoolPlaceholder',
   'privacy.standardValue',
   'home.greetingLine',
   'home.greetingName',
+  'onboard.step',
+  'classes.meta',
+  'class.rate',
+  'roster.counted',
+  'roster.tally',
+  'student.in',
+  'student.monthOf',
 ];
 
 let current: Tag = defaultLanguage;
@@ -116,10 +127,41 @@ export async function openInPhoneLanguage(): Promise<Tag> {
   return current;
 }
 
+/** One key's words in the language the app is in now, or the English they were translated from. */
+const wordsFor = (key: WordKey): string => catalogues[current][key] ?? english[key];
+
+/** Braces filled in from what the screen handed over; a brace nobody filled is left as it was. */
+const fillIn = (words: string, filling: Record<string, string | number>): string =>
+  words.replace(/\{(\w+)\}/g, (all, name: string) => (name in filling ? String(filling[name]) : all));
+
 /** Words for a key, with anything in braces filled in. */
 export function say(key: WordKey, filling: Record<string, string | number> = {}): string {
-  const words = catalogues[current][key] ?? english[key];
-  return words.replace(/\{(\w+)\}/g, (all, name: string) => (name in filling ? String(filling[name]) : all));
+  return fillIn(wordsFor(key), filling);
+}
+
+/**
+ * Words for a key, cut in two around one of their fillings, so a screen can draw that one piece in
+ * a hand of its own: the summary bar at the foot of a register writes 'Present: ' in the screen's
+ * own ink and the 20 after it in green.
+ *
+ * The cut is made in this language's own phrase and not in the English one, so a language that
+ * writes the number first, or puts something after it, is cut where its own number falls. A key
+ * with no such filling in it comes back whole, with nothing to draw differently.
+ */
+export function sayAround(
+  key: WordKey,
+  around: string,
+  filling: Record<string, string | number> = {},
+): { before: string; piece: string; after: string } {
+  const words = wordsFor(key);
+  const brace = `{${around}}`;
+  const at = words.indexOf(brace);
+  if (at < 0) return { before: fillIn(words, filling), piece: '', after: '' };
+  return {
+    before: fillIn(words.slice(0, at), filling),
+    piece: String(filling[around] ?? ''),
+    after: fillIn(words.slice(at + brace.length), filling),
+  };
 }
 
 /** How many of a thing there are, in the words this language uses for that many. */

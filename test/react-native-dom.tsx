@@ -1,6 +1,6 @@
 // The phone's primitives, drawn as browser elements, for the checks only — the app itself always
 // imports 'react-native' and on a phone that is React Native's own. Nothing here is shipped.
-import { createElement, type ReactNode } from 'react';
+import { createContext, createElement, useContext, type ReactNode } from 'react';
 
 type Style = Record<string, unknown> | null | undefined | false | Style[];
 
@@ -68,12 +68,16 @@ const roles: Record<string, string> = { header: 'heading', link: 'link', button:
 const role = (accessibilityRole?: string) => (accessibilityRole ? roles[accessibilityRole] ?? accessibilityRole : undefined);
 
 function element(tag: string, base: Record<string, unknown>) {
-  return function Primitive({ children, style, accessibilityRole, ...rest }: Props) {
+  // The words that name a thing to a screen reader, said the way a browser says them — which is
+  // react-native-web's own translation, and what a check reads a row of a list back by. A plain
+  // View can carry them too: a row of a register is named by the student standing on it.
+  return function Primitive({ children, style, accessibilityRole, accessibilityLabel, ...rest }: Props) {
     return createElement(
       tag,
       {
         style: { ...base, ...flatten(style) },
         role: role(accessibilityRole),
+        ...(accessibilityLabel === undefined ? {} : { 'aria-label': accessibilityLabel }),
         ...rest,
       },
       children,
@@ -83,7 +87,24 @@ function element(tag: string, base: Record<string, unknown>) {
 
 // display:flex, column, in that order, is React Native's own default for a View.
 export const View = element('div', { display: 'flex', flexDirection: 'column', alignItems: 'stretch' });
-export const Text = element('span', { display: 'block' });
+
+/** Whether the words being drawn are already inside somebody else's words. */
+const insideText = createContext(false);
+
+const Words = element('span', { display: 'block' });
+const WordsWithin = element('span', { display: 'inline' });
+
+/**
+ * Words on the screen. On a phone a Text is a block of its own, except inside another Text, where
+ * it runs along with the words around it: 'Present: ' and the 20 after it in green are one line and
+ * not two. That is react-native-web's own translation, and a picture taken without it would show a
+ * screen nobody holding the phone would ever see.
+ */
+export function Text(props: Props) {
+  const within = useContext(insideText);
+  const drawn = within ? WordsWithin(props) : Words(props);
+  return createElement(insideText.Provider, { value: true }, drawn);
+}
 
 /** A place to type. The phone's keyboard and its hidden-text field, said as a browser's input. */
 export function TextInput({

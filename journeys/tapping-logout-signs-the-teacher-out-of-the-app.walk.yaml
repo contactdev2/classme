@@ -1,0 +1,70 @@
+appId: com.contactdev2.classme
+name: Tapping Logout signs the teacher out of the app.
+---
+# A teacher on a phone of their own: a profile made with the school they teach at, through the
+# welcome to the dashboard, and then their own avatar — which opens the profile menu holding their
+# name, their school, the options the agreed prototype draws, the Dark Mode switch, and the way out
+# of the app.
+- tapOn: "Create a profile"
+- tapOn: "Ms. Patel"
+- inputText: "Ms. Rivera"
+- hideKeyboard
+- tapOn: "Riverside High"
+- inputText: "Riverside High"
+- hideKeyboard
+- tapOn: "Continue"
+- tapOn: "you@school.edu"
+- inputText: "ms.rivera@riversidehigh.edu"
+- hideKeyboard
+- tapOn: "At least 8 characters"
+- inputText: "Spring-2026-attendance"
+- hideKeyboard
+# The screen's own name says "Create Profile" above the steps, and so does the button under the
+# password: the second of the two is the button.
+- tapOn:
+    text: "Create Profile"
+    index: 1
+# Stretching the password is the phone's own arithmetic, done once, and it is not quick.
+- extendedWaitUntil:
+    visible: "Profile Created.*"
+    timeout: 120000
+- tapOn: "Go to Dashboard"
+# The welcome, which is where a teacher who has never used this app lands, and the three slides.
+- extendedWaitUntil:
+    visible: "A simpler way to manage.*"
+    timeout: 30000
+- tapOn: "Get Started"
+- tapOn: "Next"
+- tapOn: "Next"
+- tapOn: "Get Started"
+- extendedWaitUntil:
+    visible: "Ms. Rivera.*"
+    timeout: 30000
+# Their own avatar, at the top right of Home, which opens their profile menu.
+- tapOn: "Your account.*"
+- extendedWaitUntil:
+    visible: "Classroom Settings"
+    timeout: 30000
+- assertVisible: "Ms. Rivera"
+- assertVisible: ".*Riverside High"
+- assertVisible: "Students"
+- assertVisible: "Attendance Reports"
+- assertVisible: "Notifications"
+- assertVisible: "Dark Mode"
+# Dark Mode, which changes what the whole app is drawn in and nothing about what it says.
+- tapOn: "Dark Mode"
+- assertVisible: "Dark Mode is on"
+- assertVisible: "Ms. Rivera"
+# And the way out, at the foot of the same screen.
+- scrollUntilVisible:
+    element: "Logout"
+    direction: DOWN
+- tapOn: "Logout"
+# Back on the screen the app opens on, asking to be signed in to, with nothing of the teacher who
+# was in it left on it.
+- extendedWaitUntil:
+    visible: "Log In"
+    timeout: 30000
+- assertVisible: "Welcome.*"
+- assertNotVisible: "Ms. Rivera"
+- assertNotVisible: "Classroom Settings"

@@ -20,13 +20,32 @@ export type Classroom = {
   subject: string;
   /** Or its colour, for a teacher who would rather tell them apart that way. */
   colour: string;
+  /**
+   * Whether the class has been put away: a term finished with, kept rather than deleted, and shown
+   * under Archived in the Classes list. Left out on a class being taught, so every classroom made
+   * before this field existed — in a backup file, say — still reads as one that is being taught.
+   */
+  archived?: boolean;
 };
 
 /** One student in one classroom. The photo is where the phone keeps it, and never a web address. */
 export type Student = { id: string; classroomId: string; name: string; photo?: string };
 
 /** One mark against one student, on one day. */
-export type AttendanceRecord = { studentId: string; classroomId: string; day: string; mark: AttendanceMark };
+export type AttendanceRecord = {
+  studentId: string;
+  classroomId: string;
+  day: string;
+  mark: AttendanceMark;
+  /**
+   * The name of the teacher who saved the day this mark belongs to — an approved decision: who
+   * saved a given day's attendance is kept with it. Left out on a mark saved by nobody this app
+   * knows of, so every mark made before this field existed — in a backup file, say — still reads
+   * as a mark, and a phone whose record keeps no name of its own puts none here rather than one
+   * the app invented.
+   */
+  savedBy?: string;
+};
 
 /** Everything the phone keeps about a teacher's teaching, all together: what a backup carries. */
 export type ClassroomData = {
@@ -94,16 +113,29 @@ export function classroomDataIfWhole(value: unknown): ClassroomData | null {
   if (!Array.isArray(classrooms) || !Array.isArray(students) || !Array.isArray(attendance)) return null;
 
   const wholeClassroom = (one: unknown) => {
-    const { id, name, period, subject, colour } = (one ?? {}) as Record<string, unknown>;
-    return isText(id) && isText(name) && isText(period) && isText(subject) && isText(colour);
+    const { id, name, period, subject, colour, archived } = (one ?? {}) as Record<string, unknown>;
+    return (
+      isText(id) &&
+      isText(name) &&
+      isText(period) &&
+      isText(subject) &&
+      isText(colour) &&
+      (archived === undefined || typeof archived === 'boolean')
+    );
   };
   const wholeStudent = (one: unknown) => {
     const { id, classroomId, name, photo } = (one ?? {}) as Record<string, unknown>;
     return isText(id) && isText(classroomId) && isText(name) && (photo === undefined || isText(photo));
   };
   const wholeMark = (one: unknown) => {
-    const { studentId, classroomId, day, mark } = (one ?? {}) as Record<string, unknown>;
-    return isText(studentId) && isText(classroomId) && isText(day) && attendanceMarks.includes(mark as AttendanceMark);
+    const { studentId, classroomId, day, mark, savedBy } = (one ?? {}) as Record<string, unknown>;
+    return (
+      isText(studentId) &&
+      isText(classroomId) &&
+      isText(day) &&
+      attendanceMarks.includes(mark as AttendanceMark) &&
+      (savedBy === undefined || isText(savedBy))
+    );
   };
 
   if (!classrooms.every(wholeClassroom) || !students.every(wholeStudent) || !attendance.every(wholeMark)) return null;

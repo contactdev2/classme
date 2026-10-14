@@ -1,0 +1,53 @@
+appId: com.contactdev2.classme
+name: The Classes list shows All, Active, and Archived filter tabs.
+---
+# A teacher on a phone of their own: a profile is made, the welcome is read, and from the Home
+# dashboard the row along the bottom takes them to their classes. Nothing on this phone can make a
+# classroom yet — that is its own requirement — so what the list shows is the truth about it: the
+# three filter tabs, and under them the sentence for a filter with nothing in it.
+- tapOn: "Create a profile"
+- tapOn: "Ms. Patel"
+- inputText: "Ms. Rivera"
+- hideKeyboard
+- tapOn: "Continue"
+- tapOn: "you@school.edu"
+- inputText: "ms.rivera@riversidehigh.edu"
+- hideKeyboard
+- tapOn: "At least 8 characters"
+- inputText: "Spring-2026-attendance"
+- hideKeyboard
+# The screen's own name says "Create Profile" above the steps, and so does the button under the
+# password: the second of the two is the button.
+- tapOn:
+    text: "Create Profile"
+    index: 1
+# Stretching the password is the phone's own arithmetic, done once, and it is not quick.
+- extendedWaitUntil:
+    visible: "Profile Created.*"
+    timeout: 120000
+- tapOn: "Go to Dashboard"
+# The welcome a teacher is met with on their first morning, walked through to the dashboard.
+- extendedWaitUntil:
+    visible: "A simpler way to manage.*"
+    timeout: 30000
+- tapOn: "Get Started"
+- tapOn: "Next"
+- tapOn: "Next"
+- tapOn: "Get Started"
+- extendedWaitUntil:
+    visible: ".*what's happening today.*"
+    timeout: 30000
+# The app's own places along the bottom: Classes is one of them.
+- tapOn: "Classes"
+- extendedWaitUntil:
+    visible: "My Classes"
+    timeout: 30000
+- assertVisible: "All"
+- assertVisible: "Active"
+- assertVisible: "Archived"
+# The list opens on the classes being taught, and says so when there are none of them.
+- assertVisible: "No classes being taught"
+- tapOn: "Archived"
+- assertVisible: "No classes put away"
+- tapOn: "All"
+- assertVisible: "No classes yet"

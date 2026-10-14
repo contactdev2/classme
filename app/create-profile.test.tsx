@@ -7,6 +7,7 @@ import { setLanguage } from '../lib/i18n';
 import { keepLanguageIn, languageFileWith } from '../lib/language-file';
 import { sourceLanguage } from '../lib/languages';
 import { accountsFile, accountsIn, keepAccountsIn, lockAccount, openAccount } from '../lib/local-accounts';
+import { keepOnboardingIn, onboardingIn } from '../lib/onboarding';
 import { open, settle, takePictureOf, type Screen } from '../test/screen';
 import TheApp from './index';
 
@@ -30,6 +31,9 @@ const working = 180_000;
 /** A phone with no profile on it at all: which is what a teacher signing up is holding. */
 function aPhoneWithNoProfile(): void {
   keepAccountsIn(accountsIn([]));
+  // The teacher of this phone has already been welcomed: the first morning's walkthrough is proved
+  // in app/complete-onboarding.test.tsx, and what is being read here is what comes after it.
+  keepOnboardingIn(onboardingIn(true));
 }
 
 afterEach(() => keepAccountsIn(accountsIn([])));

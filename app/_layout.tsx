@@ -3,10 +3,12 @@ import { Slot, type ErrorBoundaryProps } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { DonemarkTryStrip } from '../components/donemark-try-strip';
 import { accountsOnThisPhone } from '../lib/accounts-file';
+import { appearanceOnThisPhone, keepAppearanceIn } from '../lib/appearance';
 import { installDonemarkTry, sayError, tryMode } from '../lib/donemark-try';
 import { useDirection, useWords } from '../lib/i18n';
 import { keepAccountsIn } from '../lib/local-accounts';
 import { mirrorWithLanguage } from '../lib/mirror';
+import { keepOnboardingIn, onboardingOnThisPhone } from '../lib/onboarding';
 import { askThisPhone, thisPhoneItself } from '../lib/phone-language';
 
 // DoneMark's try mode (template 50): does nothing unless a DoneMark preview set EXPO_PUBLIC_DONEMARK_TRY.
@@ -25,6 +27,16 @@ askThisPhone(thisPhoneItself);
 // morning is still there tomorrow. Installed here for the same reason the phone's language is: this
 // is the one file only a real app loads, and a check hands over records of its own instead.
 keepAccountsIn(accountsOnThisPhone());
+
+// Whether somebody has been welcomed on this phone, in a file of its own beside the records, so the
+// walkthrough is read once and never again. Installed here for the same reason as everything above
+// it: this is the one file only a real app loads, and a check hands over a memory of its own.
+keepOnboardingIn(onboardingOnThisPhone());
+
+// Which of the app's two looks a teacher chose, in a file of its own beside the others, so Dark
+// Mode is switched on once and not every morning. Installed here for the same reason as everything
+// above it: this is the one file only a real app loads, and a check hands over a memory of its own.
+keepAppearanceIn(appearanceOnThisPhone());
 
 /** A screen that failed to draw: its words while the app is tried; a plain sentence for everybody else. */
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {

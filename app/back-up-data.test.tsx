@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ClassroomData } from '../lib/classroom-data';
 import { accountsIn, keepAccountsIn, lockAccount } from '../lib/local-accounts';
+import { keepOnboardingIn, onboardingIn } from '../lib/onboarding';
 import { open, takePictureOf } from '../test/screen';
 import TheApp from './index';
 import { setLanguage } from '../lib/i18n';
@@ -68,6 +69,9 @@ async function parts() {
 async function aPhoneWith(data: ClassroomData, backupsAlreadySaved: Record<string, string> = {}) {
   const { classroomDataIn, keepClassroomDataIn, backupFilesIn, keepBackupFilesIn } = await parts();
   keepAccountsIn(accountsIn([lockAccount({ email: teacher.email, password }, teacher, checkIterations)]));
+  // The teacher of this phone has already been welcomed: the first morning's walkthrough is proved
+  // in app/complete-onboarding.test.tsx, and what is being read here is what comes after it.
+  keepOnboardingIn(onboardingIn(true));
   keepClassroomDataIn(classroomDataIn(data));
   keepBackupFilesIn(backupFilesIn(backupsAlreadySaved));
 }
@@ -78,13 +82,17 @@ function aMondayMorning(): void {
   vi.setSystemTime(new Date('2025-04-21T08:12:00'));
 }
 
-/** A teacher signing in and going to Settings the way the prototype sends them: their own avatar. */
+/**
+ * A teacher signing in and going to Settings the way they go there: their own avatar opens their
+ * profile menu, and Classroom Settings is the option on it that leads here.
+ */
 async function openSettings() {
   const screen = open(<TheApp />);
   await screen.type(/Email/i, teacher.email);
   await screen.type(/^Password/i, password);
   await screen.press('Log In');
   await screen.press(/Your account/);
+  await screen.press('Classroom Settings');
   return screen;
 }
 

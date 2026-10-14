@@ -35,7 +35,7 @@ export function textFileWith(text: string | null = null): KeptText {
 }
 
 /**
- * The file on the phone itself: expo-file-system's own, in the app's documents directory.
+ * A file on the phone itself: expo-file-system's own, in the app's documents directory.
  *
  * It is asked for when a record is actually being read or written, not when this module loads, so a
  * check that hands over text of its own never reaches a native module it has no phone for.
@@ -45,7 +45,7 @@ export function textFileWith(text: string | null = null): KeptText {
  * there either**: a teacher holding one reads no records, and a teacher on one can still make their
  * first profile, which is what the throw this replaced took away from them.
  */
-async function accountsFileOnThisPhone(): Promise<{ phone: typeof import('expo-file-system'); at: string } | null> {
+async function fileOnThisPhone(name: string): Promise<{ phone: typeof import('expo-file-system'); at: string } | null> {
   let phone: typeof import('expo-file-system');
   try {
     phone = await import('expo-file-system');
@@ -53,14 +53,18 @@ async function accountsFileOnThisPhone(): Promise<{ phone: typeof import('expo-f
     return null;
   }
   if (!phone?.documentDirectory) return null;
-  return { phone, at: `${phone.documentDirectory}${accountsFileName}` };
+  return { phone, at: `${phone.documentDirectory}${name}` };
 }
 
-/** The text of that file, as something the records can be kept in. */
-export function accountsTextOnThisPhone(): KeptText {
+/**
+ * The text of one file in the app's own documents folder, by name, as something anything the app
+ * keeps between one morning and the next can be kept in. The accounts are one such thing; whether
+ * a teacher has been welcomed on this phone is another (lib/onboarding.ts).
+ */
+export function textOnThisPhone(name: string): KeptText {
   return {
     async read() {
-      const file = await accountsFileOnThisPhone();
+      const file = await fileOnThisPhone(name);
       // No folder at all is not a fault, and not a record either: it is a phone keeping nothing.
       if (!file) return null;
       const there = await file.phone.getInfoAsync(file.at);
@@ -69,13 +73,18 @@ export function accountsTextOnThisPhone(): KeptText {
       return file.phone.readAsStringAsync(file.at);
     },
     async write(text) {
-      const file = await accountsFileOnThisPhone();
+      const file = await fileOnThisPhone(name);
       // Said out loud rather than passed over: whoever asked for this to be written down has to
       // know it was not, so they can tell a teacher the truth about it.
       if (!file) throw new Error('this device offers no folder of its own to keep a record in');
       await file.phone.writeAsStringAsync(file.at, text);
     },
   };
+}
+
+/** The text of the accounts file on this phone. */
+export function accountsTextOnThisPhone(): KeptText {
+  return textOnThisPhone(accountsFileName);
 }
 
 /**
