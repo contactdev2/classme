@@ -1,0 +1,74 @@
+appId: com.contactdev2.classme
+name: The Trends tab shows overall attendance as a donut chart with Present, Absent, Late counts.
+---
+# A teacher on a phone of their own: a profile is made, the welcome is read, and from the Home
+# dashboard the row along the bottom takes them to their classes. One classroom is made, the way
+# the walks beside this one make it, because a phone nobody has taught on has no class to report on.
+- tapOn: "Create a profile"
+- tapOn: "Ms. Patel"
+- inputText: "Ms. Rivera"
+- hideKeyboard
+- tapOn: "Continue"
+- tapOn: "you@school.edu"
+- inputText: "ms.rivera@riversidehigh.edu"
+- hideKeyboard
+- tapOn: "At least 8 characters"
+- inputText: "Spring-2026-attendance"
+- hideKeyboard
+# The screen's own name says "Create Profile" above the steps, and so does the button under the
+# password: the second of the two is the button.
+- tapOn:
+    text: "Create Profile"
+    index: 1
+# Stretching the password is the phone's own arithmetic, done once, and it is not quick.
+- extendedWaitUntil:
+    visible: "Profile Created.*"
+    timeout: 120000
+- tapOn: "Go to Dashboard"
+# The welcome a teacher is met with on their first morning, walked through to the dashboard.
+- extendedWaitUntil:
+    visible: "A simpler way to manage.*"
+    timeout: 30000
+- tapOn: "Get Started"
+- tapOn: "Next"
+- tapOn: "Next"
+- tapOn: "Get Started"
+- extendedWaitUntil:
+    visible: ".*what's happening today.*"
+    timeout: 30000
+- tapOn: "Classes"
+- extendedWaitUntil:
+    visible: "My Classes"
+    timeout: 30000
+- tapOn: "Create Classroom"
+- extendedWaitUntil:
+    visible: "New Classroom"
+    timeout: 30000
+- tapOn: "e.g. Mathematics"
+- inputText: "Mathematics"
+- hideKeyboard
+- tapOn: "Create Classroom"
+- extendedWaitUntil:
+    visible: "Mathematics has been created."
+    timeout: 30000
+# Selecting the class opens its attendance overview, which is where the three tabs are.
+- tapOn: "Mathematics"
+- extendedWaitUntil:
+    visible: "Overall Attendance"
+    timeout: 30000
+- assertVisible: "Last 30 days"
+- assertVisible: "Overview"
+# And the Trends tab beside it is the same class's report: the donut with the three marks counted,
+# the weeks of the past month, and the one sentence about all of it. Nobody has been marked on this
+# phone yet, so the counts are nought and the card says so rather than reading as a perfect term.
+- tapOn: "Trends"
+- extendedWaitUntil:
+    visible: "Overall Attendance"
+    timeout: 30000
+- assertVisible: "Present"
+- assertVisible: "Absent"
+- assertVisible: "Late"
+- assertVisible: "Attendance Trend"
+- assertVisible: "Weekly"
+- assertVisible: "Key Insights"
+- assertVisible: "Nothing is marked for this class yet.*"

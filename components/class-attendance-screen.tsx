@@ -1,56 +1,38 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { lastDays, monthOnMonth, tallyFor, weeklyTrend, type Tally } from '../lib/attendance-stats';
 import { classesToSwitchTo, classroomWithId } from '../lib/classes';
 import type { ClassroomData } from '../lib/classroom-data';
 import { useDirection, useWords, type WordKey } from '../lib/i18n';
-import { colors, markColours, radius, shadow, space, useAppearance } from '../lib/theme';
+import { colors, radius, shadow, space, useAppearance } from '../lib/theme';
 import { ClassStudentsScreen } from './class-students-screen';
+import { ClassTrends } from './class-trends';
 
-/** The stretch of days the dashboard reads, and the weeks the trend is drawn over. */
-const overTheLast = 30;
-const trendWeeks = 5;
-
-/** The three marks, as the legend beside the ring names and colours them. */
-const legend: { of: keyof Tally & ('present' | 'absent' | 'late'); name: WordKey; colour: string }[] = [
-  { of: 'present', name: 'tally.present', colour: markColours.present },
-  { of: 'absent', name: 'tally.absent', colour: markColours.absent },
-  { of: 'late', name: 'tally.late', colour: markColours.late },
-];
-
-/** Which of a class's own tabs a teacher is standing on. Trends is still its own requirement. */
-type ClassTab = 'overview' | 'students';
+/** Which of a class's own tabs a teacher is standing on. */
+type ClassTab = 'overview' | 'students' | 'trends';
 
 /**
- * The three tabs of a class. Overview and Students have somewhere to go and so are announced as
- * the buttons they are; Trends is drawn because the prototype draws it, has nothing behind it yet,
- * and is deliberately not announced — the shape every screen on this branch has used. Give it a
- * role the moment you give it a destination.
+ * The three tabs of a class, each of which now has somewhere to go, so each of them is announced
+ * as the button it is. Overview and Trends are the same report, which is how the agreed prototype
+ * draws them; Students is that class's own list of the people in it.
  */
-const tabs: { name: WordKey; tab: ClassTab | null }[] = [
+const tabs: { name: WordKey; tab: ClassTab }[] = [
   { name: 'class.overview', tab: 'overview' },
   { name: 'class.students', tab: 'students' },
-  { name: 'class.trends', tab: null },
+  { name: 'class.trends', tab: 'trends' },
 ];
 
-// Made when a screen is drawn and not when this module loads: the colours in it are the ones the
-// app is wearing at that moment, so a teacher flipping Dark Mode redraws this with everything else.
-const card = () => ({
-  backgroundColor: colors.card,
-  borderRadius: radius.card,
-  padding: space.step,
-  ...shadow.card,
-} as const);
-
 /**
- * One class's attendance: the dashboard behind its own card in My Classes.
+ * One class's attendance: the dashboard behind its own card in My Classes, which is what selecting
+ * a class opens.
  *
- * Every number on it is worked out here and now from the marks the phone already keeps — a rate, a
- * weekly trend, and how the month compares with the one before it. Nothing is stored twice and
- * nothing is asked of a network.
+ * It opens on Overview, and Trends beside it shows the same report — the donut with every mark
+ * counted, the weeks of the past month, and one sentence comparing this month with the last — which
+ * is how the agreed prototype draws the two tabs. The report itself is components/class-trends.tsx,
+ * so neither tab can drift from the other. Every number in it is worked out here and now from the
+ * marks the phone already keeps: nothing is stored twice and nothing is asked of a network.
  *
  * A teacher who opened the wrong class switches straight to another one from the row along the top,
- * without going back to the list for it.
+ * without going back to the list for it, and the tab they are standing on is kept as they do.
  */
 export function ClassAttendanceScreen({
   data,
@@ -74,10 +56,6 @@ export function ClassAttendanceScreen({
   const [showing, setShowing] = useState(classroomId);
   const [tab, setTab] = useState<ClassTab>('overview');
   const classroom = classroomWithId(data, showing) ?? classroomWithId(data, classroomId);
-  const span = lastDays(now, overTheLast);
-  const tally = classroom ? tallyFor(data, classroom.id, span) : { present: 0, absent: 0, late: 0, total: 0, rate: 0 };
-  const weeks = classroom ? weeklyTrend(data, classroom.id, now, trendWeeks) : [];
-  const month = classroom ? monthOnMonth(data, classroom.id, now, overTheLast) : null;
 
   // The class's own students, which is what the Students tab opens: a screen this one shows and
   // not a route of its own, the way the form a classroom is made in is a screen the Classes list
@@ -88,15 +66,6 @@ export function ClassAttendanceScreen({
       <ClassStudentsScreen classroom={classroom} data={data} onBack={() => setTab('overview')} onAdded={onChanged} />
     );
   }
-
-  const insight =
-    !month || month.of.total === 0
-      ? t('class.insightNone')
-      : month.points > 0
-        ? t('class.insightUp', { points: month.points })
-        : month.points < 0
-          ? t('class.insightDown', { points: -month.points })
-          : t('class.insightSteady');
 
   return (
     <View style={{ flex: 1, direction: dir, backgroundColor: colors.background }}>
@@ -164,8 +133,8 @@ export function ClassAttendanceScreen({
           })}
         </View>
 
-        {/* Overview, where the teacher is, and Students, which is one press away. A class's trends
-            are their own requirement, so that one is drawn and nothing is behind it yet. */}
+        {/* The three tabs of a class, the one the teacher is standing on marked. Overview and
+            Trends are this class's own report; Students is the people in it. */}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', backgroundColor: colors.card, borderRadius: radius.card, padding: 4, marginHorizontal: space.step, ...shadow.soft }}>
           {tabs.map((one) => {
             const here = one.tab === tab;
@@ -187,16 +156,12 @@ export function ClassAttendanceScreen({
               paddingVertical: 10,
               backgroundColor: here ? colors.accent : colors.card,
             } as const;
-            return one.tab === null ? (
-              <View key={one.name} style={look}>
-                {words}
-              </View>
-            ) : (
+            return (
               <Pressable
                 key={one.name}
                 accessibilityRole="button"
                 accessibilityState={{ checked: here }}
-                onPress={() => setTab(one.tab as ClassTab)}
+                onPress={() => setTab(one.tab)}
                 style={look}
               >
                 {words}
@@ -205,69 +170,11 @@ export function ClassAttendanceScreen({
           })}
         </View>
 
-        {/* What the class's attendance comes to: the share present, and every mark counted. */}
-        <View style={{ ...card(), marginHorizontal: space.step, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space.gap }}>
-          {/* The ring: thick, round and sized by what is written inside it, so the phone's largest
-              text makes the ring bigger rather than hiding the number in it. */}
-          <View
-            style={{
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderWidth: 12,
-              borderColor: tally.total === 0 ? colors.line : markColours.present,
-              borderRadius: 999,
-              paddingHorizontal: 18,
-              paddingVertical: 22,
-            }}
-          >
-            <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text }}>{t('class.rate', { rate: tally.rate })}</Text>
-            <Text style={{ fontSize: 11, color: colors.muted, textAlign: 'center' }}>{t('class.overall')}</Text>
-          </View>
+        {/* This class's own report, which is what both Overview and Trends show: the donut with
+            every mark counted, the weeks of the past month, and the one sentence about all of it.
+            See components/class-trends.tsx — the prototype draws these three cards on both tabs. */}
+        <ClassTrends data={data} classroomId={classroom ? classroom.id : null} now={now} />
 
-          <View style={{ gap: 12, flexGrow: 1 }}>
-            {legend.map((one) => (
-              <View key={one.of} style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-                <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: one.colour }} />
-                <Text style={{ fontSize: 13, color: colors.muted, flexGrow: 1 }}>{t(one.name)}</Text>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: colors.text }}>{tally[one.of]}</Text>
-              </View>
-            ))}
-            {/* The same three counts as the share of the class each one is. */}
-            <View style={{ flexDirection: 'row', height: 10, borderRadius: 5, overflow: 'hidden', backgroundColor: colors.line }}>
-              {legend.map((one) => (
-                <View key={one.of} style={{ flex: tally[one.of], backgroundColor: one.colour }} />
-              ))}
-            </View>
-          </View>
-        </View>
-
-        {/* How the weeks have gone, the week being taught last. */}
-        <View style={{ ...card(), marginHorizontal: space.step, gap: 12 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.tight }}>
-            <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>{t('class.trend')}</Text>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.accent }}>{t('class.weekly')}</Text>
-          </View>
-          {weeks.map((week) => (
-            <View key={week.label} style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space.snug }}>
-              <Text style={{ fontSize: 11, color: colors.faint, minWidth: 48 }}>{week.label}</Text>
-              <View style={{ flexGrow: 1, flexBasis: 120, height: 10, borderRadius: 5, backgroundColor: colors.background, overflow: 'hidden' }}>
-                <View style={{ width: `${week.marks === 0 ? 0 : week.rate}%`, flexGrow: 1, backgroundColor: colors.accent, borderRadius: 5 }} />
-              </View>
-              <Text style={{ fontSize: 11, fontWeight: '600', color: week.marks === 0 ? colors.faint : colors.text }}>
-                {week.marks === 0 ? t('class.weekEmpty') : t('class.rate', { rate: week.rate })}
-              </Text>
-            </View>
-          ))}
-        </View>
-
-        {/* What is worth saying about all of it, in one sentence. */}
-        <View style={{ ...card(), marginHorizontal: space.step, flexDirection: 'row', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
-          <Text style={{ fontSize: 16, backgroundColor: '#FEF3C7', borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 6 }}>💡</Text>
-          <View style={{ flex: 1, flexBasis: 180, gap: 4 }}>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>{t('class.insights')}</Text>
-            <Text style={{ fontSize: 13, color: colors.muted }}>{insight}</Text>
-          </View>
-        </View>
       </ScrollView>
     </View>
   );
