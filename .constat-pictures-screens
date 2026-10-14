@@ -2,10 +2,10 @@
   "branch": "constat/session-4-31db8811",
   "screens": [],
   "criteria": [
-    "Selecting a class opens its attendance overview.",
-    "The Trends tab shows overall attendance as a donut chart with Present, Absent, Late counts.",
-    "A weekly bar chart shows attendance trend over the past month.",
-    "A Key Insights card summarizes how attendance has changed compared to last month."
+    "Home shows a greeting with the teacher's name.",
+    "A day selector lets the teacher pick a date to view.",
+    "The schedule list shows each class period for the selected day.",
+    "Tapping 'Take Attendance' on the current class jumps to its roster."
   ],
   "why": "DoneMark froze these onto the attempt: the acceptance criteria of the requirement it is for, and the screens those criteria name. The picture suite runs the checks whose names are these criteria and skips the rest; where it can match none of them it narrows by these screens instead, and says so. Honoured on this branch only."
 }
