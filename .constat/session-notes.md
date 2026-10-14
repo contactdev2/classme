@@ -1105,3 +1105,68 @@ Half-true, and waiting for the next requirement:
   note stands).
 - The list is not searchable and does not count itself: at thirty names it is a long scroll. The
   register already has a search (`lib/roster.ts`'s `rosterShown`) and would be the thing to copy.
+
+## 19 — Review class-wide attendance trends (9da16a4e)
+
+What is here now:
+
+- **The Trends tab leads somewhere at last.** It was drawn on a class's dashboard and deliberately
+  not announced as a button (requirement 10 and 18's note); it is an `accessibilityRole` button with
+  `checked` now, like Overview and Students beside it, and **all three tabs of a class have a
+  destination**. Nothing on the dashboard is drawn-but-dead any more except the `⋯` at the top.
+- **`components/class-trends.tsx` is the report itself**, and both Overview and Trends show it: the
+  donut with the share present written in the hole of it and Present, Absent and Late counted beside
+  it, the five weekly bars of the past month, and the one sentence of Key Insights. It takes
+  `{ data, classroomId, now }` and works every number out itself from `lib/attendance-stats.ts`;
+  `overTheLast` (30) and `trendWeeks` (5) live there now, exported, rather than in the screen.
+- `components/class-attendance-screen.tsx` is a hundred lines shorter for it: the way back, the
+  class's name, the days the numbers cover, the row of classes to switch to, the three tabs, and
+  `<ClassTrends/>` under them. It no longer reckons anything of its own.
+- `journeys/the-trends-tab-shows-overall-attendance...walk.yaml` walks a real phone from an empty
+  one through making a classroom to its Trends tab, where the three cards stand with nothing marked
+  yet — which is the honest state of a phone a teacher has only just started on.
+
+Decisions taken, so they are not re-decided:
+
+- **Overview and Trends show the same report, on purpose.** The agreed prototype draws the same
+  three cards on both tabs, and the criteria of this requirement name the Trends tab for all three.
+  Two copies of a report drift apart, so there is one component and both tabs show it. **If a later
+  requirement gives Overview something of its own** — the register's way in, today's marks, a list
+  of the students at risk — add it above `<ClassTrends/>` on that tab rather than forking the cards.
+- **The donut is still the ring requirement 10 chose**, and the three shares are told apart by the
+  legend's colours and by the proportional strip under them, not by three arcs: React Native draws
+  no conic gradient without a drawing package (a new package needs its own sentence in a pull
+  request, an approved decision), and the band is sized by the number inside it so the phone's
+  largest text makes it bigger rather than hiding the rate. A requirement that really wants arcs
+  should teach `test/react-native-dom.tsx` about `transform` first — react-native-web translates a
+  transform array, and the stand-in does not.
+- **The weekly bars lie on their side**, which is requirement 10's decision and is kept: a bar
+  pinned to a height cannot grow with the largest text, and each week is a row — Monday, bar,
+  percentage — that wraps instead of clipping. The check holds that the markup has no `max-height`
+  and no `line-height` on it.
+- **A bar is drawn as long as that week's own share present**, and the check reads the bars' widths
+  straight off the screen and compares them with `weeklyTrend`: the chart is the data and not a
+  picture beside it. **Keep that shape if the chart is ever redrawn** — a bar chart nobody has
+  compared with its numbers is a decoration.
+- **A week with nothing marked says `class.weekEmpty` ('Nothing marked')** and draws no bar, rather
+  than reading as nought per cent, and the insight card says `class.insightNone` where there is
+  nothing to compare. Both were already written; this requirement only made them reachable.
+- **No new word key was needed**, so none was added, and `test/fonts/*.woff2` did not have to be
+  gathered again.
+- The four criteria are proved in `app/class-attendance-trends.test.tsx`, pushed red first — all
+  four failing with `0 buttons saying Trends on this screen` (the first on the assertion that the
+  tab is there to press at all). The data a check hands the phone is built so this month really is
+  better attended than the last, and the falling case is read back off a second phone, so the
+  sentence is proved both ways round and not only in one direction.
+
+Half-true, and waiting for the next requirement:
+
+- **The `⋯` at the top of a class's dashboard is still drawn with nothing behind it**, and so is the
+  one on its students list. Whatever else can be done with a class — renaming it, archiving it
+  (`Classroom.archived` can still only be read, requirement 17's note), deleting it — belongs there.
+- **The range is always the last thirty days.** `Last 30 days` is a word on the screen and not a
+  chooser, and `Weekly` beside the chart is the same: the prototype draws a `▾` on both, and
+  choosing another range or another grain is its own requirement. `ClassTrends` already takes the
+  days and the weeks as its own constants — make them props when something asks to change them.
+- **Home still says "No classes yet" even when the phone has classes** (requirement 10, 17 and 18's
+  note stands).
