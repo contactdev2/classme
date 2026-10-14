@@ -1,0 +1,77 @@
+appId: com.contactdev2.classme
+name: A teacher can enter a new student's name and add them to a classroom.
+---
+# The same morning as the two walks beside this one, carried one step further: the teacher who has
+# made Mathematics opens it, goes to its students, and adds the first of them by name.
+- tapOn: "Create a profile"
+- tapOn: "Ms. Patel"
+- inputText: "Ms. Rivera"
+- hideKeyboard
+- tapOn: "Continue"
+- tapOn: "you@school.edu"
+- inputText: "ms.rivera@riversidehigh.edu"
+- hideKeyboard
+- tapOn: "At least 8 characters"
+- inputText: "Spring-2026-attendance"
+- hideKeyboard
+# The screen's own name says "Create Profile" above the steps, and so does the button under the
+# password: the second of the two is the button.
+- tapOn:
+    text: "Create Profile"
+    index: 1
+# Stretching the password is the phone's own arithmetic, done once, and it is not quick.
+- extendedWaitUntil:
+    visible: "Profile Created.*"
+    timeout: 120000
+- tapOn: "Go to Dashboard"
+# The welcome a teacher is met with on their first morning, walked through to the dashboard.
+- extendedWaitUntil:
+    visible: "A simpler way to manage.*"
+    timeout: 30000
+- tapOn: "Get Started"
+- tapOn: "Next"
+- tapOn: "Next"
+- tapOn: "Get Started"
+- extendedWaitUntil:
+    visible: ".*what's happening today.*"
+    timeout: 30000
+- tapOn: "Classes"
+- extendedWaitUntil:
+    visible: "My Classes"
+    timeout: 30000
+# One classroom made, the way the walks beside this one make it.
+- tapOn: "Create Classroom"
+- extendedWaitUntil:
+    visible: "New Classroom"
+    timeout: 30000
+- tapOn: "e.g. Mathematics"
+- inputText: "Mathematics"
+- hideKeyboard
+- tapOn: "Create Classroom"
+- extendedWaitUntil:
+    visible: "Mathematics has been created."
+    timeout: 30000
+# Into the class itself, and from its own tabs to the students in it. It has none yet, and says so.
+- tapOn: "Mathematics"
+- extendedWaitUntil:
+    visible: "Overall Attendance"
+    timeout: 30000
+- tapOn: "Students"
+- extendedWaitUntil:
+    visible: "No students yet"
+    timeout: 30000
+# The dialog this requirement's mockup draws: a name typed into it, and the button that adds them.
+- tapOn: "Add Student"
+- extendedWaitUntil:
+    visible: "Enter the student's name for this classroom."
+    timeout: 30000
+- tapOn: "e.g. Chloe Kim"
+- inputText: "Amelia Ruiz"
+- hideKeyboard
+- tapOn:
+    text: "^Add$"
+# Back on the class's own list, with the student on it and the confirmation above it.
+- extendedWaitUntil:
+    visible: "Amelia Ruiz has been added to Mathematics."
+    timeout: 30000
+- assertVisible: "Amelia Ruiz"

@@ -57,7 +57,16 @@ export function PlacesRow({ here, onGo }: { here: Place; onGo: (place: Place) =>
         );
         const sitting = { alignItems: 'center', gap: 4 } as const;
         return 'place' in place ? (
-          <Pressable key={place.key} accessibilityRole="button" onPress={() => onGo(place.place)} style={sitting}>
+          // Named by the place itself, and not by the mark drawn over the word: Attendance down
+          // here and Take Attendance on a class's card on Home are two different things to a
+          // finger, to a screen reader and to a check.
+          <Pressable
+            key={place.key}
+            accessibilityRole="button"
+            accessibilityLabel={t(place.key)}
+            onPress={() => onGo(place.place)}
+            style={sitting}
+          >
             {words}
           </Pressable>
         ) : (

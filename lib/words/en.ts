@@ -101,6 +101,13 @@ export const english = {
   'home.greetingName': '{name} 👋',
   'home.here': "Here's what's happening today.",
   'home.todayLabel': 'Today',
+  // The day being viewed, where it is not today: 'Wed, Apr 23'. It also names each date in the
+  // selector to a screen reader, which is how one of the five is picked by name.
+  'home.dayHeading': '{day}, {date}',
+  // The way into the register of the class the teacher is standing in.
+  'home.take': 'Take Attendance',
+  // Said on a day that is not today, where that button would be.
+  'home.notToday': 'Attendance is taken on the day itself.',
   'home.noClasses': 'No classes yet',
   'home.noClassesWords': 'Your periods, and the students in them, show here once you have a classroom.',
   'home.account': 'Your account — profile',
@@ -157,6 +164,42 @@ export const english = {
   'classes.noneActive': 'No classes being taught',
   'classes.noneArchived': 'No classes put away',
   'classes.noneWords': 'Your classes show here, with the period each one meets in and how many students are in it.',
+  // Making one: the way to the form from a teacher's own list, and the form itself.
+  'classes.newClass': 'New classroom',
+  'classes.create': 'Create Classroom',
+  'classes.noneInvite': 'Create your first classroom to start adding students and tracking attendance.',
+  'classes.noneFoot': 'Your classrooms will appear here',
+  // A class whose teacher left the period empty, on its own card.
+  'classes.noPeriod': 'No period set',
+  'newClass.title': 'New Classroom',
+  'newClass.back': 'Back to My Classes',
+  'newClass.preview': 'Your new classroom',
+  'newClass.name': 'Classroom Name',
+  'newClass.namePlaceholder': 'e.g. Mathematics',
+  'newClass.period': 'Period',
+  'newClass.periodPlaceholder': 'e.g. 1st Period',
+  'newClass.subject': 'Subject Icon',
+  'newClass.colour': 'Colour',
+  'newClass.note': 'Only the name is needed. You can add students once the classroom is made.',
+  'newClass.saving': 'Creating this classroom…',
+  'newClass.missingName': 'Type a name for this classroom to create it.',
+  // Said in these words: the teacher already has a class of their own by this name.
+  'newClass.nameTaken': 'A classroom with this name already exists',
+  'newClass.couldNotSave': 'This classroom could not be saved on this phone just now. Try again.',
+  'newClass.created': '{name} has been created.',
+  // What each subject icon stands for, so a finger can find the icon by its name.
+  'subject.maths': 'Maths',
+  'subject.science': 'Science',
+  'subject.language': 'Languages',
+  'subject.humanities': 'Humanities',
+  'subject.arts': 'Arts',
+  'subject.music': 'Music',
+  // And the colours, for the same reason: a colour nobody can name is nobody's choice.
+  'colour.blue': 'Blue',
+  'colour.green': 'Green',
+  'colour.purple': 'Purple',
+  'colour.amber': 'Amber',
+  'colour.red': 'Red',
 
   // One class's own attendance, on the dashboard behind its card.
   'class.back': 'Back to My Classes',
@@ -175,6 +218,24 @@ export const english = {
   'class.insightDown': 'Attendance is down {points}% on the thirty days before.',
   'class.insightSteady': 'Attendance is holding steady against the thirty days before.',
   'class.insightNone': 'Nothing is marked for this class yet. Once you take attendance, its rate and its trend show here.',
+  // One class's own list of students, and the dialog where a teacher adds one to it.
+  'students.back': 'Back to the class',
+  'students.add': 'Add Student',
+  'students.noneTitle': 'No students yet',
+  'students.noneInvite': 'Add your first student to this classroom to start taking attendance.',
+  'newStudent.words': "Enter the student's name for this classroom.",
+  'newStudent.name': 'Student Name',
+  'newStudent.namePlaceholder': 'e.g. Chloe Kim',
+  'newStudent.cancel': 'Cancel',
+  'newStudent.add': 'Add',
+  'newStudent.saving': 'Adding this student…',
+  'newStudent.missingName': "Type the student's name to add them.",
+  // Said in these words: somebody in this class already has this name.
+  'newStudent.nameTaken': 'A student with this name already exists in this classroom.',
+  'newStudent.couldNotSave': 'This student could not be saved on this phone just now. Try again.',
+  'newStudent.noClass': 'This classroom is no longer on this phone.',
+  'newStudent.added': '{name} has been added to {class}.',
+
   'tally.present': 'Present',
   'tally.absent': 'Absent',
   'tally.late': 'Late',

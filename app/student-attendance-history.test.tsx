@@ -192,7 +192,7 @@ async function inTheRoster(): Promise<Screen> {
   keepOnboardingIn(onboardingIn(true));
   keepClassroomDataIn(classroomDataIn(theirTeaching(dayText)));
   const screen = await signIn();
-  await screen.press('Attendance');
+  await screen.press(/^Attendance$/);
   await settle();
   return screen;
 }
@@ -331,7 +331,7 @@ describe("Check a student's attendance history", () => {
     const screen = await onTheProfile();
 
     // The tab is one of the three a profile has, and pressing it is the whole of getting there.
-    await screen.press('Attendance');
+    await screen.press(/^Attendance$/);
     await settle();
     expect(tabInUse(screen)).toEqual(['Attendance']);
 

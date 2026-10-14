@@ -937,3 +937,307 @@ Half-true, and waiting for the next requirement:
   to dark, the way it follows a phone set to French. Following it would be `Appearance.getColorScheme()`
   from react-native, and the honest shape is a third setting — System — rather than a switch that
   argues with the phone.
+
+## 17 — Add ability to create new classrooms by a teacher (f3b6bc28)
+
+What is here now:
+
+- **A teacher can make a classroom, and the phone keeps it.** `components/new-classroom-screen.tsx`
+  is the form: the name (the one field a class cannot be made without), the period (which may be
+  left empty), and the subject icon and colour, which open on a choice already made — so a teacher
+  who types a name and presses **Create Classroom** has a whole class. At the top of it is the card
+  the list will draw, so the icon and colour are a choice that can be seen rather than imagined.
+- **My Classes is the way in, twice.** The `+` at the top of the list is announced as a button now
+  (`classes.newClass` — *New classroom*), and an empty list is **the agreed mockup's own card**: the
+  school on a round wash of the accent, which emptiness it is, the invitation
+  (`classes.noneInvite`), one large **Create Classroom** button and `classes.noneFoot` under the
+  card. A teacher who has classes but none under this filter still reads `classes.noneWords` — the
+  invitation to make their *first* class would not be true for them.
+- **The confirmation is the list itself.** `ClassesScreen` keeps `said`, shows it in an
+  `accessibilityRole="alert"` on a wash of `goodWash` above the tabs, and puts the filter back to
+  **Active**, which is where a new class joins. The form is a screen the list shows and not a route
+  — requirement 14's decision, for the same reason: the list stays mounted behind it, so the class
+  appears in the place the teacher is already looking at. **Still no new route**: requirement 1's
+  `No other screen appears before the login screen.` is still true and still has not been widened.
+- **`lib/new-classroom.ts` is every rule**: `detailsFrom`, `nameMissingFrom`, `sameName`,
+  `classroomNamed`, `nameAlreadyUsed`, `notReadyFor`, `freshClassroomId`, `classroomFrom`,
+  `dataWithClassroom` and `makeClassroom` — the read-change-write, which **never throws** and
+  answers `created: false` with `newClass.couldNotSave`. It also holds `subjectIcons` (six) and
+  `classColours` (five), each named by a word key so a finger and a screen reader can find one.
+  **Neither screen holds a rule of its own.**
+- **`lib/classroom-file.ts` ends the branch's oldest half-truth.** The classroom data is kept as
+  `classme-classrooms.json` in the app's own documents folder — the seam `lib/classroom-data.ts`
+  always had, filled in at last — installed by `app/_layout.tsx` beside the records, the onboarding
+  memory and the chosen look. It is read back through `classroomDataIfWhole`, so a file somebody
+  edited reads as a phone that has been told nothing rather than refusing a teacher the app.
+  **A register saved this morning is now there tomorrow**, and so is every class.
+- Thirty-four new word keys in all five catalogues (`classes.newClass`, `classes.create`,
+  `classes.noneInvite`, `classes.noneFoot`, `classes.noPeriod`, `newClass.*`, `subject.*`,
+  `colour.*`), and `test/fonts/*.woff2` were gathered again (`node test/fonts/gather-fonts.mjs`).
+
+Decisions taken, so they are not re-decided:
+
+- **A classroom is its name, and a name is compared with its case and its end spaces set aside.**
+  'Mathematics', 'mathematics' and ' MATHEMATICS ' are one class to the teacher reading the list, so
+  the second of them is refused in the requirement's own words — `newClass.nameTaken`, which is
+  exactly *A classroom with this name already exists* and has **no full stop**: the criterion names
+  those words and a check reads them. **A class put away counts**: it is still one of their own.
+- **The name is checked against what the phone keeps, not against the screen's copy of it** — the
+  reason `keepRegister` reads the store again. `notReadyFor` names what is wrong before anything is
+  written, and `makeClassroom` asks again with the store's own answer.
+- **The period may be left empty**, and a card then says `classes.noPeriod` (*No period set*) where
+  the period would be, rather than drawing a gap. Only `ClassesScreen` does this today: the register,
+  the class report and a student's profile all write `{period}` straight and would show a gap for a
+  class made without one. **Whoever touches those screens next should use the same word.**
+- **An id is the moment it was made** (`c-<time in base 36>`, with `-2`, `-3` after it where two
+  were made in the same millisecond), and nothing random: a phone making the same two classrooms
+  twice reads the same both times, and a check with a frozen clock still gets two ids.
+- **The icon and colour choosers are the mark alone, named by `accessibilityLabel`.** Six icons and
+  five colours with their words beside them wrap into six rows and push the refusal under the fold;
+  the mark alone is one row each, every one of them named for a screen reader, and the whole form —
+  including what it says back — fits on a phone. `newClass.words` was written and then deleted for
+  the same reason; the foot of the form still says the name is the only thing needed.
+- **The empty card keeps the three emptinesses apart.** The mockup writes *No classrooms yet*; this
+  app's own word for it is `classes.noneAll` (*No classes yet*), and `journeys/the-classes-list-...`
+  walks a phone through all three on the real app. The mockup's layout is matched; its words give
+  way to the project's own, which is the rule when the two disagree.
+- **Two walks were written** — the first on this branch that could be: a phone can make a classroom
+  now, so `journeys/a-teacher-can-type-a-classroom-name...` and
+  `journeys/block-creation-and-show-a-classroom...` drive the real app through making one and
+  through being refused the same name twice.
+- The seven criteria are proved in `app/create-classroom.test.tsx`, pushed red first — all seven
+  failing with `Cannot find module '../lib/new-classroom'`. The module is asked for by a name held
+  in a word (`const theRules = '../lib/new-classroom'`) rather than written into the import, because
+  a missing module written in plainly is a file that will not load, and a file that will not load
+  says nothing about any one criterion. **Keep that shape when you add the next check file.**
+
+Half-true, and waiting for the next requirement:
+
+- **Nothing adds a student to a classroom yet**, so every class made on a real phone is
+  `0 students`, its register says so, and its report has nothing in it. That is the next
+  requirement's, and `lib/classroom-data.ts` already keeps a `Student` (a name and a photo) against
+  a classroom id. `lib/new-classroom.ts` is the shape to copy: the rules in a module of their own,
+  the screen saying back what it is told.
+- **Nothing edits or deletes a classroom.** A name typed wrong is a class a teacher is stuck with;
+  archiving one (`Classroom.archived`, requirement 10) can be read but not written. An edit will
+  have to decide what a renamed class does to the name that is now free — `nameAlreadyUsed` would
+  need to pass over the class being renamed.
+- **Home still says "No classes yet" even when the phone has classes** (requirement 10's note
+  stands). It now has `lib/classes.ts` to fill its card from, and classes to fill it with.
+- The form is always a new class: there is no `⋮` on it, no way to choose a colour outside the five
+  offered or an icon outside the six, and no second step. All of that is deliberate — a teacher
+  standing in a corridor between periods is making a class, not designing one.
+
+## 18 — Add ability to add a new student and ensure uniqueness based on name (a318d42e)
+
+What is here now:
+
+- **A teacher can add a student to one of their own classes, and the phone keeps them.**
+  `components/class-students-screen.tsx` is that class's own list of students, built to this
+  requirement's mockup (Modal Entry): the way back, the class's own name, the `⋮` the mockup draws,
+  the `Students` caption, a card a name, and — over the whole screen when a teacher asks for it —
+  the dialog: *Add Student*, "Enter the student's name for this classroom.", the one field there is,
+  the refusal under it, and **Cancel** beside **Add**. A class with nobody in it yet shows the card
+  shape the Classes list uses for a teacher with no classes (`students.noneTitle` /
+  `students.noneInvite`) with the same one button on it. **Never two Add Student buttons at once**,
+  so a finger is never offered the same thing twice and `press` finds exactly one.
+- **The Students tab of a class is the way in**, and it is a button now — the first of the class
+  dashboard's three tabs to be given a destination. Overview and Students are `accessibilityRole`
+  buttons with `checked`; **Trends is still drawn with nothing behind it and deliberately no role**,
+  which is this branch's established shape. The students screen is a screen the dashboard shows and
+  **not a route of its own** (requirement 14 and 17's decision), so requirement 1's `No other screen
+  appears before the login screen.` is still true and still has not had to be widened.
+- **`lib/new-student.ts` is every rule**: `detailsFrom`, `sameStudentName`, `studentNamedIn`,
+  `nameAlreadyInClass`, `nameMissingFrom`, `notReadyFor`, `freshStudentId` (`s-<time in base 36>`,
+  with `-2`, `-3` after it where two were added in the same millisecond), `studentFrom`,
+  `dataWithStudent` and `addStudent` — the read-change-write, which **never throws** and answers
+  `added: false` with `newStudent.couldNotSave`. It is `lib/new-classroom.ts` written again for a
+  student; **neither screen holds a rule of its own.**
+- `ClassAttendanceScreen` gained **`onChanged`**, which `app/index.tsx` wires to `setTeaching`: a
+  student added inside a class is handed straight back up, so the Classes list's `2 students`, the
+  register and every report read the same phone without reading it again.
+- Fifteen new word keys in all five catalogues (`students.*`, `newStudent.*`), `lib/theme.ts`
+  gained **`scrim`** (the dim over a screen behind a dialog, in both looks — a hex loose in a screen
+  is a colour that will not follow a teacher into the dark), and `test/fonts/*.woff2` were gathered
+  again (`node test/fonts/gather-fonts.mjs`).
+
+Decisions taken, so they are not re-decided:
+
+- **A name is compared inside one classroom and no further.** The criterion says so, and it is also
+  true: the same name in another of the teacher's classes is another person in another room. Inside
+  one class a name is one student, with the case and the end spaces set aside — the rule
+  requirement 17 chose for a classroom's own name — which is a superset of the criterion's "exact
+  same name" and refuses 'amelia ruiz' beside 'Amelia Ruiz' as well.
+- **The honest cost of that**: a class with two real students of the same name cannot hold both.
+  Nothing in the app can yet tell them apart (no photo, no id a school gave them), so the second is
+  refused rather than drawn as a name the teacher cannot tell from the first. **A requirement that
+  adds photos or a student number is the one that should revisit this**, not a quiet widening.
+- **The refusal is the mockup's own sentence** — `newStudent.nameTaken`, exactly *A student with
+  this name already exists in this classroom.*, full stop and all, said in `colors.alarm` under the
+  field where the mockup draws it and announced as an alert.
+- **The dialog is drawn over the screen** (an absolutely positioned View on `colors.scrim`), not a
+  React Native `Modal`: the checks' stand-in has no `Modal`, and the mockup draws exactly this — the
+  list still standing behind the dim. It does **not** trap a screen reader's focus; a phone's own
+  modal would, and that is the one thing a real `Modal` would buy. Teach `test/react-native-dom.tsx`
+  a `Modal` first if you ever want it.
+- **A student is a name, and nothing else yet.** `Student.photo` is still optional and still unset:
+  the mockup asks for a name alone, and a photo means the camera, which is its own requirement and
+  its own permission (asked for only when it is needed — an approved decision).
+- **The list is the plain cards the mockup draws**, with no initials avatar: the register
+  (`components/take-attendance-screen.tsx`) draws faces on `avatarWashes`, this list does not,
+  because the mockup does not. A row is a `role="listitem"` named by the student, inside a
+  `role="list"` called *Students*.
+- The five criteria are proved in `app/add-student.test.tsx`, pushed red first — two failing on
+  `Cannot find module '../lib/new-student'` and three on `0 buttons saying Students on this screen`.
+  The rules are asked for by a name held in a word, the shape requirement 17 asked for.
+  `journeys/a-teacher-can-enter-a-new-students-name...` walks a real phone through making a class
+  and adding Amelia Ruiz to it; its one subtlety is `text: "^Add$"`, because *Add* and *Add Student*
+  are both on the screen at that moment.
+
+Half-true, and waiting for the next requirement:
+
+- **Nothing edits or removes a student**, so a name typed wrong is a student the teacher is stuck
+  with — the same hole requirement 17 left for a classroom's name. An edit will have to let a
+  student keep their own name (`nameAlreadyInClass` would need to pass over the student being
+  renamed), and removing one should decide what becomes of the attendance marks against them.
+- **The dashboard's Trends tab still goes nowhere**, and so do the `⋮` on both of those screens.
+- **Home still says "No classes yet" even when the phone has classes** (requirement 10 and 17's
+  note stands).
+- The list is not searchable and does not count itself: at thirty names it is a long scroll. The
+  register already has a search (`lib/roster.ts`'s `rosterShown`) and would be the thing to copy.
+
+## 19 — Review class-wide attendance trends (9da16a4e)
+
+What is here now:
+
+- **The Trends tab leads somewhere at last.** It was drawn on a class's dashboard and deliberately
+  not announced as a button (requirement 10 and 18's note); it is an `accessibilityRole` button with
+  `checked` now, like Overview and Students beside it, and **all three tabs of a class have a
+  destination**. Nothing on the dashboard is drawn-but-dead any more except the `⋯` at the top.
+- **`components/class-trends.tsx` is the report itself**, and both Overview and Trends show it: the
+  donut with the share present written in the hole of it and Present, Absent and Late counted beside
+  it, the five weekly bars of the past month, and the one sentence of Key Insights. It takes
+  `{ data, classroomId, now }` and works every number out itself from `lib/attendance-stats.ts`;
+  `overTheLast` (30) and `trendWeeks` (5) live there now, exported, rather than in the screen.
+- `components/class-attendance-screen.tsx` is a hundred lines shorter for it: the way back, the
+  class's name, the days the numbers cover, the row of classes to switch to, the three tabs, and
+  `<ClassTrends/>` under them. It no longer reckons anything of its own.
+- `journeys/the-trends-tab-shows-overall-attendance...walk.yaml` walks a real phone from an empty
+  one through making a classroom to its Trends tab, where the three cards stand with nothing marked
+  yet — which is the honest state of a phone a teacher has only just started on.
+
+Decisions taken, so they are not re-decided:
+
+- **Overview and Trends show the same report, on purpose.** The agreed prototype draws the same
+  three cards on both tabs, and the criteria of this requirement name the Trends tab for all three.
+  Two copies of a report drift apart, so there is one component and both tabs show it. **If a later
+  requirement gives Overview something of its own** — the register's way in, today's marks, a list
+  of the students at risk — add it above `<ClassTrends/>` on that tab rather than forking the cards.
+- **The donut is still the ring requirement 10 chose**, and the three shares are told apart by the
+  legend's colours and by the proportional strip under them, not by three arcs: React Native draws
+  no conic gradient without a drawing package (a new package needs its own sentence in a pull
+  request, an approved decision), and the band is sized by the number inside it so the phone's
+  largest text makes it bigger rather than hiding the rate. A requirement that really wants arcs
+  should teach `test/react-native-dom.tsx` about `transform` first — react-native-web translates a
+  transform array, and the stand-in does not.
+- **The weekly bars lie on their side**, which is requirement 10's decision and is kept: a bar
+  pinned to a height cannot grow with the largest text, and each week is a row — Monday, bar,
+  percentage — that wraps instead of clipping. The check holds that the markup has no `max-height`
+  and no `line-height` on it.
+- **A bar is drawn as long as that week's own share present**, and the check reads the bars' widths
+  straight off the screen and compares them with `weeklyTrend`: the chart is the data and not a
+  picture beside it. **Keep that shape if the chart is ever redrawn** — a bar chart nobody has
+  compared with its numbers is a decoration.
+- **A week with nothing marked says `class.weekEmpty` ('Nothing marked')** and draws no bar, rather
+  than reading as nought per cent, and the insight card says `class.insightNone` where there is
+  nothing to compare. Both were already written; this requirement only made them reachable.
+- **No new word key was needed**, so none was added, and `test/fonts/*.woff2` did not have to be
+  gathered again.
+- The four criteria are proved in `app/class-attendance-trends.test.tsx`, pushed red first — all
+  four failing with `0 buttons saying Trends on this screen` (the first on the assertion that the
+  tab is there to press at all). The data a check hands the phone is built so this month really is
+  better attended than the last, and the falling case is read back off a second phone, so the
+  sentence is proved both ways round and not only in one direction.
+
+Half-true, and waiting for the next requirement:
+
+- **The `⋯` at the top of a class's dashboard is still drawn with nothing behind it**, and so is the
+  one on its students list. Whatever else can be done with a class — renaming it, archiving it
+  (`Classroom.archived` can still only be read, requirement 17's note), deleting it — belongs there.
+- **The range is always the last thirty days.** `Last 30 days` is a word on the screen and not a
+  chooser, and `Weekly` beside the chart is the same: the prototype draws a `▾` on both, and
+  choosing another range or another grain is its own requirement. `ClassTrends` already takes the
+  days and the weeks as its own constants — make them props when something asks to change them.
+- **Home still says "No classes yet" even when the phone has classes** (requirement 10, 17 and 18's
+  note stands).
+
+## 20 — Check today's schedule from Home (d903b4ed)
+
+What is here now:
+
+- **Home's empty card is filled in at last** — the branch's oldest half-truth, left by requirements
+  10, 17, 18 and 19 in turn. `components/home-screen.tsx` now draws the day the teacher picked:
+  a card for each class they are teaching, in the order their periods put them, with the period (or
+  `classes.noPeriod` where one was left empty), the class's name, `{n} students`, the class's own
+  colour down the side of it, and the chevron the prototype draws — which is a `role="link"` now and
+  opens that class's dashboard. The list is a `role="list"` of `role="listitem"` cards, each named by
+  its class, which is how a check reads one back.
+- **The week along the top is a day selector.** Five `accessibilityRole="radio"` dates in a
+  `radiogroup`, each named `home.dayHeading` (*Mon, Apr 21*) so a screen reader says which date it is
+  reading and a check can press one by name. Under it, the day being viewed: `home.todayLabel`
+  (*Today*) on the day itself, and *Wed, Apr 23* on any other.
+- **Take Attendance on the current class**, which opens that class's own register with everybody
+  marked Present — `app/index.tsx` sets the open class and goes to `attendance`, so the way back out
+  of the register is Home.
+- **`lib/day-schedule.ts` is every rule**: `schoolDaysOf`, `isToday`, `theDaysClasses` and
+  `classToTakeNow`. The screen holds none of its own.
+- `lib/week.ts`'s `SchoolDay` gained `on` (the day itself, which is what a teacher picking a date is
+  asking for) and `sameDay` is exported. Three new word keys in all five catalogues
+  (`home.dayHeading`, `home.take`, `home.notToday`); no new character, so `test/fonts/*.woff2` did
+  not have to be gathered again (checked with `lettersMissingFrom` before deciding that).
+- **`components/places-row.tsx` names each of its places** with an `accessibilityLabel`. *Attendance*
+  along the bottom and *Take Attendance* on a card are two different things, and `screen.press` reads
+  a name by `includes`: the eight checks in five files that pressed `'Attendance'` now press
+  `/^Attendance$/`, which is the row's own label and not the card's. **Keep that in mind when you
+  name a new control after one that already exists.**
+
+Decisions taken, so they are not re-decided:
+
+- **A classroom keeps no days of its own**, so every class a teacher is teaching stands on every
+  school day, and the date they pick decides what the schedule is headed with and whether there is a
+  register to take — not which classes are on it. `lib/classroom-data.ts` keeps a name, a period, an
+  icon and a colour; giving a class the days it meets on is a requirement of its own, and
+  `components/new-classroom-screen.tsx` is where it would be asked for.
+- **The current class is the first class of the day, and only on the day itself.** A period is free
+  text with no hours against it ('1st Period', 'Period 10'), so nothing can know which period is
+  running at half past two; and the register this app saves is always today's (requirement 11), so
+  another day is a schedule to read and says `home.notToday` — *Attendance is taken on the day
+  itself.* — where the button would be. **A requirement that gives a period its own hours is the one
+  that should narrow `classToTakeNow`**, and it would also let a card say `8:00 – 8:50 AM`, which the
+  mockup draws and this app does not: inventing a lesson's hours would be requirement 4's refusal to
+  ship "Mathematics, Science, English" all over again.
+- **Home opens on the date the phone is being held on, whichever day of the week that is.** On a
+  Saturday the strip still shows the week just taught with nothing picked out in it (requirement 4's
+  decision, kept) and the caption still says *Today* — which is also what keeps
+  `app/localise-app.test.tsx` reading `home.todayLabel` on Home whatever day CI runs on.
+- **A teacher whose every class is put away reads `classes.noneActive` / `classes.noneWords`**, not
+  *No classes yet*: the Classes list's own words, because an invitation to make a first class would
+  not be true for them. A phone with nothing taught on it still reads `home.noClasses` in the same
+  card shape.
+- The `☰` and the `🔔` at the top are still drawn with nothing behind them and deliberately no role,
+  as they have been since requirement 4.
+- The four criteria are proved in `app/check-todays-schedule.test.tsx`, pushed red first — the
+  greeting check on the order the screen is read in (the day's classes were not there to be read
+  under it), and the other three on `Cannot find module '../lib/day-schedule'`, the rules asked for
+  by a name held in a word, which is the shape requirement 17 asked the next check file to keep.
+
+Half-true, and waiting for the next requirement:
+
+- **No class has hours, so no card says when it meets** and the current class is the day's first.
+  See the decision above; this is the one thing on Home that the agreed prototype draws and the app
+  does not.
+- **The day selector is one week wide.** There is no way to reach last Tuesday or next Monday from
+  Home — `schoolDaysOf` is the week the phone is being held in, and a teacher planning further ahead
+  has nothing here. A `‹`/`›` either side of the strip would be the shape to add.
+- **Messages and More along the bottom are still drawn with nothing behind them**, and so is the
+  `⋯` on a class's dashboard (requirement 19's note stands).
