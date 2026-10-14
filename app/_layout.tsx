@@ -4,6 +4,8 @@ import { Pressable, Text, View } from 'react-native';
 import { DonemarkTryStrip } from '../components/donemark-try-strip';
 import { accountsOnThisPhone } from '../lib/accounts-file';
 import { appearanceOnThisPhone, keepAppearanceIn } from '../lib/appearance';
+import { keepClassroomDataIn } from '../lib/classroom-data';
+import { classroomDataOnThisPhone } from '../lib/classroom-file';
 import { installDonemarkTry, sayError, tryMode } from '../lib/donemark-try';
 import { useDirection, useWords } from '../lib/i18n';
 import { keepAccountsIn } from '../lib/local-accounts';
@@ -32,6 +34,12 @@ keepAccountsIn(accountsOnThisPhone());
 // walkthrough is read once and never again. Installed here for the same reason as everything above
 // it: this is the one file only a real app loads, and a check hands over a memory of its own.
 keepOnboardingIn(onboardingOnThisPhone());
+
+// A teacher's own teaching — their classrooms, the students in them and every attendance mark — in
+// a file in this app's own documents folder, so a classroom made this morning and a register saved
+// at nine are still there tomorrow. Installed here for the same reason as everything above it: this
+// is the one file only a real app loads, and a check hands over a store of its own.
+keepClassroomDataIn(classroomDataOnThisPhone());
 
 // Which of the app's two looks a teacher chose, in a file of its own beside the others, so Dark
 // Mode is switched on once and not every morning. Installed here for the same reason as everything

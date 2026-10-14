@@ -1,0 +1,63 @@
+appId: com.contactdev2.classme
+name: Block creation and show 'A classroom with this name already exists' if the name matches one the teacher already has.
+---
+# The same morning as the walk beside this one, carried one step further: a teacher who has made
+# Mathematics tries to make it again, and is told why they cannot.
+- tapOn: "Create a profile"
+- tapOn: "Ms. Patel"
+- inputText: "Ms. Rivera"
+- hideKeyboard
+- tapOn: "Continue"
+- tapOn: "you@school.edu"
+- inputText: "ms.rivera@riversidehigh.edu"
+- hideKeyboard
+- tapOn: "At least 8 characters"
+- inputText: "Spring-2026-attendance"
+- hideKeyboard
+- tapOn:
+    text: "Create Profile"
+    index: 1
+- extendedWaitUntil:
+    visible: "Profile Created.*"
+    timeout: 120000
+- tapOn: "Go to Dashboard"
+- extendedWaitUntil:
+    visible: "A simpler way to manage.*"
+    timeout: 30000
+- tapOn: "Get Started"
+- tapOn: "Next"
+- tapOn: "Next"
+- tapOn: "Get Started"
+- extendedWaitUntil:
+    visible: ".*what's happening today.*"
+    timeout: 30000
+- tapOn: "Classes"
+- extendedWaitUntil:
+    visible: "My Classes"
+    timeout: 30000
+# One classroom made, the way the walk beside this one makes it.
+- tapOn: "Create Classroom"
+- extendedWaitUntil:
+    visible: "New Classroom"
+    timeout: 30000
+- tapOn: "e.g. Mathematics"
+- inputText: "Mathematics"
+- hideKeyboard
+- tapOn: "Create Classroom"
+- extendedWaitUntil:
+    visible: "Mathematics has been created."
+    timeout: 30000
+# And now the same name again, from the + at the top of their own list.
+- tapOn: "New classroom"
+- extendedWaitUntil:
+    visible: "New Classroom"
+    timeout: 30000
+- tapOn: "e.g. Mathematics"
+- inputText: "Mathematics"
+- hideKeyboard
+- tapOn: "Create Classroom"
+# Refused, in those words, and the teacher is still standing in the form with what they typed.
+- extendedWaitUntil:
+    visible: "A classroom with this name already exists"
+    timeout: 30000
+- assertVisible: "New Classroom"

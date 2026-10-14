@@ -157,6 +157,42 @@ export const english = {
   'classes.noneActive': 'No classes being taught',
   'classes.noneArchived': 'No classes put away',
   'classes.noneWords': 'Your classes show here, with the period each one meets in and how many students are in it.',
+  // Making one: the way to the form from a teacher's own list, and the form itself.
+  'classes.newClass': 'New classroom',
+  'classes.create': 'Create Classroom',
+  'classes.noneInvite': 'Create your first classroom to start adding students and tracking attendance.',
+  'classes.noneFoot': 'Your classrooms will appear here',
+  // A class whose teacher left the period empty, on its own card.
+  'classes.noPeriod': 'No period set',
+  'newClass.title': 'New Classroom',
+  'newClass.back': 'Back to My Classes',
+  'newClass.preview': 'Your new classroom',
+  'newClass.name': 'Classroom Name',
+  'newClass.namePlaceholder': 'e.g. Mathematics',
+  'newClass.period': 'Period',
+  'newClass.periodPlaceholder': 'e.g. 1st Period',
+  'newClass.subject': 'Subject Icon',
+  'newClass.colour': 'Colour',
+  'newClass.note': 'Only the name is needed. You can add students once the classroom is made.',
+  'newClass.saving': 'Creating this classroom…',
+  'newClass.missingName': 'Type a name for this classroom to create it.',
+  // Said in these words: the teacher already has a class of their own by this name.
+  'newClass.nameTaken': 'A classroom with this name already exists',
+  'newClass.couldNotSave': 'This classroom could not be saved on this phone just now. Try again.',
+  'newClass.created': '{name} has been created.',
+  // What each subject icon stands for, so a finger can find the icon by its name.
+  'subject.maths': 'Maths',
+  'subject.science': 'Science',
+  'subject.language': 'Languages',
+  'subject.humanities': 'Humanities',
+  'subject.arts': 'Arts',
+  'subject.music': 'Music',
+  // And the colours, for the same reason: a colour nobody can name is nobody's choice.
+  'colour.blue': 'Blue',
+  'colour.green': 'Green',
+  'colour.purple': 'Purple',
+  'colour.amber': 'Amber',
+  'colour.red': 'Red',
 
   // One class's own attendance, on the dashboard behind its card.
   'class.back': 'Back to My Classes',

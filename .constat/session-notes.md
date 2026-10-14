@@ -937,3 +937,93 @@ Half-true, and waiting for the next requirement:
   to dark, the way it follows a phone set to French. Following it would be `Appearance.getColorScheme()`
   from react-native, and the honest shape is a third setting — System — rather than a switch that
   argues with the phone.
+
+## 17 — Add ability to create new classrooms by a teacher (f3b6bc28)
+
+What is here now:
+
+- **A teacher can make a classroom, and the phone keeps it.** `components/new-classroom-screen.tsx`
+  is the form: the name (the one field a class cannot be made without), the period (which may be
+  left empty), and the subject icon and colour, which open on a choice already made — so a teacher
+  who types a name and presses **Create Classroom** has a whole class. At the top of it is the card
+  the list will draw, so the icon and colour are a choice that can be seen rather than imagined.
+- **My Classes is the way in, twice.** The `+` at the top of the list is announced as a button now
+  (`classes.newClass` — *New classroom*), and an empty list is **the agreed mockup's own card**: the
+  school on a round wash of the accent, which emptiness it is, the invitation
+  (`classes.noneInvite`), one large **Create Classroom** button and `classes.noneFoot` under the
+  card. A teacher who has classes but none under this filter still reads `classes.noneWords` — the
+  invitation to make their *first* class would not be true for them.
+- **The confirmation is the list itself.** `ClassesScreen` keeps `said`, shows it in an
+  `accessibilityRole="alert"` on a wash of `goodWash` above the tabs, and puts the filter back to
+  **Active**, which is where a new class joins. The form is a screen the list shows and not a route
+  — requirement 14's decision, for the same reason: the list stays mounted behind it, so the class
+  appears in the place the teacher is already looking at. **Still no new route**: requirement 1's
+  `No other screen appears before the login screen.` is still true and still has not been widened.
+- **`lib/new-classroom.ts` is every rule**: `detailsFrom`, `nameMissingFrom`, `sameName`,
+  `classroomNamed`, `nameAlreadyUsed`, `notReadyFor`, `freshClassroomId`, `classroomFrom`,
+  `dataWithClassroom` and `makeClassroom` — the read-change-write, which **never throws** and
+  answers `created: false` with `newClass.couldNotSave`. It also holds `subjectIcons` (six) and
+  `classColours` (five), each named by a word key so a finger and a screen reader can find one.
+  **Neither screen holds a rule of its own.**
+- **`lib/classroom-file.ts` ends the branch's oldest half-truth.** The classroom data is kept as
+  `classme-classrooms.json` in the app's own documents folder — the seam `lib/classroom-data.ts`
+  always had, filled in at last — installed by `app/_layout.tsx` beside the records, the onboarding
+  memory and the chosen look. It is read back through `classroomDataIfWhole`, so a file somebody
+  edited reads as a phone that has been told nothing rather than refusing a teacher the app.
+  **A register saved this morning is now there tomorrow**, and so is every class.
+- Thirty-four new word keys in all five catalogues (`classes.newClass`, `classes.create`,
+  `classes.noneInvite`, `classes.noneFoot`, `classes.noPeriod`, `newClass.*`, `subject.*`,
+  `colour.*`), and `test/fonts/*.woff2` were gathered again (`node test/fonts/gather-fonts.mjs`).
+
+Decisions taken, so they are not re-decided:
+
+- **A classroom is its name, and a name is compared with its case and its end spaces set aside.**
+  'Mathematics', 'mathematics' and ' MATHEMATICS ' are one class to the teacher reading the list, so
+  the second of them is refused in the requirement's own words — `newClass.nameTaken`, which is
+  exactly *A classroom with this name already exists* and has **no full stop**: the criterion names
+  those words and a check reads them. **A class put away counts**: it is still one of their own.
+- **The name is checked against what the phone keeps, not against the screen's copy of it** — the
+  reason `keepRegister` reads the store again. `notReadyFor` names what is wrong before anything is
+  written, and `makeClassroom` asks again with the store's own answer.
+- **The period may be left empty**, and a card then says `classes.noPeriod` (*No period set*) where
+  the period would be, rather than drawing a gap. Only `ClassesScreen` does this today: the register,
+  the class report and a student's profile all write `{period}` straight and would show a gap for a
+  class made without one. **Whoever touches those screens next should use the same word.**
+- **An id is the moment it was made** (`c-<time in base 36>`, with `-2`, `-3` after it where two
+  were made in the same millisecond), and nothing random: a phone making the same two classrooms
+  twice reads the same both times, and a check with a frozen clock still gets two ids.
+- **The icon and colour choosers are the mark alone, named by `accessibilityLabel`.** Six icons and
+  five colours with their words beside them wrap into six rows and push the refusal under the fold;
+  the mark alone is one row each, every one of them named for a screen reader, and the whole form —
+  including what it says back — fits on a phone. `newClass.words` was written and then deleted for
+  the same reason; the foot of the form still says the name is the only thing needed.
+- **The empty card keeps the three emptinesses apart.** The mockup writes *No classrooms yet*; this
+  app's own word for it is `classes.noneAll` (*No classes yet*), and `journeys/the-classes-list-...`
+  walks a phone through all three on the real app. The mockup's layout is matched; its words give
+  way to the project's own, which is the rule when the two disagree.
+- **Two walks were written** — the first on this branch that could be: a phone can make a classroom
+  now, so `journeys/a-teacher-can-type-a-classroom-name...` and
+  `journeys/block-creation-and-show-a-classroom...` drive the real app through making one and
+  through being refused the same name twice.
+- The seven criteria are proved in `app/create-classroom.test.tsx`, pushed red first — all seven
+  failing with `Cannot find module '../lib/new-classroom'`. The module is asked for by a name held
+  in a word (`const theRules = '../lib/new-classroom'`) rather than written into the import, because
+  a missing module written in plainly is a file that will not load, and a file that will not load
+  says nothing about any one criterion. **Keep that shape when you add the next check file.**
+
+Half-true, and waiting for the next requirement:
+
+- **Nothing adds a student to a classroom yet**, so every class made on a real phone is
+  `0 students`, its register says so, and its report has nothing in it. That is the next
+  requirement's, and `lib/classroom-data.ts` already keeps a `Student` (a name and a photo) against
+  a classroom id. `lib/new-classroom.ts` is the shape to copy: the rules in a module of their own,
+  the screen saying back what it is told.
+- **Nothing edits or deletes a classroom.** A name typed wrong is a class a teacher is stuck with;
+  archiving one (`Classroom.archived`, requirement 10) can be read but not written. An edit will
+  have to decide what a renamed class does to the name that is now free — `nameAlreadyUsed` would
+  need to pass over the class being renamed.
+- **Home still says "No classes yet" even when the phone has classes** (requirement 10's note
+  stands). It now has `lib/classes.ts` to fill its card from, and classes to fill it with.
+- The form is always a new class: there is no `⋮` on it, no way to choose a colour outside the five
+  offered or an icon outside the six, and no second step. All of that is deliberate — a teacher
+  standing in a corridor between periods is making a class, not designing one.

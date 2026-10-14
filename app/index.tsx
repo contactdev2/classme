@@ -67,14 +67,14 @@ async function theirTeaching(): Promise<ClassroomData> {
  * phone is asked whether it is finished at the moment somebody signs in, and told when it is — from
  * the next morning on they go straight to Home. See lib/onboarding.ts.
  *
- * From Home a teacher goes to their own classes — the list of them, and the attendance of any one
- * they open — and to today's register, where the class they opened, or else the first class of
+ * From Home a teacher goes to their own classes — the list of them, the form where a new one is
+ * made, and the attendance of any one they open — and to today's register, where the class they opened, or else the first class of
  * their day, stands with everybody marked Present, and where one student's name opens their own
  * attendance over time. What the phone keeps about their teaching is
  * read once, as they sign in, and handed down to those screens, so none of them has anything to
  * wait for when it is drawn.
  *
- * Home, the profile menu, Settings, Classes, a class's attendance, today's register, the walkthrough and the signup
+ * Home, the profile menu, Settings, Classes, the form a classroom is made in, a class's attendance, today's register, the walkthrough and the signup
  * are components and not routes of their own on purpose: the app opening on the login screen and
  * nothing else is a requirement of its own, and this keeps '/' the only screen there is.
  */
@@ -185,11 +185,12 @@ export default function Login() {
     }
     if (place === 'classes') {
       // A class the teacher has opened is in front of the list it was opened from; the way back out
-      // of it is to that same list.
+      // of it is to that same list. A class the teacher makes is handed straight back from the list,
+      // so the register and every report read what the phone keeps without reading it again.
       return openClass ? (
         <ClassAttendanceScreen data={teaching} classroomId={openClass} onBack={() => setOpenClass(null)} />
       ) : (
-        <ClassesScreen data={teaching} onOpenClass={setOpenClass} onGo={goTo} />
+        <ClassesScreen data={teaching} onOpenClass={setOpenClass} onGo={goTo} onMade={setTeaching} />
       );
     }
     return <HomeScreen teacher={teacher} onOpenProfile={() => setPlace('profile')} onGo={goTo} />;
