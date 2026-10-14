@@ -1,0 +1,14 @@
+{
+  "branch": "constat/session-4-31db8811",
+  "screens": [],
+  "criteria": [
+    "A teacher can tap a clear 'create classroom' option from their screen.",
+    "A teacher can type a classroom name and save it to create a new classroom.",
+    "After saving, the new classroom appears in the teacher's list of classes.",
+    "The teacher sees a confirmation message right after a classroom is created.",
+    "If a teacher tries to save a classroom without typing a name, the app shows an error and does not create it.",
+    "Block creation and show 'A classroom with this name already exists' if the name matches one the teacher already has.",
+    "A classroom is unique based on the classroom  name"
+  ],
+  "why": "DoneMark froze these onto the attempt: the acceptance criteria of the requirement it is for, and the screens those criteria name. The picture suite runs the checks whose names are these criteria and skips the rest; where it can match none of them it narrows by these screens instead, and says so. Honoured on this branch only."
+}
