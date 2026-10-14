@@ -4,7 +4,7 @@ import { useDirection, useWords } from '../lib/i18n';
 import type { TeacherProfile } from '../lib/local-accounts';
 import { colors, radius, shadow, space } from '../lib/theme';
 import { schoolWeekOf } from '../lib/week';
-import { PlacesRow } from './places-row';
+import { PlacesRow, type Place } from './places-row';
 
 /**
  * Home: what a teacher lands on the moment their own record opens. It greets them by the name that
@@ -16,12 +16,12 @@ import { PlacesRow } from './places-row';
 export function HomeScreen({
   teacher,
   onOpenSettings,
-  onOpenClasses,
+  onGo,
   now = new Date(),
 }: {
   teacher: TeacherProfile;
   onOpenSettings: () => void;
-  onOpenClasses: () => void;
+  onGo: (place: Place) => void;
   now?: Date;
 }) {
   const t = useWords();
@@ -117,7 +117,7 @@ export function HomeScreen({
       </ScrollView>
 
       {/* The app's own places, along the bottom, with Home the one the teacher is standing in. */}
-      <PlacesRow here="home" onGo={(place) => (place === 'classes' ? onOpenClasses() : undefined)} />
+      <PlacesRow here="home" onGo={onGo} />
     </View>
   );
 }

@@ -44,6 +44,8 @@ export const wordsAllowedToStay: readonly WordKey[] = [
   'onboard.step',
   'classes.meta',
   'class.rate',
+  'roster.counted',
+  'roster.tally',
 ];
 
 let current: Tag = defaultLanguage;

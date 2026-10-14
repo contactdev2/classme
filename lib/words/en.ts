@@ -114,6 +114,8 @@ export const english = {
   'day.wed': 'Wed',
   'day.thu': 'Thu',
   'day.fri': 'Fri',
+  'day.sat': 'Sat',
+  'day.sun': 'Sun',
   'month.1': 'Jan',
   'month.2': 'Feb',
   'month.3': 'Mar',
@@ -161,6 +163,30 @@ export const english = {
   'tally.present': 'Present',
   'tally.absent': 'Absent',
   'tally.late': 'Late',
+  // Taking attendance: one class's register, with everybody on it present until the teacher says
+  // otherwise.
+  'roster.title': 'Take Attendance',
+  'roster.back': 'Go back',
+  // Which register this is: the period the class meets in, and the day it is being taken on.
+  'roster.when': '{period} · {day}, {date}',
+  'roster.all': 'All',
+  // A filter, with how many of the class stand at it: a count written as a count.
+  'roster.counted': '{name} ({many})',
+  // The same, at the foot of the screen, where the class is added up.
+  'roster.tally': '{name}: {many}',
+  'roster.search': 'Search students',
+  'roster.searchPlaceholder': 'Search students...',
+  'roster.noneTitle': 'No students to show',
+  'roster.noneMarked': 'Nobody in this class is marked that way.',
+  'roster.noneFound': 'No student in this class has that name.',
+  'roster.noClassWords':
+    'Once you have a classroom with students in it, its register opens here with everybody present.',
+  'roster.save': 'Save Attendance',
+
+  // The three marks, as a register says them of one student.
+  'mark.present': 'Present',
+  'mark.absent': 'Absent',
+  'mark.late': 'Late',
 
   // Classroom Settings.
   'settings.title': 'Classroom Settings',

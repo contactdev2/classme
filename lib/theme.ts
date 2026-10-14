@@ -32,6 +32,23 @@ export const colors = {
  */
 export const markColours = { present: '#22C55E', absent: '#EF4444', late: '#F59E0B' } as const;
 
+/**
+ * The soft washes a student's own initials sit on, with the ink each of them is written in. A
+ * register is a column of two dozen faces, and one wash down the whole of it reads as a wall rather
+ * than as a list of people: the prototype draws its roster this way, taking each student the next
+ * wash along. Every pair is dark ink on a pale wash, so a name is as readable at the bottom of the
+ * list as at the top.
+ */
+export const avatarWashes = [
+  { wash: '#DBEAFE', ink: '#1D4ED8' },
+  { wash: '#FDE68A', ink: '#92400E' },
+  { wash: '#FBCFE8', ink: '#9D174D' },
+  { wash: '#BFDBFE', ink: '#1E40AF' },
+  { wash: '#E9D5FF', ink: '#6B21A8' },
+  { wash: '#C7D2FE', ink: '#3730A3' },
+  { wash: '#A7F3D0', ink: '#065F46' },
+] as const;
+
 /** 16px corners, as agreed; 12px where something sits inside something already rounded. */
 export const radius = { card: 16, field: 12, pill: 10 } as const;
 

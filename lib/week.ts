@@ -6,6 +6,20 @@ import type { WordKey } from './words/en';
 
 const weekdays = ['day.mon', 'day.tue', 'day.wed', 'day.thu', 'day.fri'] as const;
 
+// Every day of the week, from the Sunday a phone's own clock counts from.
+const everyDay = ['day.sun', 'day.mon', 'day.tue', 'day.wed', 'day.thu', 'day.fri', 'day.sat'] as const;
+
+/** The short name of the day this is, in the app's own language: 'Mon', 'lun.', '周一'. */
+export const dayName = (day: Date): string => say(everyDay[day.getDay()]);
+
+/**
+ * The day and month this is, as this language writes them: 'Apr 21', '21 أبريل', '4月21日'. The
+ * month and the day round the other way in French and Arabic, and the day carries a character of
+ * its own in Chinese and Japanese, so the order is the catalogue's to decide.
+ */
+export const dateLabel = (day: Date): string =>
+  say('week.date', { month: say(`month.${day.getMonth() + 1}` as WordKey), day: day.getDate() });
+
 /** One day in the strip along the top of Home. */
 export type SchoolDay = {
   /** Monday to Friday, the day's short name in the app's own language. */
@@ -29,12 +43,9 @@ export function schoolWeekOf(now: Date): SchoolDay[] {
   const sinceMonday = (now.getDay() + 6) % 7;
   return weekdays.map((key, after) => {
     const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - sinceMonday + after);
-    const month = say(`month.${day.getMonth() + 1}` as WordKey);
     return {
       name: say(key),
-      // The month and the day round the other way in French and Arabic, and the day carries a
-      // character of its own in Chinese and Japanese: the order is the catalogue's to decide.
-      date: say('week.date', { month, day: day.getDate() }),
+      date: dateLabel(day),
       today: sameDay(day, now),
     };
   });

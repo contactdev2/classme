@@ -521,3 +521,78 @@ Half-true, and waiting for the next requirement:
 - The class pills switch between the classes being taught, plus the open one if it was archived. A
   teacher with twenty classes gets a wrapped block of pills rather than a row that scrolls sideways:
   it reads at the largest text size, which a sideways scroll would not.
+
+## 11 — See every student marked Present by default (ec0a04c7)
+
+What is here now:
+
+- **`components/take-attendance-screen.tsx` is today's register**, built to the agreed prototype:
+  the way back, *Take Attendance*, the class card (its subject icon on a wash of its own colour, its
+  name, `{period} · {day}, {date}`), the four filters with their counts — **All (24)**,
+  **Present (24)**, **Absent (0)**, **Late (0)** — the search, a row for each student with their
+  initials and their mark, and along the foot *Present: 24 · Absent: 0 · Late: 0* with the
+  **Save Attendance** button the prototype draws. It opens with **every student on the roster marked
+  Present**, which is this requirement's whole point.
+- **`lib/roster.ts` is the reading of one class's register**: `rosterOf` (the class's students, in
+  the order a register is read in — by name), `markToStartWith` (`'Present'`), `everyonePresent`,
+  `markOf`, `tallyOfRoster`, `countedBy`, `rosterShown` (the filter and the search together),
+  `initialsOf`, and `classToMarkIn` — the class a teacher is marking, being the one they opened or
+  else the first of their own day. **The screen holds no rule of its own**: add one here.
+- **The row along the bottom now has a destination behind Attendance.** `Place` is
+  `'home' | 'classes' | 'attendance'`, `HomeScreen` takes `onGo` instead of `onOpenClasses`, and
+  `app/index.tsx` remembers where a teacher was standing (`before`) so the way out of a register is
+  the way they came into it. Messages and More are still drawn with nothing behind them and
+  deliberately no role. **Still no new route**: requirement 1's check has still not had to be widened.
+- `lib/week.ts` gained `dayName` (every day of the week, `day.sun`…`day.sat` — two new keys) and
+  `dateLabel`, which `lib/attendance-stats.ts` now imports rather than keeping a second copy of.
+- `lib/theme.ts` gained **`avatarWashes`**, the prototype's own seven pale washes with the ink for
+  each. A register is a column of two dozen faces and one wash down the whole of it reads as a wall;
+  each student takes the next wash along by their place in the roster. **Use these for a person's
+  initials**, and nowhere else.
+- `test/react-native-dom.tsx` now says `accessibilityLabel` on a plain `View` or `Text` as
+  `aria-label`, which is react-native-web's own translation. A row of the register is a `role="list"`
+  / `role="listitem"` named by the student standing on it — `role` and not `accessibilityRole`,
+  because React Native's ARIA `role` prop has `list` and `listitem` and `accessibilityRole` does not.
+
+Decisions taken, so they are not re-decided:
+
+- **Present is where a register starts, and it is not read off a saved mark.** Nothing on the phone
+  is consulted for today: `everyonePresent(roster)` is the opening state, full stop. The check
+  `Each student's status starts as Present.` holds that by giving the phone a term of marks with
+  **nothing for today** and reading the screen. **The requirement that saves attendance has to
+  decide, on purpose, what a register re-opened after a save shows** — the saved marks, or Present
+  again. Today's answer is Present because today has never been saved.
+- **`mark.present` / `mark.absent` / `mark.late` are a register's words for one student**
+  ('Présent(e)', 出席), beside `tally.*`, which stay the legend's plural nouns. The marking
+  requirement should use `mark.*` for its buttons.
+- `roster.counted` (`{name} ({many})`) and `roster.tally` (`{name}: {many}`) are in
+  `wordsAllowedToStay`: a count written as a count is the same count in every language.
+- **The status pill on a row, the `⋮`, the `▾` on the class card and `Save Attendance` are drawn
+  and deliberately not announced as buttons**, like the `+` on My Classes before them. Marking a
+  student, choosing another class from the card, and saving the register are each their own
+  requirement: **give each of them a role the moment you give it something to do.**
+- **The filters and the search do work**, because both are only a reading of the marks already in
+  hand and the screen is unreadable without them at 24 names. The empty answers say which emptiness
+  they are (`roster.noneTitle` with `roster.noneMarked` / `roster.noneFound`).
+- The avatar is initials, never the student's photo. A photo is kept against a student
+  (`lib/classroom-data.ts`) and drawing it needs an `Image` the checks' stand-in has not got;
+  **that is the photo requirement's to add**, here and on the class's own Students tab.
+- **No walk was written for this requirement.** A phone still cannot make a classroom, so a walk
+  could only reach the register and read "No classes yet" — it could not show one student, let alone
+  twenty-four. The three criteria are proved in `app/students-present-by-default.test.tsx`, which
+  was pushed red first.
+
+Half-true, and waiting for the next requirement:
+
+- **`classroomStore()` is still in memory** (requirements 5, 7, 8, 9 and 10's note stands), so on a
+  real phone the register says "No classes yet" and offers `roster.noClassWords`. Everything on the
+  screen is real and proved against data a check hands over; what is missing is the screen that
+  makes a class, the one that adds students to it, and a store that outlasts the app.
+  `lib/accounts-file.ts` and `lib/onboarding.ts` both show how a thing is kept on a phone.
+- **The marks are held in the screen and nowhere else.** `useState(() => everyonePresent(roster))`
+  is seeded once, so a teacher who leaves the register and comes back is back at everybody present,
+  and a class switched to from the card would not re-seed. The marking requirement should lift that
+  state to where it can be changed and saved, and re-seed it when the class changes.
+- **The register is always today's.** There is no way to take a past day's attendance, and the
+  class is the one opened or the first of the day — the `▾` on the card is where choosing another
+  belongs.

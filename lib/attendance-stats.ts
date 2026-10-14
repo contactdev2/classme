@@ -4,9 +4,8 @@
 // None of it is kept: every number here is worked out fresh from the daily marks the phone already
 // has, which is an approved decision — a summary stored beside the records is a second truth, and
 // the day they disagree there is no telling which of them is the teacher's own class.
-import { say } from './i18n';
 import type { ClassroomData } from './classroom-data';
-import type { WordKey } from './words/en';
+import { dateLabel } from './week';
 
 /** A day, as a mark against a student's name writes it: '2025-04-21'. */
 export const dayText = (day: Date): string =>
@@ -72,10 +71,6 @@ export type TrendWeek = {
 /** The Monday of the week a day falls in. */
 const mondayOf = (day: Date): Date =>
   new Date(day.getFullYear(), day.getMonth(), day.getDate() - ((day.getDay() + 6) % 7));
-
-/** How this language writes the day a week begins on. */
-const dateLabel = (day: Date): string =>
-  say('week.date', { month: say(`month.${day.getMonth() + 1}` as WordKey), day: day.getDate() });
 
 /** The last so many weeks of a class's attendance, oldest first, the week being taught last. */
 export function weeklyTrend(data: ClassroomData, classroomId: string, now: Date, weeks: number): TrendWeek[] {

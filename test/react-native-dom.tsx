@@ -68,12 +68,16 @@ const roles: Record<string, string> = { header: 'heading', link: 'link', button:
 const role = (accessibilityRole?: string) => (accessibilityRole ? roles[accessibilityRole] ?? accessibilityRole : undefined);
 
 function element(tag: string, base: Record<string, unknown>) {
-  return function Primitive({ children, style, accessibilityRole, ...rest }: Props) {
+  // The words that name a thing to a screen reader, said the way a browser says them — which is
+  // react-native-web's own translation, and what a check reads a row of a list back by. A plain
+  // View can carry them too: a row of a register is named by the student standing on it.
+  return function Primitive({ children, style, accessibilityRole, accessibilityLabel, ...rest }: Props) {
     return createElement(
       tag,
       {
         style: { ...base, ...flatten(style) },
         role: role(accessibilityRole),
+        ...(accessibilityLabel === undefined ? {} : { 'aria-label': accessibilityLabel }),
         ...rest,
       },
       children,

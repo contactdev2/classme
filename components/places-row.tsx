@@ -3,23 +3,23 @@ import { useWords } from '../lib/i18n';
 import { colors, space } from '../lib/theme';
 
 /**
- * The places the app has, along the bottom, as the prototype draws them. Home and Classes are
- * screens a teacher can be in, so those two are buttons and announced as buttons. The other three
- * are each their own requirement and — like 'Forgot password?' on the login screen — are drawn
- * because the prototype draws them, with nothing behind them yet and deliberately no role of their
- * own: a control that answers nothing should not say it does. Give one a role when you give it a
- * destination.
+ * The places the app has, along the bottom, as the prototype draws them. Home, Classes and
+ * Attendance are screens a teacher can be in, so those three are buttons and announced as buttons.
+ * The other two are each their own requirement and — like 'Forgot password?' on the login screen —
+ * are drawn because the prototype draws them, with nothing behind them yet and deliberately no role
+ * of their own: a control that answers nothing should not say it does. Give one a role when you
+ * give it a destination.
  */
 const places = [
   { key: 'place.home', mark: '⌂', place: 'home' },
   { key: 'place.classes', mark: '◫', place: 'classes' },
-  { key: 'place.attendance', mark: '📅' },
+  { key: 'place.attendance', mark: '📅', place: 'attendance' },
   { key: 'place.messages', mark: '💬' },
   { key: 'place.more', mark: '⋯' },
 ] as const;
 
 /** One of the app's own places: where a teacher is now, or where they can go. */
-export type Place = 'home' | 'classes';
+export type Place = 'home' | 'classes' | 'attendance';
 
 /**
  * The row along the bottom of the screens a teacher lives in. It wraps rather than clips, so the

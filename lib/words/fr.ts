@@ -98,6 +98,8 @@ export const french: Words = {
   'day.wed': 'mer.',
   'day.thu': 'jeu.',
   'day.fri': 'ven.',
+  'day.sat': 'sam.',
+  'day.sun': 'dim.',
   'month.1': 'janv.',
   'month.2': 'févr.',
   'month.3': 'mars',
@@ -145,6 +147,26 @@ export const french: Words = {
   'tally.present': 'Présences',
   'tally.absent': 'Absences',
   'tally.late': 'Retards',
+  // La prise des présences : le registre d'une classe.
+  'roster.title': 'Faire l’appel',
+  'roster.back': 'Retour',
+  'roster.when': '{period} · {day} {date}',
+  'roster.all': 'Tous',
+  'roster.counted': '{name} ({many})',
+  'roster.tally': '{name}: {many}',
+  'roster.search': 'Rechercher un élève',
+  'roster.searchPlaceholder': 'Rechercher un élève…',
+  'roster.noneTitle': 'Aucun élève à afficher',
+  'roster.noneMarked': 'Aucun élève de cette classe n’est marqué ainsi.',
+  'roster.noneFound': 'Aucun élève de cette classe ne porte ce nom.',
+  'roster.noClassWords':
+    'Dès que vous aurez une classe avec des élèves, son registre s’ouvrira ici avec tout le monde présent.',
+  'roster.save': 'Enregistrer les présences',
+
+  // Un élève d'une classe, qui peut être de l'un ou l'autre genre.
+  'mark.present': 'Présent(e)',
+  'mark.absent': 'Absent(e)',
+  'mark.late': 'En retard',
 
   'settings.title': 'Réglages de la classe',
   'settings.back': "Retour à l'accueil",
