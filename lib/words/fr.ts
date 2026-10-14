@@ -193,6 +193,23 @@ export const french: Words = {
   'class.insightSteady': 'La présence reste stable par rapport aux trente jours précédents.',
   'class.insightNone':
     'Rien n’est encore noté pour cette classe. Dès que vous ferez l’appel, son taux et son évolution apparaîtront ici.',
+  // La liste des élèves d'une classe, et la fenêtre où le professeur en ajoute un.
+  'students.back': 'Retour à la classe',
+  'students.add': 'Ajouter un élève',
+  'students.noneTitle': 'Aucun élève pour l’instant',
+  'students.noneInvite': 'Ajoutez votre premier élève à cette classe pour commencer à faire l’appel.',
+  'newStudent.words': 'Saisissez le nom de l’élève pour cette classe.',
+  'newStudent.name': 'Nom de l’élève',
+  'newStudent.namePlaceholder': 'par ex. Chloé Kim',
+  'newStudent.cancel': 'Annuler',
+  'newStudent.add': 'Ajouter',
+  'newStudent.saving': 'Ajout de l’élève…',
+  'newStudent.missingName': 'Saisissez le nom de l’élève pour l’ajouter.',
+  'newStudent.nameTaken': 'Un élève portant ce nom existe déjà dans cette classe.',
+  'newStudent.couldNotSave': 'Cet élève n’a pas pu être enregistré sur ce téléphone pour le moment. Réessayez.',
+  'newStudent.noClass': 'Cette classe n’est plus sur ce téléphone.',
+  'newStudent.added': '{name} a été ajouté(e) à {class}.',
+
   'tally.present': 'Présences',
   'tally.absent': 'Absences',
   'tally.late': 'Retards',

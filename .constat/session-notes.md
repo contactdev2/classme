@@ -1027,3 +1027,81 @@ Half-true, and waiting for the next requirement:
 - The form is always a new class: there is no `⋮` on it, no way to choose a colour outside the five
   offered or an icon outside the six, and no second step. All of that is deliberate — a teacher
   standing in a corridor between periods is making a class, not designing one.
+
+## 18 — Add ability to add a new student and ensure uniqueness based on name (a318d42e)
+
+What is here now:
+
+- **A teacher can add a student to one of their own classes, and the phone keeps them.**
+  `components/class-students-screen.tsx` is that class's own list of students, built to this
+  requirement's mockup (Modal Entry): the way back, the class's own name, the `⋮` the mockup draws,
+  the `Students` caption, a card a name, and — over the whole screen when a teacher asks for it —
+  the dialog: *Add Student*, "Enter the student's name for this classroom.", the one field there is,
+  the refusal under it, and **Cancel** beside **Add**. A class with nobody in it yet shows the card
+  shape the Classes list uses for a teacher with no classes (`students.noneTitle` /
+  `students.noneInvite`) with the same one button on it. **Never two Add Student buttons at once**,
+  so a finger is never offered the same thing twice and `press` finds exactly one.
+- **The Students tab of a class is the way in**, and it is a button now — the first of the class
+  dashboard's three tabs to be given a destination. Overview and Students are `accessibilityRole`
+  buttons with `checked`; **Trends is still drawn with nothing behind it and deliberately no role**,
+  which is this branch's established shape. The students screen is a screen the dashboard shows and
+  **not a route of its own** (requirement 14 and 17's decision), so requirement 1's `No other screen
+  appears before the login screen.` is still true and still has not had to be widened.
+- **`lib/new-student.ts` is every rule**: `detailsFrom`, `sameStudentName`, `studentNamedIn`,
+  `nameAlreadyInClass`, `nameMissingFrom`, `notReadyFor`, `freshStudentId` (`s-<time in base 36>`,
+  with `-2`, `-3` after it where two were added in the same millisecond), `studentFrom`,
+  `dataWithStudent` and `addStudent` — the read-change-write, which **never throws** and answers
+  `added: false` with `newStudent.couldNotSave`. It is `lib/new-classroom.ts` written again for a
+  student; **neither screen holds a rule of its own.**
+- `ClassAttendanceScreen` gained **`onChanged`**, which `app/index.tsx` wires to `setTeaching`: a
+  student added inside a class is handed straight back up, so the Classes list's `2 students`, the
+  register and every report read the same phone without reading it again.
+- Fifteen new word keys in all five catalogues (`students.*`, `newStudent.*`), `lib/theme.ts`
+  gained **`scrim`** (the dim over a screen behind a dialog, in both looks — a hex loose in a screen
+  is a colour that will not follow a teacher into the dark), and `test/fonts/*.woff2` were gathered
+  again (`node test/fonts/gather-fonts.mjs`).
+
+Decisions taken, so they are not re-decided:
+
+- **A name is compared inside one classroom and no further.** The criterion says so, and it is also
+  true: the same name in another of the teacher's classes is another person in another room. Inside
+  one class a name is one student, with the case and the end spaces set aside — the rule
+  requirement 17 chose for a classroom's own name — which is a superset of the criterion's "exact
+  same name" and refuses 'amelia ruiz' beside 'Amelia Ruiz' as well.
+- **The honest cost of that**: a class with two real students of the same name cannot hold both.
+  Nothing in the app can yet tell them apart (no photo, no id a school gave them), so the second is
+  refused rather than drawn as a name the teacher cannot tell from the first. **A requirement that
+  adds photos or a student number is the one that should revisit this**, not a quiet widening.
+- **The refusal is the mockup's own sentence** — `newStudent.nameTaken`, exactly *A student with
+  this name already exists in this classroom.*, full stop and all, said in `colors.alarm` under the
+  field where the mockup draws it and announced as an alert.
+- **The dialog is drawn over the screen** (an absolutely positioned View on `colors.scrim`), not a
+  React Native `Modal`: the checks' stand-in has no `Modal`, and the mockup draws exactly this — the
+  list still standing behind the dim. It does **not** trap a screen reader's focus; a phone's own
+  modal would, and that is the one thing a real `Modal` would buy. Teach `test/react-native-dom.tsx`
+  a `Modal` first if you ever want it.
+- **A student is a name, and nothing else yet.** `Student.photo` is still optional and still unset:
+  the mockup asks for a name alone, and a photo means the camera, which is its own requirement and
+  its own permission (asked for only when it is needed — an approved decision).
+- **The list is the plain cards the mockup draws**, with no initials avatar: the register
+  (`components/take-attendance-screen.tsx`) draws faces on `avatarWashes`, this list does not,
+  because the mockup does not. A row is a `role="listitem"` named by the student, inside a
+  `role="list"` called *Students*.
+- The five criteria are proved in `app/add-student.test.tsx`, pushed red first — two failing on
+  `Cannot find module '../lib/new-student'` and three on `0 buttons saying Students on this screen`.
+  The rules are asked for by a name held in a word, the shape requirement 17 asked for.
+  `journeys/a-teacher-can-enter-a-new-students-name...` walks a real phone through making a class
+  and adding Amelia Ruiz to it; its one subtlety is `text: "^Add$"`, because *Add* and *Add Student*
+  are both on the screen at that moment.
+
+Half-true, and waiting for the next requirement:
+
+- **Nothing edits or removes a student**, so a name typed wrong is a student the teacher is stuck
+  with — the same hole requirement 17 left for a classroom's name. An edit will have to let a
+  student keep their own name (`nameAlreadyInClass` would need to pass over the student being
+  renamed), and removing one should decide what becomes of the attendance marks against them.
+- **The dashboard's Trends tab still goes nowhere**, and so do the `⋮` on both of those screens.
+- **Home still says "No classes yet" even when the phone has classes** (requirement 10 and 17's
+  note stands).
+- The list is not searchable and does not count itself: at thirty names it is a long scroll. The
+  register already has a search (`lib/roster.ts`'s `rosterShown`) and would be the thing to copy.

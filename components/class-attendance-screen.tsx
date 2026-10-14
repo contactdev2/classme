@@ -5,6 +5,7 @@ import { classesToSwitchTo, classroomWithId } from '../lib/classes';
 import type { ClassroomData } from '../lib/classroom-data';
 import { useDirection, useWords, type WordKey } from '../lib/i18n';
 import { colors, markColours, radius, shadow, space, useAppearance } from '../lib/theme';
+import { ClassStudentsScreen } from './class-students-screen';
 
 /** The stretch of days the dashboard reads, and the weeks the trend is drawn over. */
 const overTheLast = 30;
@@ -17,11 +18,19 @@ const legend: { of: keyof Tally & ('present' | 'absent' | 'late'); name: WordKey
   { of: 'late', name: 'tally.late', colour: markColours.late },
 ];
 
-/** The three tabs of a class's attendance. Students and Trends are each their own requirement. */
-const tabs: { name: WordKey; here: boolean }[] = [
-  { name: 'class.overview', here: true },
-  { name: 'class.students', here: false },
-  { name: 'class.trends', here: false },
+/** Which of a class's own tabs a teacher is standing on. Trends is still its own requirement. */
+type ClassTab = 'overview' | 'students';
+
+/**
+ * The three tabs of a class. Overview and Students have somewhere to go and so are announced as
+ * the buttons they are; Trends is drawn because the prototype draws it, has nothing behind it yet,
+ * and is deliberately not announced — the shape every screen on this branch has used. Give it a
+ * role the moment you give it a destination.
+ */
+const tabs: { name: WordKey; tab: ClassTab | null }[] = [
+  { name: 'class.overview', tab: 'overview' },
+  { name: 'class.students', tab: 'students' },
+  { name: 'class.trends', tab: null },
 ];
 
 // Made when a screen is drawn and not when this module loads: the colours in it are the ones the
@@ -47,11 +56,14 @@ export function ClassAttendanceScreen({
   data,
   classroomId,
   onBack,
+  onChanged,
   now = new Date(),
 }: {
   data: ClassroomData;
   classroomId: string;
   onBack: () => void;
+  /** Something about this class changed on the phone — a student added to it — and here is all of it. */
+  onChanged: (kept: ClassroomData) => void;
   now?: Date;
 }) {
   const t = useWords();
@@ -60,11 +72,22 @@ export function ClassAttendanceScreen({
   // whichever of the two looks the app is wearing. See lib/theme.ts.
   useAppearance();
   const [showing, setShowing] = useState(classroomId);
+  const [tab, setTab] = useState<ClassTab>('overview');
   const classroom = classroomWithId(data, showing) ?? classroomWithId(data, classroomId);
   const span = lastDays(now, overTheLast);
   const tally = classroom ? tallyFor(data, classroom.id, span) : { present: 0, absent: 0, late: 0, total: 0, rate: 0 };
   const weeks = classroom ? weeklyTrend(data, classroom.id, now, trendWeeks) : [];
   const month = classroom ? monthOnMonth(data, classroom.id, now, overTheLast) : null;
+
+  // The class's own students, which is what the Students tab opens: a screen this one shows and
+  // not a route of its own, the way the form a classroom is made in is a screen the Classes list
+  // shows. The class is the one being shown, so a teacher who switched classes from the row above
+  // and then opened Students is looking at that class's register.
+  if (tab === 'students' && classroom) {
+    return (
+      <ClassStudentsScreen classroom={classroom} data={data} onBack={() => setTab('overview')} onAdded={onChanged} />
+    );
+  }
 
   const insight =
     !month || month.of.total === 0
@@ -141,26 +164,45 @@ export function ClassAttendanceScreen({
           })}
         </View>
 
-        {/* Overview, where the teacher is. The students of a class and its trends are each their
-            own requirement, so those two are drawn and nothing is behind them yet. */}
+        {/* Overview, where the teacher is, and Students, which is one press away. A class's trends
+            are their own requirement, so that one is drawn and nothing is behind it yet. */}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', backgroundColor: colors.card, borderRadius: radius.card, padding: 4, marginHorizontal: space.step, ...shadow.soft }}>
-          {tabs.map((tab) => (
-            <Text
-              key={tab.name}
-              style={{
-                flex: 1,
-                textAlign: 'center',
-                borderRadius: radius.field,
-                paddingVertical: 10,
-                fontSize: 14,
-                fontWeight: tab.here ? '700' : '600',
-                color: tab.here ? colors.onAccent : colors.muted,
-                backgroundColor: tab.here ? colors.accent : colors.card,
-              }}
-            >
-              {t(tab.name)}
-            </Text>
-          ))}
+          {tabs.map((one) => {
+            const here = one.tab === tab;
+            const words = (
+              <Text
+                style={{
+                  textAlign: 'center',
+                  fontSize: 14,
+                  fontWeight: here ? '700' : '600',
+                  color: here ? colors.onAccent : colors.muted,
+                }}
+              >
+                {t(one.name)}
+              </Text>
+            );
+            const look = {
+              flex: 1,
+              borderRadius: radius.field,
+              paddingVertical: 10,
+              backgroundColor: here ? colors.accent : colors.card,
+            } as const;
+            return one.tab === null ? (
+              <View key={one.name} style={look}>
+                {words}
+              </View>
+            ) : (
+              <Pressable
+                key={one.name}
+                accessibilityRole="button"
+                accessibilityState={{ checked: here }}
+                onPress={() => setTab(one.tab as ClassTab)}
+                style={look}
+              >
+                {words}
+              </Pressable>
+            );
+          })}
         </View>
 
         {/* What the class's attendance comes to: the share present, and every mark counted. */}

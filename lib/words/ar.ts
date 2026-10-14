@@ -193,6 +193,23 @@ export const arabic: Words = {
     'الحضور ثابت مقارنة بالثلاثين يومًا السابقة.',
   'class.insightNone':
     'لا توجد تسجيلات لهذا الصف بعد. بعد تسجيل الحضور ستظهر النسبة والاتجاه هنا.',
+  // قائمة طلاب الصف، والنافذة التي يضيف المعلّم فيها طالبًا.
+  'students.back': 'العودة إلى الصف',
+  'students.add': 'إضافة طالب',
+  'students.noneTitle': 'لا يوجد طلاب بعد',
+  'students.noneInvite': 'أضف أول طالب إلى هذا الصف لتبدأ بتسجيل الحضور.',
+  'newStudent.words': 'اكتب اسم الطالب لهذا الصف.',
+  'newStudent.name': 'اسم الطالب',
+  'newStudent.namePlaceholder': 'مِثال: خلود كيم',
+  'newStudent.cancel': 'إلغاء',
+  'newStudent.add': 'إضافة',
+  'newStudent.saving': 'جارٍ إضافة الطالب…',
+  'newStudent.missingName': 'اكتب اسم الطالب لإضافته.',
+  'newStudent.nameTaken': 'يوجد طالب بهذا الاسم في هذا الصف بالفعل.',
+  'newStudent.couldNotSave': 'لم يتمكّن الهاتف من حفظ هذا الطالب الآن. حاول مرة أخرى.',
+  'newStudent.noClass': 'هذا الصف لم يعد موجودًا على هذا الهاتف.',
+  'newStudent.added': 'تمت إضافة {name} إلى {class}.',
+
   'tally.present': 'الحضور',
   'tally.absent': 'الغياب',
   'tally.late': 'التأخير',

@@ -186,9 +186,15 @@ export default function Login() {
     if (place === 'classes') {
       // A class the teacher has opened is in front of the list it was opened from; the way back out
       // of it is to that same list. A class the teacher makes is handed straight back from the list,
-      // so the register and every report read what the phone keeps without reading it again.
+      // and so is a student they add to one of their classes, so the register and every report read
+      // what the phone keeps without reading it again.
       return openClass ? (
-        <ClassAttendanceScreen data={teaching} classroomId={openClass} onBack={() => setOpenClass(null)} />
+        <ClassAttendanceScreen
+          data={teaching}
+          classroomId={openClass}
+          onBack={() => setOpenClass(null)}
+          onChanged={setTeaching}
+        />
       ) : (
         <ClassesScreen data={teaching} onOpenClass={setOpenClass} onGo={goTo} onMade={setTeaching} />
       );

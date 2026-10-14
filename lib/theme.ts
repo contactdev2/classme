@@ -60,6 +60,8 @@ export type Palette = {
   ring: string;
   /** The little arrow at the end of a row that leads somewhere. */
   chevron: string;
+  /** Over the whole screen, behind a dialog: the screen is still there and is not to be used yet. */
+  scrim: string;
 };
 
 /** The light the app has always been drawn in: the agreed palette, round 3. */
@@ -85,6 +87,7 @@ export const lightColours: Palette = {
   switchOff: '#D7E3F7',
   ring: '#D5DDE8',
   chevron: '#B7C3D1',
+  scrim: 'rgba(30, 42, 58, 0.45)',
 };
 
 /**
@@ -117,6 +120,7 @@ export const darkColours: Palette = {
   switchOff: '#36455B',
   ring: '#3C4B60',
   chevron: '#7C8A9C',
+  scrim: 'rgba(4, 7, 12, 0.6)',
 };
 
 /**
