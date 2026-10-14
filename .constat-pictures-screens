@@ -2,9 +2,10 @@
   "branch": "constat/session-3-324a1a86",
   "screens": [],
   "criteria": [
-    "Tapping 'Save Attendance' stores today's status for every student in the class.",
-    "After saving, the 'Attendance Saved!' confirmation screen appears.",
-    "The saved record includes the teacher's name and today's date."
+    "Tapping a student's name opens their profile.",
+    "The Overview tab shows attendance rate, absences, and lates.",
+    "The Attendance tab lists recent dates and statuses.",
+    "Tapping 'View All' shows the complete attendance history."
   ],
   "why": "DoneMark froze these onto the attempt: the acceptance criteria of the requirement it is for, and the screens those criteria name. The picture suite runs the checks whose names are these criteria and skips the rest; where it can match none of them it narrows by these screens instead, and says so. Honoured on this branch only."
 }
