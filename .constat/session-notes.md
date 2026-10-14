@@ -1170,3 +1170,74 @@ Half-true, and waiting for the next requirement:
   days and the weeks as its own constants — make them props when something asks to change them.
 - **Home still says "No classes yet" even when the phone has classes** (requirement 10, 17 and 18's
   note stands).
+
+## 20 — Check today's schedule from Home (d903b4ed)
+
+What is here now:
+
+- **Home's empty card is filled in at last** — the branch's oldest half-truth, left by requirements
+  10, 17, 18 and 19 in turn. `components/home-screen.tsx` now draws the day the teacher picked:
+  a card for each class they are teaching, in the order their periods put them, with the period (or
+  `classes.noPeriod` where one was left empty), the class's name, `{n} students`, the class's own
+  colour down the side of it, and the chevron the prototype draws — which is a `role="link"` now and
+  opens that class's dashboard. The list is a `role="list"` of `role="listitem"` cards, each named by
+  its class, which is how a check reads one back.
+- **The week along the top is a day selector.** Five `accessibilityRole="radio"` dates in a
+  `radiogroup`, each named `home.dayHeading` (*Mon, Apr 21*) so a screen reader says which date it is
+  reading and a check can press one by name. Under it, the day being viewed: `home.todayLabel`
+  (*Today*) on the day itself, and *Wed, Apr 23* on any other.
+- **Take Attendance on the current class**, which opens that class's own register with everybody
+  marked Present — `app/index.tsx` sets the open class and goes to `attendance`, so the way back out
+  of the register is Home.
+- **`lib/day-schedule.ts` is every rule**: `schoolDaysOf`, `isToday`, `theDaysClasses` and
+  `classToTakeNow`. The screen holds none of its own.
+- `lib/week.ts`'s `SchoolDay` gained `on` (the day itself, which is what a teacher picking a date is
+  asking for) and `sameDay` is exported. Three new word keys in all five catalogues
+  (`home.dayHeading`, `home.take`, `home.notToday`); no new character, so `test/fonts/*.woff2` did
+  not have to be gathered again (checked with `lettersMissingFrom` before deciding that).
+- **`components/places-row.tsx` names each of its places** with an `accessibilityLabel`. *Attendance*
+  along the bottom and *Take Attendance* on a card are two different things, and `screen.press` reads
+  a name by `includes`: the eight checks in five files that pressed `'Attendance'` now press
+  `/^Attendance$/`, which is the row's own label and not the card's. **Keep that in mind when you
+  name a new control after one that already exists.**
+
+Decisions taken, so they are not re-decided:
+
+- **A classroom keeps no days of its own**, so every class a teacher is teaching stands on every
+  school day, and the date they pick decides what the schedule is headed with and whether there is a
+  register to take — not which classes are on it. `lib/classroom-data.ts` keeps a name, a period, an
+  icon and a colour; giving a class the days it meets on is a requirement of its own, and
+  `components/new-classroom-screen.tsx` is where it would be asked for.
+- **The current class is the first class of the day, and only on the day itself.** A period is free
+  text with no hours against it ('1st Period', 'Period 10'), so nothing can know which period is
+  running at half past two; and the register this app saves is always today's (requirement 11), so
+  another day is a schedule to read and says `home.notToday` — *Attendance is taken on the day
+  itself.* — where the button would be. **A requirement that gives a period its own hours is the one
+  that should narrow `classToTakeNow`**, and it would also let a card say `8:00 – 8:50 AM`, which the
+  mockup draws and this app does not: inventing a lesson's hours would be requirement 4's refusal to
+  ship "Mathematics, Science, English" all over again.
+- **Home opens on the date the phone is being held on, whichever day of the week that is.** On a
+  Saturday the strip still shows the week just taught with nothing picked out in it (requirement 4's
+  decision, kept) and the caption still says *Today* — which is also what keeps
+  `app/localise-app.test.tsx` reading `home.todayLabel` on Home whatever day CI runs on.
+- **A teacher whose every class is put away reads `classes.noneActive` / `classes.noneWords`**, not
+  *No classes yet*: the Classes list's own words, because an invitation to make a first class would
+  not be true for them. A phone with nothing taught on it still reads `home.noClasses` in the same
+  card shape.
+- The `☰` and the `🔔` at the top are still drawn with nothing behind them and deliberately no role,
+  as they have been since requirement 4.
+- The four criteria are proved in `app/check-todays-schedule.test.tsx`, pushed red first — the
+  greeting check on the order the screen is read in (the day's classes were not there to be read
+  under it), and the other three on `Cannot find module '../lib/day-schedule'`, the rules asked for
+  by a name held in a word, which is the shape requirement 17 asked the next check file to keep.
+
+Half-true, and waiting for the next requirement:
+
+- **No class has hours, so no card says when it meets** and the current class is the day's first.
+  See the decision above; this is the one thing on Home that the agreed prototype draws and the app
+  does not.
+- **The day selector is one week wide.** There is no way to reach last Tuesday or next Monday from
+  Home — `schoolDaysOf` is the week the phone is being held in, and a teacher planning further ahead
+  has nothing here. A `‹`/`›` either side of the strip would be the shape to add.
+- **Messages and More along the bottom are still drawn with nothing behind them**, and so is the
+  `⋯` on a class's dashboard (requirement 19's note stands).

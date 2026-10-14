@@ -194,7 +194,7 @@ async function inTheRoster(): Promise<{ screen: Screen; store: ClassroomStore }>
   const store = classroomDataIn(theirTeaching(dayText));
   keepClassroomDataIn(store);
   const screen = await signIn();
-  await screen.press('Attendance');
+  await screen.press(/^Attendance$/);
   await settle();
   return { screen, store };
 }
@@ -394,7 +394,7 @@ describe("Save the day's attendance and see confirmation", () => {
     // Back into the register, saved again, and this time out to Home.
     await screen.press('Back to My Classes');
     await settle();
-    await screen.press('Attendance');
+    await screen.press(/^Attendance$/);
     await settle();
     await theMorningAsDrawn(screen);
     await save(screen);
@@ -406,7 +406,7 @@ describe("Save the day's attendance and see confirmation", () => {
 
     // The confirmation once more, which is the screen this picture is of. It reads at the phone's
     // largest text size: nothing on it is pinned to a height or cut short.
-    await screen.press('Attendance');
+    await screen.press(/^Attendance$/);
     await settle();
     await theMorningAsDrawn(screen);
     await save(screen);

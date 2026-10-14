@@ -167,7 +167,7 @@ async function inTheRoster(students: Student[] = theRoster): Promise<Screen> {
   aMondayMorning();
   await aPhoneWithTheirClasses(students);
   const screen = await signIn();
-  await screen.press('Attendance');
+  await screen.press(/^Attendance$/);
   await settle();
   return screen;
 }

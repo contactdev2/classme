@@ -70,7 +70,9 @@ async function theirTeaching(): Promise<ClassroomData> {
  * From Home a teacher goes to their own classes — the list of them, the form where a new one is
  * made, and the attendance of any one they open — and to today's register, where the class they opened, or else the first class of
  * their day, stands with everybody marked Present, and where one student's name opens their own
- * attendance over time. What the phone keeps about their teaching is
+ * attendance over time. Home is also their day: the date they pick of the week being taught, every
+ * class standing on it, and Take Attendance on the class they are in now, which opens that class's
+ * own register. What the phone keeps about their teaching is
  * read once, as they sign in, and handed down to those screens, so none of them has anything to
  * wait for when it is drawn.
  *
@@ -199,7 +201,26 @@ export default function Login() {
         <ClassesScreen data={teaching} onOpenClass={setOpenClass} onGo={goTo} onMade={setTeaching} />
       );
     }
-    return <HomeScreen teacher={teacher} onOpenProfile={() => setPlace('profile')} onGo={goTo} />;
+    // Home: their day, read off what the phone keeps about their teaching — every class of the
+    // date they are looking at, the way into any one of them, and the register of the class they
+    // are standing in, which is one press from here.
+    return (
+      <HomeScreen
+        teacher={teacher}
+        data={teaching}
+        onOpenProfile={() => setPlace('profile')}
+        onOpenClass={(classroomId) => {
+          setOpenClass(classroomId);
+          setPlace('classes');
+        }}
+        onTakeAttendance={(classroomId) => {
+          setOpenClass(classroomId);
+          setBefore('home');
+          setPlace('attendance');
+        }}
+        onGo={goTo}
+      />
+    );
   }
   if (signingUp) {
     return (

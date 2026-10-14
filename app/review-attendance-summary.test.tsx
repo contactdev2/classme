@@ -159,7 +159,7 @@ async function inTheRoster(): Promise<Screen> {
   keepOnboardingIn(onboardingIn(true));
   keepClassroomDataIn(classroomDataIn(theirTeaching(dayText)));
   const screen = await signIn();
-  await screen.press('Attendance');
+  await screen.press(/^Attendance$/);
   await settle();
   return screen;
 }

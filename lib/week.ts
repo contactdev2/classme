@@ -26,11 +26,14 @@ export type SchoolDay = {
   name: string;
   /** The date on it, as this language writes it: 'Apr 21', '4月21日'. */
   date: string;
+  /** The day itself, which is what a teacher picking it is asking to see. */
+  on: Date;
   /** Whether this is the day the teacher is looking at the screen on. */
   today: boolean;
 };
 
-const sameDay = (one: Date, other: Date) =>
+/** Whether these are the same day, whatever hour of it either of them is at. */
+export const sameDay = (one: Date, other: Date) =>
   one.getFullYear() === other.getFullYear() && one.getMonth() === other.getMonth() && one.getDate() === other.getDate();
 
 /**
@@ -46,6 +49,7 @@ export function schoolWeekOf(now: Date): SchoolDay[] {
     return {
       name: say(key),
       date: dateLabel(day),
+      on: day,
       today: sameDay(day, now),
     };
   });

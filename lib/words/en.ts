@@ -101,6 +101,13 @@ export const english = {
   'home.greetingName': '{name} 👋',
   'home.here': "Here's what's happening today.",
   'home.todayLabel': 'Today',
+  // The day being viewed, where it is not today: 'Wed, Apr 23'. It also names each date in the
+  // selector to a screen reader, which is how one of the five is picked by name.
+  'home.dayHeading': '{day}, {date}',
+  // The way into the register of the class the teacher is standing in.
+  'home.take': 'Take Attendance',
+  // Said on a day that is not today, where that button would be.
+  'home.notToday': 'Attendance is taken on the day itself.',
   'home.noClasses': 'No classes yet',
   'home.noClassesWords': 'Your periods, and the students in them, show here once you have a classroom.',
   'home.account': 'Your account — profile',
