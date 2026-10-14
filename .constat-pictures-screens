@@ -1,11 +1,36 @@
 {
   "branch": "constat/session-3-324a1a86",
-  "screens": [],
+  "screens": [
+    "the Home"
+  ],
   "criteria": [
+    "The welcome screen shows a 'Get Started' button.",
+    "Three onboarding slides explain attendance, organization, and insights features.",
+    "Tapping 'Get Started' on the last slide leads to the Home dashboard.",
+    "Onboarding is skipped on future app opens once completed.",
+    "The Classes list shows All, Active, and Archived filter tabs.",
+    "Each class card shows its name, period, and student count.",
+    "Tapping a class card opens its attendance dashboard.",
+    "The roster lists all 24 students in the class.",
+    "Each student's status starts as Present.",
+    "The list matches the class roster stored for that class.",
+    "Tapping a student's status button changes it to Absent, Late, or Present.",
+    "Changing Chloe Kim's status to Absent updates her row to show Absent.",
+    "Changing Elena Wright's status to Late updates her row to show Late.",
+    "A summary bar shows the count of Present, Absent, and Late students.",
+    "The counts update immediately when a status is changed.",
+    "The summary bar numbers add up to the total number of students in the class.",
+    "Tapping 'Save Attendance' stores today's status for every student in the class.",
+    "After saving, the 'Attendance Saved!' confirmation screen appears.",
+    "The saved record includes the teacher's name and today's date.",
+    "Tapping a student's name opens their profile.",
+    "The Overview tab shows attendance rate, absences, and lates.",
+    "The Attendance tab lists recent dates and statuses.",
+    "Tapping 'View All' shows the complete attendance history.",
     "The profile menu shows the teacher's name and school.",
     "Menu options include Classroom Settings, Students, Attendance Reports, and Notifications.",
     "Toggling Dark Mode changes the app's appearance.",
     "Tapping Logout signs the teacher out of the app."
   ],
-  "why": "DoneMark froze these onto the attempt: the acceptance criteria of the requirement it is for, and the screens those criteria name. The picture suite runs the checks whose names are these criteria and skips the rest; where it can match none of them it narrows by these screens instead, and says so. Honoured on this branch only."
+  "why": "DoneMark froze these onto session 3's proof: every screen and criterion of the requirements it built. Honoured on this branch only."
 }
