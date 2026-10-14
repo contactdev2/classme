@@ -162,6 +162,7 @@ export const french: Words = {
   'roster.noClassWords':
     'Dès que vous aurez une classe avec des élèves, son registre s’ouvrira ici avec tout le monde présent.',
   'roster.save': 'Enregistrer les présences',
+  'roster.change': '{name} — {mark}. Touchez pour modifier.',
 
   // Un élève d'une classe, qui peut être de l'un ou l'autre genre.
   'mark.present': 'Présent(e)',

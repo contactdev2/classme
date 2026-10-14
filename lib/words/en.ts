@@ -182,6 +182,9 @@ export const english = {
   'roster.noClassWords':
     'Once you have a classroom with students in it, its register opens here with everybody present.',
   'roster.save': 'Save Attendance',
+  // What a student's own status is called to a screen reader: whose mark it is, what it stands at
+  // now, and that pressing it changes it.
+  'roster.change': '{name} — {mark}. Tap to change.',
 
   // The three marks, as a register says them of one student.
   'mark.present': 'Present',

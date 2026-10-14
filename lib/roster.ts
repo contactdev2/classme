@@ -43,6 +43,32 @@ export function everyonePresent(students: Student[]): MarkedRoster {
 /** What a student standing on the roster is marked as; Present for one nobody has changed. */
 export const markOf = (marks: MarkedRoster, student: Student): AttendanceMark => marks[student.id] ?? markToStartWith;
 
+/**
+ * The three marks in the order one press after another takes a student through them, starting at
+ * the one a register starts at.
+ *
+ * A register is marked with a thumb, in the few seconds between the bell and the lesson, and the
+ * exceptions are two or three names in twenty-four: a press that goes round the three is quicker
+ * than three buttons on every row, it leaves the roster readable at the phone's largest text size,
+ * and a wrong press is undone by pressing on round rather than by finding an undo.
+ */
+export const markOrder: readonly AttendanceMark[] = ['Present', 'Absent', 'Late'];
+
+/** The mark a student lands on when the one they are standing at is pressed. */
+export function nextMarkAfter(mark: AttendanceMark): AttendanceMark {
+  const at = markOrder.indexOf(mark);
+  return markOrder[(at + 1) % markOrder.length];
+}
+
+/**
+ * The roster as it stands after one student's mark is changed: that student at their new mark, and
+ * everybody else exactly where they were. Nothing is changed in place, so what a screen was holding
+ * a moment ago is still what it was.
+ */
+export function markedAs(marks: MarkedRoster, studentId: string, mark: AttendanceMark): MarkedRoster {
+  return { ...marks, [studentId]: mark };
+}
+
 /** How many of a roster stand at each of the three marks, and how many there are altogether. */
 export type RosterTally = { present: number; absent: number; late: number; total: number };
 

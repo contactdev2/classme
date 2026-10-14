@@ -158,6 +158,7 @@ export const simplifiedChinese: Words = {
   'roster.noneFound': '这个班级没有叫这个名字的学生。',
   'roster.noClassWords': '创建班级并添加学生后，名单会在这里打开，所有人默认出勤。',
   'roster.save': '保存出勤',
+  'roster.change': '{name} — {mark}。点击即可更改。',
 
   'mark.present': '出勤',
   'mark.absent': '缺勤',

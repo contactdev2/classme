@@ -164,6 +164,7 @@ export const arabic: Words = {
   'roster.noClassWords':
     'عند إنشاء صف وإضافة طلاب إليه، يُفتح كشفه هنا والجميع حاضرون.',
   'roster.save': 'حفظ الحضور',
+  'roster.change': '{name} — {mark}. اضغط للتغيير.',
 
   'mark.present': 'حاضر',
   'mark.absent': 'غائب',

@@ -596,3 +596,51 @@ Half-true, and waiting for the next requirement:
 - **The register is always today's.** There is no way to take a past day's attendance, and the
   class is the one opened or the first of the day — the `▾` on the card is where choosing another
   belongs.
+
+## 12 — Mark exceptions like Absent or Late (8da3f0c0)
+
+What is here now:
+
+- **A student's status on the register is a button now**, and pressing it takes that one student
+  round the three marks: Present → Absent → Late → Present. The round is `markOrder` in
+  `lib/roster.ts`, with `nextMarkAfter` and `markedAs` (one student's mark changed, nobody else's,
+  nothing changed in place) beside it. **The screen still holds no rule of its own** — a fourth
+  mark, or another order, is one line in `lib/roster.ts`.
+- One new word key, `roster.change` (`'{name} — {mark}. Tap to change.'`), in all five catalogues:
+  what the button is called to a screen reader. **It is named by the student standing on it**, which
+  is what makes Chloe Kim's and Hannah Kim's two different buttons to a finger and to a check —
+  `screen.press(/^Chloe Kim\b/)` is how the checks tap one.
+- `components/take-attendance-screen.tsx` now keeps the marks **beside the class they were seeded
+  for** (`seededFor`), and re-seeds when that changes. Requirement 11's note said a class switched
+  to from the card would not re-seed; it does now, so the `▾` requirement has nothing to fix here.
+- **The Late pill draws the prototype's own ⏰** (`markLook.Late.before`). The clock is beside the
+  word and never instead of it, and it is not in the accessibility label: the word carries the
+  meaning on its own.
+- `test/fonts/*.woff2` were gathered again (`node test/fonts/gather-fonts.mjs`) for the characters
+  the new catalogue line brought.
+
+Decisions taken, so they are not re-decided:
+
+- **One button that goes round, not three buttons on every row.** A register is marked with a thumb
+  in the seconds between the bell and the lesson, and the exceptions are two or three names in
+  twenty-four. Three buttons a row would not read at the phone's largest text size, and a wrong tap
+  here is undone by tapping on round rather than by finding an undo. **If a later requirement wants
+  a sheet of three, `nextMarkAfter` is what it replaces, not the round itself.**
+- **Nothing is written to the phone.** The marks are held in the screen, exactly as before — this
+  requirement changes them, it does not keep them. The screen's own doc comment says so.
+
+Half-true, and waiting for the next requirement:
+
+- **Saving the register is still its own requirement.** `Save Attendance` is drawn and still
+  deliberately not announced as a button, and a teacher who leaves the register and comes back is
+  back at everybody present. That requirement has `marks`/`setMarks` in
+  `components/take-attendance-screen.tsx` to lift or to read, `AttendanceRecord` in
+  `lib/classroom-data.ts` to write, and requirement 11's open question to answer on purpose: **what
+  a register re-opened after a save shows — the saved marks, or Present again.**
+- **`classroomStore()` is still in memory** (requirements 5, 7, 8, 9, 10 and 11's note stands), so
+  on a real phone the register still says "No classes yet". `lib/accounts-file.ts` and
+  `lib/onboarding.ts` both show how a thing is kept on a phone.
+- **No walk was written**, for requirement 11's reason: a phone still cannot make a classroom, so a
+  walk could not reach one student to tap. The three criteria are proved in
+  `app/mark-exceptions.test.tsx`, which was pushed red first — all three failing with
+  `0 buttons saying /^Chloe Kim\b/ on this screen`, which is the register as requirement 11 left it.

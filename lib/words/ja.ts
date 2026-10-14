@@ -158,6 +158,7 @@ export const japanese: Words = {
   'roster.noneFound': 'このクラスにその名前の生徒はいません。',
   'roster.noClassWords': 'クラスをつくって生徒を登録すると、全員出席の状態で名簿がここに開きます。',
   'roster.save': '出欠を保存',
+  'roster.change': '{name} — {mark}。タップして変更します。',
 
   'mark.present': '出席',
   'mark.absent': '欠席',

@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import type { ClassroomData } from '../lib/classroom-data';
+import type { ClassroomData, Student } from '../lib/classroom-data';
 import { useDirection, useWords, type WordKey } from '../lib/i18n';
 import {
   classToMarkIn,
   countedBy,
   everyonePresent,
   initialsOf,
+  markedAs,
   markOf,
+  nextMarkAfter,
   rosterFilters,
   rosterOf,
   rosterShown,
@@ -26,13 +28,15 @@ const filterWords: Record<RosterFilter, WordKey> = {
 };
 
 /**
- * Each mark's own colour, the word for it, and the sign the prototype draws beside that word: a
- * tick for a student who is here, a cross for one who is not.
+ * Each mark's own colour, the word for it, and the signs the prototype draws around that word: a
+ * tick for a student who is here, a cross for one who is not, and a clock on the one who came in
+ * after the bell. The word carries the meaning on its own — the signs are beside it, never instead
+ * of it, so a screen read with the ears says the same thing as one read with the eyes.
  */
 const markLook = {
-  Present: { name: 'mark.present' as WordKey, colour: markColours.present, sign: '✓' },
-  Absent: { name: 'mark.absent' as WordKey, colour: markColours.absent, sign: '✕' },
-  Late: { name: 'mark.late' as WordKey, colour: markColours.late, sign: '✕' },
+  Present: { name: 'mark.present' as WordKey, colour: markColours.present, before: '', sign: '✓' },
+  Absent: { name: 'mark.absent' as WordKey, colour: markColours.absent, before: '', sign: '✕' },
+  Late: { name: 'mark.late' as WordKey, colour: markColours.late, before: '⏰ ', sign: '✕' },
 } as const;
 
 /** A mark's colour, washed out, behind the word for it. */
@@ -48,6 +52,11 @@ const tintOf = (colour: string) => (/^#[0-9a-f]{6}$/i.test(colour) ? `${colour}1
  * and a register is mostly the handful who are not there. Nothing is read off a saved mark and
  * nothing is waited for: the roster is the class as the phone already keeps it, and the marks start
  * where lib/roster.ts says a register starts.
+ *
+ * From there a teacher marks the exceptions: a student's own status is a button, and pressing it
+ * takes that one student round Present, Absent and Late. Nothing is written to the phone yet —
+ * keeping the register is its own requirement — so what is held here is the register as it stands
+ * under the teacher's thumb.
  *
  * The clock is a prop so a check can arrive on a particular morning; on a phone it is the phone's.
  */
@@ -67,12 +76,22 @@ export function TakeAttendanceScreen({
   const classroom = classToMarkIn(data, classroomId);
   const roster = classroom ? rosterOf(data, classroom.id) : [];
 
-  // Where the register starts: everybody present. Marking one student another way is its own
-  // requirement; what is held here is the register as it stands, so that requirement has only to
-  // change one student's mark in it.
-  const [marks] = useState(() => everyonePresent(roster));
+  // Where the register starts — everybody present — and where it stands once the teacher has
+  // marked the exceptions. The class it was seeded for is held beside it, so a teacher who changes
+  // which class they are marking gets that class's own register and not the last one's marks: the
+  // ids are another class's, and a roster read through them would show everybody present anyway,
+  // which would be a lie about a mark nobody had made.
+  const [marks, setMarks] = useState(() => everyonePresent(roster));
+  const [seededFor, setSeededFor] = useState(classroom?.id ?? null);
+  if (seededFor !== (classroom?.id ?? null)) {
+    setSeededFor(classroom?.id ?? null);
+    setMarks(everyonePresent(roster));
+  }
   const [filter, setFilter] = useState<RosterFilter>('all');
   const [looking, setLooking] = useState('');
+
+  /** One student's status pressed: that student on to the next of the three marks, nobody else. */
+  const markNext = (student: Student) => setMarks((standing) => markedAs(standing, student.id, nextMarkAfter(markOf(standing, student))));
 
   const tally = tallyOfRoster(roster, marks);
   const showing = rosterShown(roster, marks, filter, looking);
@@ -233,21 +252,27 @@ export function TakeAttendanceScreen({
                 <Text style={{ flex: 1, flexBasis: 120, fontSize: 14, fontWeight: '600', color: colors.text }}>
                   {student.name}
                 </Text>
-                {/* What they are marked as. Changing it is its own requirement, so this says what
-                    it says and is deliberately not announced as a button. */}
-                <Text
+                {/* What they are marked as, and the way to change it: one press takes this one
+                    student on to the next of the three marks. It is named by the student standing
+                    on it, so a teacher reading the screen with their ears is told whose mark they
+                    are about to change — and so that two students sharing a surname are two
+                    different buttons. */}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t('roster.change', { name: student.name, mark: t(look.name) })}
+                  onPress={() => markNext(student)}
                   style={{
-                    fontSize: 12,
-                    fontWeight: '600',
-                    color: look.colour,
                     backgroundColor: washOf(look.colour),
                     borderRadius: radius.pill,
                     paddingHorizontal: 10,
                     paddingVertical: 6,
                   }}
                 >
-                  {t(look.name)} {look.sign}
-                </Text>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: look.colour }}>
+                    {look.before}
+                    {t(look.name)} {look.sign}
+                  </Text>
+                </Pressable>
               </View>
             );
           })}
