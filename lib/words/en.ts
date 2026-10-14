@@ -128,6 +128,40 @@ export const english = {
   'month.12': 'Dec',
   'week.date': '{month} {day}',
 
+  // The Classes list: all of a teacher's own classes, and the way into any one of them.
+  'classes.title': 'My Classes',
+  'classes.back': 'Back to Home',
+  'classes.all': 'All',
+  'classes.active': 'Active',
+  'classes.archived': 'Archived',
+  // A class card's second line: the period it meets in, and how many are in it.
+  'classes.meta': '{period} · {students}',
+  'classes.noneAll': 'No classes yet',
+  'classes.noneActive': 'No classes being taught',
+  'classes.noneArchived': 'No classes put away',
+  'classes.noneWords': 'Your classes show here, with the period each one meets in and how many students are in it.',
+
+  // One class's own attendance, on the dashboard behind its card.
+  'class.back': 'Back to My Classes',
+  'class.range': 'Last 30 days',
+  'class.overview': 'Overview',
+  'class.students': 'Students',
+  'class.trends': 'Trends',
+  'class.overall': 'Overall Attendance',
+  // A share of a class, written as a share: 92% is 92% in every language.
+  'class.rate': '{rate}%',
+  'class.trend': 'Attendance Trend',
+  'class.weekly': 'Weekly',
+  'class.weekEmpty': 'Nothing marked',
+  'class.insights': 'Key Insights',
+  'class.insightUp': 'Attendance is up {points}% on the thirty days before.',
+  'class.insightDown': 'Attendance is down {points}% on the thirty days before.',
+  'class.insightSteady': 'Attendance is holding steady against the thirty days before.',
+  'class.insightNone': 'Nothing is marked for this class yet. Once you take attendance, its rate and its trend show here.',
+  'tally.present': 'Present',
+  'tally.absent': 'Absent',
+  'tally.late': 'Late',
+
   // Classroom Settings.
   'settings.title': 'Classroom Settings',
   'settings.back': 'Back to Home',

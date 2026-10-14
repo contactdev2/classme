@@ -20,6 +20,12 @@ export type Classroom = {
   subject: string;
   /** Or its colour, for a teacher who would rather tell them apart that way. */
   colour: string;
+  /**
+   * Whether the class has been put away: a term finished with, kept rather than deleted, and shown
+   * under Archived in the Classes list. Left out on a class being taught, so every classroom made
+   * before this field existed — in a backup file, say — still reads as one that is being taught.
+   */
+  archived?: boolean;
 };
 
 /** One student in one classroom. The photo is where the phone keeps it, and never a web address. */
@@ -94,8 +100,15 @@ export function classroomDataIfWhole(value: unknown): ClassroomData | null {
   if (!Array.isArray(classrooms) || !Array.isArray(students) || !Array.isArray(attendance)) return null;
 
   const wholeClassroom = (one: unknown) => {
-    const { id, name, period, subject, colour } = (one ?? {}) as Record<string, unknown>;
-    return isText(id) && isText(name) && isText(period) && isText(subject) && isText(colour);
+    const { id, name, period, subject, colour, archived } = (one ?? {}) as Record<string, unknown>;
+    return (
+      isText(id) &&
+      isText(name) &&
+      isText(period) &&
+      isText(subject) &&
+      isText(colour) &&
+      (archived === undefined || typeof archived === 'boolean')
+    );
   };
   const wholeStudent = (one: unknown) => {
     const { id, classroomId, name, photo } = (one ?? {}) as Record<string, unknown>;

@@ -24,6 +24,14 @@ export const colors = {
   onAccent: '#FFFFFF',
 } as const;
 
+/**
+ * The three attendance marks, each with a colour of its own. The agreed palette (round 3) names a
+ * colour for text, one for what does something and one for what is behind it, and a class's
+ * attendance cannot be read in one colour: present, absent and late have to be told apart at a
+ * glance, in a ring and in a legend beside it. These are the prototype's own three.
+ */
+export const markColours = { present: '#22C55E', absent: '#EF4444', late: '#F59E0B' } as const;
+
 /** 16px corners, as agreed; 12px where something sits inside something already rounded. */
 export const radius = { card: 16, field: 12, pill: 10 } as const;
 

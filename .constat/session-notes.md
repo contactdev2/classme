@@ -447,3 +447,77 @@ Half-true, and waiting for the next requirement:
 - `classroomStore()` is still in memory (requirement 5, 7 and 8's note stands), so a backup made on
   a real phone is still a backup of nothing. `lib/accounts-file.ts` and now `lib/onboarding.ts` both
   show how a thing is kept on the phone.
+
+## 10 — Browse and switch between classes (3e0408cc)
+
+What is here now:
+
+- **`components/classes-screen.tsx` is My Classes**, built to the agreed prototype: the way back to
+  Home, the screen's name, the `+` the prototype draws, the three filter tabs — **All**, **Active**,
+  **Archived** — and a card for each class with its subject icon on a wash of its own colour, its
+  name, `{period} · {n} students`, and the chevron into it. It opens on **Active**, as the prototype
+  draws it, and a class put away carries an *Archived* badge on its own card so the All list is
+  never a puzzle. An empty list says which emptiness it is (`classes.noneAll` / `noneActive` /
+  `noneArchived`) rather than showing nothing.
+- **`components/class-attendance-screen.tsx` is one class's dashboard**, which is what a card opens:
+  the class's name, *Last 30 days*, the row of pills that **switches straight to another class**,
+  the Overview / Students / Trends tabs with Overview the one in use, the ring with the share
+  present and the three counts beside it, the weekly trend, and one sentence of *Key Insights*.
+- **`lib/classes.ts`** is the reading of a teacher's classes: `classesShown(data, filter)`,
+  `studentsInClass`, `classroomWithId`, `classesToSwitchTo`, and `periodOrder`, which is how a list
+  sorts itself ('1st Period' before '2nd Period', 'Period 10' after 'Period 9'; a period with no
+  number in it sorts last, by name). **Neither screen holds a rule of its own** — add a filter here,
+  not in a screen.
+- **`lib/attendance-stats.ts`** is every number on the dashboard: `dayText` (a mark's own
+  '2025-04-21'), `lastDays`, `theDaysBefore`, `tallyFor`, `weeklyTrend` and `monthOnMonth`. Nothing
+  is stored: a rate is worked out from the daily marks each time it is read, which is an approved
+  decision. **The requirement that marks attendance should write records and nothing else** — every
+  summary in the app already follows from them.
+- `components/places-row.tsx` is the row along the bottom, **now shared by Home and Classes**. Home
+  and Classes are buttons in it; Attendance, Messages and More are still drawn with nothing behind
+  them and deliberately no role. `HomeScreen` gained `onOpenClasses`.
+- `app/index.tsx` holds where a teacher is standing (`place`) and which class they have opened, and
+  **reads the classroom data once, as they sign in** (`theirTeaching()`, which never throws), handing
+  it down. **Still no new route**: requirement 1's `No other screen appears before the login screen.`
+  is still true and still has not had to be widened. The requirement that *creates* a classroom will
+  need the data read again after it writes — give `ClassesScreen` a `reload` and call it there.
+
+Decisions taken, so they are not re-decided:
+
+- **`Classroom` gained one optional field, `archived`.** Optional on purpose, the way requirement 4
+  added a teacher's name: a classroom made before it existed — in a backup file — still reads as one
+  being taught. `classroomDataIfWhole` accepts it only as a boolean.
+- **`lib/theme.ts` gained `markColours`** (#22C55E, #EF4444, #F59E0B — the prototype's own three).
+  The agreed palette names one colour for text, one for what does something and one for what is
+  behind it; present, absent and late have to be told apart at a glance, and one accent cannot do
+  it. **Use these three wherever a mark is coloured**, and nowhere else.
+- **The donut is a ring, and the trend bars lie on their side.** React Native draws no conic
+  gradient without a drawing package, and a bar chart pinned to a height cannot grow with the
+  phone's largest text: the ring is a thick round border sized by the number written inside it, and
+  each week of the trend is a row — label, bar, percentage — that grows taller rather than clipping.
+  Nothing on either screen is pinned to a `line-height` or a `max-height`, and the checks hold that.
+- **`tally.present` / `tally.absent` / `tally.late` are the legend's words, not a mark's.** They are
+  plural nouns in the languages that want them ('Présences', 出勤). The requirement that marks a
+  student Present, Absent or Late should write its own `mark.*` keys for the buttons.
+- The dashboard's `⋯`, the list's `+`, and the Students and Trends tabs are drawn because the
+  prototype draws them and are **not announced as buttons**: each is its own requirement.
+- `classes.meta` (`{period} · {students}`) and `class.rate` (`{rate}%`) are in `wordsAllowedToStay`:
+  a count written as a count is the same count in every language.
+- `test/fonts/*.woff2` were gathered again for the characters the new catalogues brought
+  (`node test/fonts/gather-fonts.mjs`). Run it whenever a catalogue gains a character.
+
+Half-true, and waiting for the next requirement:
+
+- **Nothing on the phone creates a classroom yet** (requirement 5, 7, 8 and 9's note stands), and
+  `classroomStore()` is still in memory, so on a real phone the Classes list is empty and says so.
+  Everything on both screens is real and proved against data a check hands over; what is missing is
+  the screen that makes a class and a store that outlasts the app. `lib/accounts-file.ts` and
+  `lib/onboarding.ts` both show how a thing is kept on a phone.
+- **Home still says "No classes yet" even when the phone has classes.** Home's own card is the
+  classroom requirement's to fill (requirement 4's note), and filling it from this requirement would
+  have been building that one. It now has `lib/classes.ts` to fill it from.
+- **The dashboard's Students and Trends tabs go nowhere**, and the `+` on My Classes makes nothing.
+  Both are their own requirements; the screens have the place ready for them.
+- The class pills switch between the classes being taught, plus the open one if it was archived. A
+  teacher with twenty classes gets a wrapped block of pills rather than a row that scrolls sideways:
+  it reads at the largest text size, which a sideways scroll would not.

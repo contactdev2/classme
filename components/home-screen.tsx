@@ -4,21 +4,7 @@ import { useDirection, useWords } from '../lib/i18n';
 import type { TeacherProfile } from '../lib/local-accounts';
 import { colors, radius, shadow, space } from '../lib/theme';
 import { schoolWeekOf } from '../lib/week';
-
-/**
- * The places the app has, along the bottom, as the prototype draws them. Home is where a teacher
- * already is; the other four are each their own requirement, so — like 'Forgot password?' on the
- * login screen — they are drawn because the prototype draws them, and nothing is behind them yet.
- * They are deliberately not announced as buttons: a control that answers nothing should not say it
- * does.
- */
-const places = [
-  { key: 'place.home', mark: '⌂' },
-  { key: 'place.classes', mark: '◫' },
-  { key: 'place.attendance', mark: '📅' },
-  { key: 'place.messages', mark: '💬' },
-  { key: 'place.more', mark: '⋯' },
-] as const;
+import { PlacesRow } from './places-row';
 
 /**
  * Home: what a teacher lands on the moment their own record opens. It greets them by the name that
@@ -30,10 +16,12 @@ const places = [
 export function HomeScreen({
   teacher,
   onOpenSettings,
+  onOpenClasses,
   now = new Date(),
 }: {
   teacher: TeacherProfile;
   onOpenSettings: () => void;
+  onOpenClasses: () => void;
   now?: Date;
 }) {
   const t = useWords();
@@ -128,34 +116,8 @@ export function HomeScreen({
         </View>
       </ScrollView>
 
-      {/* The app's places, along the bottom. It wraps rather than clips, so the phone's largest text
-          makes this row taller and never cuts a word off it. */}
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-around',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: space.snug,
-          paddingHorizontal: space.snug,
-          paddingVertical: 12,
-          backgroundColor: colors.card,
-          borderTopWidth: 1,
-          borderTopColor: colors.line,
-        }}
-      >
-        {places.map((place) => {
-          const here = place.key === 'place.home';
-          return (
-            <View key={place.key} style={{ alignItems: 'center', gap: 4 }}>
-              <Text style={{ fontSize: 18, color: here ? colors.accent : colors.faint }}>{place.mark}</Text>
-              <Text style={{ fontSize: 11, fontWeight: here ? '600' : '400', color: here ? colors.accent : colors.faint }}>
-                {t(place.key)}
-              </Text>
-            </View>
-          );
-        })}
-      </View>
+      {/* The app's own places, along the bottom, with Home the one the teacher is standing in. */}
+      <PlacesRow here="home" onGo={(place) => (place === 'classes' ? onOpenClasses() : undefined)} />
     </View>
   );
 }

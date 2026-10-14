@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ClassAttendanceScreen } from '../components/class-attendance-screen';
+import { ClassesScreen } from '../components/classes-screen';
 import { HomeScreen } from '../components/home-screen';
 import { OnboardingScreen } from '../components/onboarding-screen';
 import { SettingsScreen } from '../components/settings-screen';
 import { SignUpScreen } from '../components/sign-up-screen';
+import { classroomStore, nothingKeptYet, type ClassroomData } from '../lib/classroom-data';
 import { openInPhoneLanguage, useDirection, useWords } from '../lib/i18n';
 import type { TeacherProfile } from '../lib/local-accounts';
 import { finishedOnboarding, rememberOnboardingFinished } from '../lib/onboarding';
@@ -30,6 +33,19 @@ const fieldRow = {
 } as const;
 
 /**
+ * What the phone keeps about this teacher's teaching, read as they sign in. A phone that will not
+ * answer reads as a phone with nothing taught on it: the screens then say so plainly rather than
+ * failing in front of a teacher, and nothing of theirs is written to a log on the way past.
+ */
+async function theirTeaching(): Promise<ClassroomData> {
+  try {
+    return await classroomStore().read();
+  } catch {
+    return nothingKeptYet();
+  }
+}
+
+/**
  * The route the app opens on: the login screen, until a teacher's own record on this phone opens
  * with what they typed — and from then on, Home, greeting them by name, with Settings behind their
  * own avatar. Nobody is signed in when the app starts, so the first thing drawn is always the login
@@ -44,13 +60,19 @@ const fieldRow = {
  * phone is asked whether it is finished at the moment somebody signs in, and told when it is — from
  * the next morning on they go straight to Home. See lib/onboarding.ts.
  *
- * Home, Settings, the walkthrough and the signup are components and not routes of their own on
- * purpose: the app opening on the login screen and nothing else is a requirement of its own, and
- * this keeps '/' the only screen there is.
+ * From Home a teacher goes to their own classes — the list of them, and the attendance of any one
+ * they open. What the phone keeps about their teaching is read once, as they sign in, and handed
+ * down to those screens, so neither of them has anything to wait for when it is drawn.
+ *
+ * Home, Settings, Classes, a class's attendance, the walkthrough and the signup are components and
+ * not routes of their own on purpose: the app opening on the login screen and nothing else is a
+ * requirement of its own, and this keeps '/' the only screen there is.
  */
 export default function Login() {
   const [teacher, setTeacher] = useState<TeacherProfile | null>(null);
-  const [inSettings, setInSettings] = useState(false);
+  const [place, setPlace] = useState<'home' | 'classes' | 'settings'>('home');
+  const [openClass, setOpenClass] = useState<string | null>(null);
+  const [teaching, setTeaching] = useState<ClassroomData>(nothingKeptYet());
   const [signingUp, setSigningUp] = useState(false);
   const [welcomed, setWelcomed] = useState(false);
 
@@ -68,13 +90,16 @@ export default function Login() {
    */
   async function signedIn(made: TeacherProfile) {
     setWelcomed(await finishedOnboarding());
+    setTeaching(await theirTeaching());
     setTeacher(made);
   }
 
   if (teacher) {
     const logOut = () => {
       setTeacher(null);
-      setInSettings(false);
+      setPlace('home');
+      setOpenClass(null);
+      setTeaching(nothingKeptYet());
     };
     if (!welcomed) {
       return (
@@ -89,10 +114,20 @@ export default function Login() {
         />
       );
     }
-    return inSettings ? (
-      <SettingsScreen teacher={teacher} onBack={() => setInSettings(false)} onLogOut={logOut} />
-    ) : (
-      <HomeScreen teacher={teacher} onOpenSettings={() => setInSettings(true)} />
+    if (place === 'settings') {
+      return <SettingsScreen teacher={teacher} onBack={() => setPlace('home')} onLogOut={logOut} />;
+    }
+    if (place === 'classes') {
+      // A class the teacher has opened is in front of the list it was opened from; the way back out
+      // of it is to that same list.
+      return openClass ? (
+        <ClassAttendanceScreen data={teaching} classroomId={openClass} onBack={() => setOpenClass(null)} />
+      ) : (
+        <ClassesScreen data={teaching} onOpenClass={setOpenClass} onGo={(going) => setPlace(going)} />
+      );
+    }
+    return (
+      <HomeScreen teacher={teacher} onOpenSettings={() => setPlace('settings')} onOpenClasses={() => setPlace('classes')} />
     );
   }
   if (signingUp) {

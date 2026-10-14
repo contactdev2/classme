@@ -111,6 +111,43 @@ export const arabic: Words = {
   'month.12': 'ديسمبر',
   'week.date': '{day} {month}',
 
+  // قائمة الصفوف.
+  'classes.title': 'صفوفي',
+  'classes.back': 'العودة إلى الرئيسية',
+  'classes.all': 'الكل',
+  'classes.active': 'النشطة',
+  'classes.archived': 'المؤرشفة',
+  'classes.meta': '{period} · {students}',
+  'classes.noneAll': 'لا توجد صفوف بعد',
+  'classes.noneActive': 'لا توجد صفوف نشطة',
+  'classes.noneArchived': 'لا توجد صفوف مؤرشفة',
+  'classes.noneWords':
+    'تظهر صفوفك هنا، مع الحصة التي يلتقي فيها كل صف وعدد الطلاب فيه.',
+
+  // حضور صف واحد.
+  'class.back': 'العودة إلى صفوفي',
+  'class.range': 'آخر 30 يومًا',
+  'class.overview': 'نظرة عامة',
+  'class.students': 'الطلاب',
+  'class.trends': 'الاتجاهات',
+  'class.overall': 'نسبة الحضور الإجمالية',
+  'class.rate': '{rate}%',
+  'class.trend': 'اتجاه الحضور',
+  'class.weekly': 'أسبوعيًا',
+  'class.weekEmpty': 'لا تسجيل',
+  'class.insights': 'أهم الملاحظات',
+  'class.insightUp':
+    'ارتفع الحضور بنسبة {points}% مقارنة بالثلاثين يومًا السابقة.',
+  'class.insightDown':
+    'انخفض الحضور بنسبة {points}% مقارنة بالثلاثين يومًا السابقة.',
+  'class.insightSteady':
+    'الحضور ثابت مقارنة بالثلاثين يومًا السابقة.',
+  'class.insightNone':
+    'لا توجد تسجيلات لهذا الصف بعد. بعد تسجيل الحضور ستظهر النسبة والاتجاه هنا.',
+  'tally.present': 'الحضور',
+  'tally.absent': 'الغياب',
+  'tally.late': 'التأخير',
+
   'settings.title': 'إعدادات الصف',
   'settings.back': 'العودة إلى الرئيسية',
   'settings.teacher': 'مدرّس',

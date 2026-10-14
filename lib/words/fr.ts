@@ -112,6 +112,40 @@ export const french: Words = {
   'month.12': 'déc.',
   'week.date': '{day} {month}',
 
+  // La liste des classes.
+  'classes.title': 'Mes classes',
+  'classes.back': 'Retour à l’accueil',
+  'classes.all': 'Toutes',
+  'classes.active': 'En cours',
+  'classes.archived': 'Archivées',
+  'classes.meta': '{period} · {students}',
+  'classes.noneAll': 'Aucune classe pour l’instant',
+  'classes.noneActive': 'Aucune classe en cours',
+  'classes.noneArchived': 'Aucune classe archivée',
+  'classes.noneWords':
+    'Vos classes apparaissent ici, avec la période où chacune a lieu et le nombre d’élèves qu’elle compte.',
+
+  // La présence d’une classe.
+  'class.back': 'Retour à mes classes',
+  'class.range': 'Les 30 derniers jours',
+  'class.overview': 'Aperçu',
+  'class.students': 'Élèves',
+  'class.trends': 'Tendances',
+  'class.overall': 'Présence globale',
+  'class.rate': '{rate}%',
+  'class.trend': 'Évolution de la présence',
+  'class.weekly': 'Par semaine',
+  'class.weekEmpty': 'Rien de noté',
+  'class.insights': 'À retenir',
+  'class.insightUp': 'La présence a progressé de {points} % par rapport aux trente jours précédents.',
+  'class.insightDown': 'La présence a baissé de {points} % par rapport aux trente jours précédents.',
+  'class.insightSteady': 'La présence reste stable par rapport aux trente jours précédents.',
+  'class.insightNone':
+    'Rien n’est encore noté pour cette classe. Dès que vous ferez l’appel, son taux et son évolution apparaîtront ici.',
+  'tally.present': 'Présences',
+  'tally.absent': 'Absences',
+  'tally.late': 'Retards',
+
   'settings.title': 'Réglages de la classe',
   'settings.back': "Retour à l'accueil",
   'settings.teacher': 'Enseignant',
